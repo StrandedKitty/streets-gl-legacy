@@ -3,8 +3,8 @@
 	"version": "0.1.0",
 	"scripts": {
 		"start": "http-server ./build -p 8080",
-		"build": "webpack --config webpack.config.js",
-		"dev": "concurrently \"http-server ./build -p 8080\" \"webpack --config webpack.config.js --watch\""
+		"build": "webpack --config webpack.config.js --mode=production",
+		"dev": "concurrently \"http-server ./build -p 8080\" \"webpack --config webpack.config.js --watch --mode=development\""
 	},
 	"author": "vtHawk",
 	"license": "MIT",
