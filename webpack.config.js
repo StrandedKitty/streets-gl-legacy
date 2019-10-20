@@ -9,7 +9,7 @@ module.exports = {
 	},
 	plugins: [
 		new CopyPlugin([
-			{from: './src', to: __dirname + '/build'},
+			{from: '*.html', to: __dirname + '/build', context: './src'},
 			{from: './src/css', to: __dirname + '/build/css'}
 		])
 	]
