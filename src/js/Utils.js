@@ -1,0 +1,55 @@
+export function clamp(num, min, max) {
+	return num <= min ? min : num >= max ? max : num;
+}
+
+export function lerp(start, end, amt){
+	return (1-amt) * start + amt * end
+}
+
+export function calculateLine(a, b) {
+	let x = Math.floor(a[0]);
+	let y = Math.floor(a[1]);
+	const endX = Math.floor(b[0]);
+	const endY = Math.floor(b[1]);
+
+	let points = [[x, y]];
+
+	if(x === endX && y === endY) return points;
+
+	const stepX = Math.sign(b[0] - a[0]);
+	const stepY = Math.sign(b[1] - a[1]);
+
+	const toX = Math.abs(a[0] - x - Math.max(0, stepX));
+	const toY = Math.abs(a[1] - y - Math.max(0, stepY));
+
+	const vX = Math.abs(a[0] - b[0]);
+	const vY = Math.abs(a[1] - b[1]);
+
+	let tMaxX = toX / vX;
+	let tMaxY = toY / vY;
+
+	const tDeltaX = 1 / vX;
+	const tDeltaY = 1 / vY;
+
+	while(!(x === endX && y === endY)) {
+		if(tMaxX < tMaxY) {
+			tMaxX = tMaxX + tDeltaX;
+			x = x + stepX;
+		} else {
+			tMaxY = tMaxY + tDeltaY;
+			y = y + stepY;
+		}
+
+		points.push([x, y]);
+	}
+
+	return points;
+}
+
+export function toRad(degrees) {
+	return degrees * Math.PI / 180;
+}
+
+export function toDeg(radians) {
+	return radians * 180 / Math.PI;
+}
