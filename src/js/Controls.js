@@ -162,6 +162,7 @@ export default class Controls {
 			this.direction.applyAxisAngle(axis, angle);
 		}
 
+		if(this.direction.y > 0) this.direction.y = 0;
 		this.direction.normalize();
 
 		let cameraPosition = new THREE.Vector3();
