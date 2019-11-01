@@ -53,3 +53,33 @@ export function toRad(degrees) {
 export function toDeg(radians) {
 	return radians * 180 / Math.PI;
 }
+
+export function degrees2meters(lat, lon) {
+	let z = lon * 20037508.34 / 180;
+	let x =  Math.log(Math.tan((90 + lat) * Math.PI / 360)) * 20037508.34 / Math.PI;
+	return {x, z}
+}
+
+export function meters2degress(x, z) {
+	let lon = z *  180 / 20037508.34;
+	let lat = Math.atan(Math.exp(x * Math.PI / 20037508.34)) * 360 / Math.PI - 90;
+	return {lat, lon}
+}
+
+export function degrees2tile(lat, lon, zoom = 16)  {
+	let x = (lon + 180) / 360 * (1 << zoom);
+	let y = (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * (1 << zoom);
+	return {x, y}
+}
+
+export function meters2tile(x, z, zoom = 16)  {
+	let rx = (z + 20037508.34) / (2 * 20037508.34) * (1 << zoom);
+	let ry = (1 - (x + 20037508.34) / (2 * 20037508.34)) * (1 << zoom);
+	return {x: rx, y: ry}
+}
+
+export function tile2meters(x, y, zoom = 16)  {
+	let rz = (2 * 20037508.34 * x) / (1 << zoom) - 20037508.34;
+	let rx = 20037508.34 - (2 * 20037508.34 * y) / (1 << zoom);
+	return {x: rx, z: rz}
+}
