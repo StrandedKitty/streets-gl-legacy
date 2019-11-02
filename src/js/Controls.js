@@ -1,4 +1,4 @@
-import {toRad, clamp} from './Utils';
+import {toRad, clamp, degrees2meters} from './Utils';
 
 export default class Controls {
 	constructor(camera) {
@@ -20,7 +20,9 @@ export default class Controls {
 			fastMovement: false
 		};
 
-		this.target = new THREE.Vector3(0, 0, 0);
+		let position = degrees2meters(40.75963, -73.98303);
+
+		this.target = new THREE.Vector3(position.x, 0, position.z);
 		this.distance = 100;
 		this.direction = new THREE.Vector3(-1, -1, -1);
 

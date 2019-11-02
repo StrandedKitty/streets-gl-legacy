@@ -72,6 +72,13 @@ export function degrees2tile(lat, lon, zoom = 16)  {
 	return {x, y}
 }
 
+export function tile2degrees(x, y, zoom = 16) {
+	let n = Math.PI - 2 * Math.PI * y / (1 << zoom);
+	let lat = 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+	let lon = x / (1 << zoom) * 360-180;
+	return {lat, lon}
+}
+
 export function meters2tile(x, z, zoom = 16)  {
 	let rx = (z + 20037508.34) / (2 * 20037508.34) * (1 << zoom);
 	let ry = (1 - (x + 20037508.34) / (2 * 20037508.34)) * (1 << zoom);
