@@ -7,14 +7,9 @@ export default class Tile {
 		this.mesh = new THREE.Object3D();
 	}
 
-	load(worker /* MapWorker */) {
+	load(worker) {
 		this.worker = worker;
-		let callback = this.onload;
-		worker.start(this.x, this.y, callback);
-	}
-
-	abortLoading() {
-		if(!this.loaded && this.worker) this.worker.abort();
+		worker.start(this.x, this.y, this.onload.bind(this));
 	}
 
 	onload(e) {

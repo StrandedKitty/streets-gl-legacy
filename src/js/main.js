@@ -1,13 +1,16 @@
 import {meters2degress, meters2tile, tile2meters, toRad} from './Utils';
 import Frustum from './Frustum';
 import Controls from './Controls';
+import Tile from './Tile';
+import MapWorkerManager from './MapWorkerManager';
 
 let scene,
 	camera,
 	renderer,
 	clock,
 	controls,
-	rendererStats = new THREEx.RendererStats();
+	rendererStats = new THREEx.RendererStats(),
+	workerManager;
 
 let view = {};
 let tiles = new Map();
@@ -56,6 +59,8 @@ function init() {
 	tileGeometry.rotateX(toRad(-90));
 	meshes.tile = new THREE.Mesh(tileGeometry, new THREE.MeshBasicMaterial({color: '#4084ff'}));
 
+	workerManager = new MapWorkerManager(navigator.hardwareConcurrency, './js/worker.js');
+
 	window.addEventListener('resize', function() {
 		camera.aspect = window.innerWidth / window.innerHeight;
 		view.frustum.aspect = camera.aspect;
@@ -84,17 +89,27 @@ function animate() {
 	}
 
 	for(let i = 0; i < frustumTiles.length; i++) {
-		frustumTiles[i].x = Math.floor(frustumTiles[i].x);
-		frustumTiles[i].y = Math.floor(frustumTiles[i].y);
+		let frustumTile = frustumTiles[i];
 
-		let tile = meshes.tile.clone();
-		let position = tile2meters(frustumTiles[i].x, frustumTiles[i].y + 1);
-		position.x += 20037508.34 / (1 << 16);
-		position.z += 20037508.34 / (1 << 16);
-		tile.position.set(position.x, 0, position.z);
-		scene.add(tile);
+		frustumTile.x = Math.floor(frustumTile.x);
+		frustumTile.y = Math.floor(frustumTile.y);
 
-		tiles.set(frustumTiles[i].x + ' ' + frustumTiles[i].y, tile)
+		let name = frustumTile.x + ' ' + frustumTile.y;
+		let worker = workerManager.getFreeWorker();
+
+		if(!tiles.get(name) && worker) {
+			let tile = new Tile(frustumTile.x, frustumTile.y);
+			tiles.set(name, tile);
+
+			tile.mesh = meshes.tile.clone();
+			let position = tile2meters(frustumTile.x, frustumTile.y + 1);
+			position.x += 20037508.34 / (1 << 16);
+			position.z += 20037508.34 / (1 << 16);
+			tile.mesh.position.set(position.x, 0, position.z);
+			scene.add(tile.mesh);
+
+			tile.load(worker);
+		}
 	}
 
 	renderer.render(scene, camera);

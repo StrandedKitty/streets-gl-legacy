@@ -3,8 +3,7 @@ export default class MapWorker {
 		this.used = false;
 		this.worker = new Worker(path);
 
-		let onmessage = this.onmessage;
-		this.worker.addEventListener('message', onmessage, false);
+		this.worker.addEventListener('message', this.onmessage.bind(this), false);
 
 		this.worker.postMessage({code: 'init'});
 	}
