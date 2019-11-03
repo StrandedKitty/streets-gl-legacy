@@ -1,7 +1,7 @@
 const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
 
-module.exports = {
+module.exports = [{
 	entry: './src/js/main.js',
 	output: {
 		filename: 'main.js',
@@ -10,8 +10,13 @@ module.exports = {
 	plugins: [
 		new CopyPlugin([
 			{from: '*.html', to: __dirname + '/build', context: './src'},
-			{from: 'js/worker.js', to: __dirname + '/build/js', context: './src'},
 			{from: './src/css', to: __dirname + '/build/css'}
 		])
 	]
-};
+},{
+	entry: './src/js/worker.js',
+	output: {
+		filename: 'worker.js',
+		path: path.resolve(__dirname, 'build/js')
+	}
+}];
