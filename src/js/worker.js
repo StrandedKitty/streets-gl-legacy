@@ -75,6 +75,11 @@ function processData(data, pivot) {
 		}
 	}
 
+	let meshData = {
+		vertices: [],
+		normals: []
+	};
+
 	for(let i = 0; i < data.length; i++) {
 		let item = data[i];
 
@@ -88,15 +93,11 @@ function processData(data, pivot) {
 
 			let way = new Way(item.id, item.nodes, vertices, item.tags);
 			ways.set(item.id, way);
-		}
 
-	}
-
-	self.postMessage(ways);
-
-	for (const [id, way] of ways.entries()) {
-		if(way.tags.building) {
-
+			meshData.vertices = [...meshData.vertices, ...way.mesh.vertices];
+			meshData.normals = [...meshData.normals, ...way.mesh.normals];
 		}
 	}
+
+	self.postMessage(meshData);
 }

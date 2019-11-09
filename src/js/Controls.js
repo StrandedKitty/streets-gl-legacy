@@ -154,7 +154,6 @@ export default class Controls {
 			let axis = new THREE.Vector3(perp.x, 0, perp.y);
 			const angle = toRad(1);
 			this.direction.applyAxisAngle(axis, angle);
-			console.log(axis)
 		}
 
 		if(this.keys.rotation.down) {

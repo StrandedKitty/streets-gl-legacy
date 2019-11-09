@@ -118,3 +118,5 @@ function animate() {
 
 	requestAnimationFrame(animate);
 }
+
+export {scene};

@@ -1,4 +1,4 @@
-import earcut from './earcut'
+import earcut from './earcut';
 
 export default class Way {
 	constructor(id, nodes, vertices, tags) {
@@ -11,15 +11,17 @@ export default class Way {
 			normals: []
 		};
 
-		this.triangulate();
+		this.closed = this.isClosed();
+
+		if(this.closed) this.triangulate();
 	}
 
 	triangulate() {
 		let flattenVertices = this.flatten();
-		let triangles = earcut(flattenVertices);
+		let triangles = earcut(flattenVertices).reverse();
 
 		for(let i = 0; i < triangles.length; i++) {
-			this.mesh.vertices.push(flattenVertices[triangles[i] * 2], flattenVertices[triangles[i] * 2 + 1]);
+			this.mesh.vertices.push(flattenVertices[triangles[i] * 2], 5, flattenVertices[triangles[i] * 2 + 1]);
 			this.mesh.normals.push(0, 1, 0);
 		}
 	}
@@ -32,5 +34,9 @@ export default class Way {
 		}
 
 		return result;
+	}
+
+	isClosed() {
+		return this.nodes[0] === this.nodes[this.nodes.length - 1];
 	}
 }
