@@ -1,7 +1,7 @@
 import {degrees2meters} from "./Utils";
 
 export default class Node {
-	constructor(id, lat, lon, tags) {
+	constructor(id, lat, lon, tags, pivot) {
 		this.id = id;
 		this.lat = lat;
 		this.lon = lon;
@@ -9,7 +9,7 @@ export default class Node {
 
 		let position = degrees2meters(this.lat, this.lon);
 
-		this.x = position.x;
-		this.z = position.z;
+		this.x = position.x - pivot.x;
+		this.z = position.z - pivot.z;
 	}
 }

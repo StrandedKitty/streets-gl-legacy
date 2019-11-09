@@ -1,3 +1,7 @@
+import Node from "./Node";
+import Way from "./Way";
+import {tile2degrees, degrees2meters} from "./Utils";
+
 self.addEventListener('message', function(e) {
 	let code = e.data.code;
 	switch(code) {
@@ -45,7 +49,7 @@ function overpass(x, y) {
 		if (httpRequest.readyState === XMLHttpRequest.DONE) {
 			if (httpRequest.status === 200) {
 				let data = JSON.parse(httpRequest.responseText).elements;
-				self.postMessage(data);
+				processData(data, position[0]);
 			} else {
 				self.postMessage({code: 'error', error: 'request'});
 			}
@@ -55,10 +59,44 @@ function overpass(x, y) {
 	httpRequest.send();
 }
 
-function tile2degrees(x, y, zoom = 16) {
-	let n = Math.PI - 2 * Math.PI * y / (1 << zoom);
-	let lat = 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
-	let lon = x / (1 << zoom) * 360-180;
-	return {lat, lon}
-}
+function processData(data, pivot) {
+	let metersPivot = degrees2meters(pivot.lat, pivot.lon);
+	let vertices = [];
+	let faces = [];
+	let nodes = new Map();
+	let ways = new Map();
 
+	for(let i = 0; i < data.length; i++) {
+		let item = data[i];
+
+		if(item.type === 'node') {
+			let node = new Node(item.id, item.lat, item.lon, item.tags, metersPivot);
+			nodes.set(item.id, node);
+		}
+	}
+
+	for(let i = 0; i < data.length; i++) {
+		let item = data[i];
+
+		if(item.type === 'way') {
+			let vertices = [];
+
+			for(let i = 0; i < item.nodes.length; i++) {
+				let vertex = nodes.get(item.nodes[i]);
+				vertices.push({x: vertex.x, z: vertex.z});
+			}
+
+			let way = new Way(item.id, item.nodes, vertices, item.tags);
+			ways.set(item.id, way);
+		}
+
+	}
+
+	self.postMessage(ways);
+
+	for (const [id, way] of ways.entries()) {
+		if(way.tags.building) {
+
+		}
+	}
+}
