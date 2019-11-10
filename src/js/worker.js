@@ -76,6 +76,8 @@ function processData(data, pivot) {
 	}
 
 	let meshData = {
+		ids: [],
+		offsets: [],
 		vertices: [],
 		normals: []
 	};
@@ -94,8 +96,13 @@ function processData(data, pivot) {
 			let way = new Way(item.id, item.nodes, vertices, item.tags);
 			ways.set(item.id, way);
 
-			meshData.vertices = [...meshData.vertices, ...way.mesh.vertices];
-			meshData.normals = [...meshData.normals, ...way.mesh.normals];
+			if(way.mesh.vertices.length > 0) {
+				meshData.ids.push(item.id);
+				meshData.offsets.push(meshData.vertices.length / 3);
+
+				meshData.vertices = [...meshData.vertices, ...way.mesh.vertices];
+				meshData.normals = [...meshData.normals, ...way.mesh.normals];
+			}
 		}
 	}
 

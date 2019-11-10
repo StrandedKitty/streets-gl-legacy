@@ -14,6 +14,9 @@ let scene,
 
 let view = {};
 let tiles = new Map();
+let objects = {
+	meshes: {}
+};
 let meshes = {};
 
 init();
@@ -22,7 +25,7 @@ animate();
 function init() {
 	scene = new THREE.Scene();
 	scene.background = new THREE.Color('#a4d2f5');
-	camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
+	camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 15000);
 	scene.add(camera);
 
 	view.frustum = new Frustum(camera.fov, camera.aspect, 1, 1000);
@@ -98,15 +101,34 @@ function animate() {
 		let worker = workerManager.getFreeWorker();
 
 		if(!tiles.get(name) && worker) {
-			let tile = new Tile(frustumTile.x, frustumTile.y);
+			let tile = new Tile(frustumTile.x, frustumTile.y, function (data) {
+				let geometry = new THREE.BufferGeometry();
+				let vertices = new Float32Array(data.vertices);
+				let normals = new Float32Array(data.normals);
+				let ids = data.ids;
+				let offsets = data.offsets;
+				let hidden = new Uint8Array(offsets.length);
+
+				geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+				geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+
+				let material = new THREE.MeshBasicMaterial({color: 0x000});
+				tile.mesh = new THREE.Mesh(geometry, material);
+
+				let pivot = tile2meters(this.x, this.y + 1);
+				tile.mesh.position.set(pivot.x, 0, pivot.z);
+
+				scene.add(tile.mesh);
+			});
+
 			tiles.set(name, tile);
 
-			tile.mesh = meshes.tile.clone();
+			tile.ground = meshes.tile.clone();
 			let position = tile2meters(frustumTile.x, frustumTile.y + 1);
 			position.x += 20037508.34 / (1 << 16);
 			position.z += 20037508.34 / (1 << 16);
-			tile.mesh.position.set(position.x, 0, position.z);
-			scene.add(tile.mesh);
+			tile.ground.position.set(position.x, 0, position.z);
+			scene.add(tile.ground);
 
 			tile.load(worker);
 		}
