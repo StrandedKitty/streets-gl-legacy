@@ -3,6 +3,7 @@ import Frustum from './Frustum';
 import Controls from './Controls';
 import Tile from './Tile';
 import MapWorkerManager from './MapWorkerManager';
+import MapMesh from './MapMesh';
 
 let scene,
 	camera,
@@ -15,7 +16,7 @@ let scene,
 let view = {};
 let tiles = new Map();
 let objects = {
-	meshes: {}
+	meshes: new Map()
 };
 let meshes = {};
 
@@ -107,10 +108,13 @@ function animate() {
 				let normals = new Float32Array(data.normals);
 				let ids = data.ids;
 				let offsets = data.offsets;
-				let hidden = new Uint8Array(offsets.length);
+				let display = new Uint8Array(vertices.length / 3);
+
+				tile.displayBuffer = display;
 
 				geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 				geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+				geometry.setAttribute('display', new THREE.BufferAttribute(display, 1));
 
 				let material = new THREE.MeshBasicMaterial({color: 0x000});
 				tile.mesh = new THREE.Mesh(geometry, material);
@@ -119,6 +123,24 @@ function animate() {
 				tile.mesh.position.set(pivot.x, 0, pivot.z);
 
 				scene.add(tile.mesh);
+
+				for(let i = 0; i < ids.length; i++) {
+					let id = ids[i];
+
+					if(objects.meshes.get(id)) {
+						let mesh = objects.meshes.get(id);
+
+						mesh.addParent(this);
+					} else {
+						let offset = offsets[i];
+						let nextOffset = offset || (vertices.length / 3);
+						let size = nextOffset - offset;
+						let object = new MapMesh(ids[i], this, offset, size);
+
+						objects.meshes.set(ids[i], object);
+					}
+
+				}
 			});
 
 			tiles.set(name, tile);
