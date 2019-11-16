@@ -12,7 +12,15 @@ module.exports = [{
 			{from: '*.html', to: __dirname + '/build', context: './src'},
 			{from: './src/css', to: __dirname + '/build/css'}
 		])
-	]
+	],
+	module: {
+		rules: [
+			{
+				test: /\.vert|.frag$/i,
+				use: 'raw-loader'
+			},
+		]
+	}
 },{
 	entry: './src/js/worker.js',
 	output: {
