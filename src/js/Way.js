@@ -13,16 +13,43 @@ export default class Way {
 
 		this.closed = this.isClosed();
 
-		if(this.closed) this.triangulate();
+		if(this.closed) {
+			this.clockwise = this.isClockwise();
+
+			if(!this.clockwise) {
+				this.nodes.reverse();
+				this.vertices.reverse();
+			}
+
+			this.triangulate();
+		}
 	}
 
 	triangulate() {
 		let flattenVertices = this.flatten();
 		let triangles = earcut(flattenVertices).reverse();
+		let height = 10;
 
 		for(let i = 0; i < triangles.length; i++) {
-			this.mesh.vertices.push(flattenVertices[triangles[i] * 2], 5, flattenVertices[triangles[i] * 2 + 1]);
+			this.mesh.vertices.push(flattenVertices[triangles[i] * 2], height, flattenVertices[triangles[i] * 2 + 1]);
 			this.mesh.normals.push(0, 1, 0);
+		}
+
+		for(let i = 0; i < this.vertices.length; i++) {
+			let vertex = this.vertices[i];
+			let nextVertex = this.vertices[i + 1] || this.vertices[0];
+
+			this.mesh.vertices.push(nextVertex.x, 0, nextVertex.z);
+			this.mesh.vertices.push(vertex.x, height, vertex.z);
+			this.mesh.vertices.push(vertex.x, 0, vertex.z);
+
+			this.mesh.vertices.push(nextVertex.x, 0, nextVertex.z);
+			this.mesh.vertices.push(nextVertex.x, height, nextVertex.z);
+			this.mesh.vertices.push(vertex.x, height, vertex.z);
+
+			for(let j = 0; j < 6; j++) {
+				this.mesh.normals.push(0, 1, 0);
+			}
 		}
 	}
 
@@ -38,5 +65,17 @@ export default class Way {
 
 	isClosed() {
 		return this.nodes[0] === this.nodes[this.nodes.length - 1];
+	}
+
+	isClockwise() {
+		let sum = 0;
+
+		for(let i = 0; i < this.nodes.length; i++) {
+			let point1 = this.vertices[i];
+			let point2 = this.vertices[i+1] || this.vertices[0];
+			sum += (point2.x - point1.x) * (point2.z + point1.z);
+		}
+
+		return sum > 0
 	}
 }
