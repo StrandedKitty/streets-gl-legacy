@@ -85,7 +85,7 @@ function processData(data, pivot) {
 	for(let i = 0; i < data.length; i++) {
 		let item = data[i];
 
-		if(item.type === 'way') {
+		if(item.type === 'way' && item.tags && item.tags.building) {
 			let vertices = [];
 
 			for(let i = 0; i < item.nodes.length; i++) {

@@ -4,6 +4,7 @@ import Controls from './Controls';
 import Tile from './Tile';
 import MapWorkerManager from './MapWorkerManager';
 import MapMesh from './MapMesh';
+import BuildingMaterial from "./BuildingMaterial";
 
 let scene,
 	camera,
@@ -108,7 +109,7 @@ function animate() {
 				let normals = new Float32Array(data.normals);
 				let ids = data.ids;
 				let offsets = data.offsets;
-				let display = new Uint8Array(vertices.length / 3);
+				let display = new Float32Array(vertices.length / 3);
 
 				tile.displayBuffer = display;
 
@@ -116,7 +117,7 @@ function animate() {
 				geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
 				geometry.setAttribute('display', new THREE.BufferAttribute(display, 1));
 
-				let material = new THREE.MeshBasicMaterial({color: 0x000});
+				let material = new BuildingMaterial().material;
 				tile.mesh = new THREE.Mesh(geometry, material);
 
 				let pivot = tile2meters(this.x, this.y + 1);
@@ -130,14 +131,17 @@ function animate() {
 					if(objects.meshes.get(id)) {
 						let mesh = objects.meshes.get(id);
 
-						mesh.addParent(this);
+						let offset = offsets[i];
+						let nextOffset = offsets[i + 1] || (vertices.length / 3);
+						let size = nextOffset - offset;
+						mesh.addParent(this, offset, size);
 					} else {
 						let offset = offsets[i];
-						let nextOffset = offset || (vertices.length / 3);
+						let nextOffset = offsets[i + 1] || (vertices.length / 3);
 						let size = nextOffset - offset;
-						let object = new MapMesh(ids[i], this, offset, size);
+						let object = new MapMesh(id, this, offset, size);
 
-						objects.meshes.set(ids[i], object);
+						objects.meshes.set(id, object);
 					}
 
 				}

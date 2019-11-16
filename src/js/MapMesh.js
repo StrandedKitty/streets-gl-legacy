@@ -7,9 +7,12 @@ export default class MapMesh {
 		this.size = size;
 	}
 
-	addParent(tile) {
+	addParent(tile, newOffset, newSize) {
 		this.holder.hideObject(this.offset, this.size);
 		this.holder = tile;
+		this.offset = newOffset;
+		this.size = newSize;
+		this.holder.showObject(this.offset, this.size);
 
 		for(let i = 0; i < this.tiles.length; i++) {
 			if(this.tiles[i].id === tile.id) {
