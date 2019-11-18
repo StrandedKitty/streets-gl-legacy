@@ -1,3 +1,5 @@
+import {tile2meters, toRad} from "./Utils";
+
 export default class Tile {
 	constructor(x, y, callback) {
 		this.x = x;
@@ -39,5 +41,20 @@ export default class Tile {
 		}
 
 		this.mesh.geometry.attributes.display.needsUpdate = true;
+	}
+
+	getGroundMesh() {
+		let material = new THREE.MeshBasicMaterial({
+			map: new THREE.TextureLoader().load('https://a.tile.openstreetmap.org/16/' + this.x + '/' + this.y + '.png')
+		});
+		let geometry = new THREE.PlaneBufferGeometry(40075016.7 / (1 << 16), 40075016.7 / (1 << 16));
+		geometry.rotateX(toRad(-90));
+		geometry.rotateY(toRad(-90));
+		this.groundMesh = new THREE.Mesh(geometry,material);
+
+		let position = tile2meters(this.x, this.y + 1);
+		this.groundMesh.position.set(position.x + 20037508.34 / (1 << 16), 0, position.z + 20037508.34 / (1 << 16));
+
+		return this.groundMesh;
 	}
 }

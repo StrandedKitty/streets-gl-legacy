@@ -149,12 +149,8 @@ function animate() {
 
 			tiles.set(name, tile);
 
-			tile.ground = meshes.tile.clone();
-			let position = tile2meters(frustumTile.x, frustumTile.y + 1);
-			position.x += 20037508.34 / (1 << 16);
-			position.z += 20037508.34 / (1 << 16);
-			tile.ground.position.set(position.x, 0, position.z);
-			scene.add(tile.ground);
+			let ground = tile.getGroundMesh();
+			scene.add(ground);
 
 			tile.load(worker);
 		}
