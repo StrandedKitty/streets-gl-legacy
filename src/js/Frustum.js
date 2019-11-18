@@ -1,4 +1,4 @@
-import {toRad} from './Utils';
+import {toRad, meters2tile, tile2meters, calculateLine} from './Utils';
 
 export default class Frustum {
 	constructor(fov, aspect, near, far) {
@@ -124,5 +124,76 @@ export default class Frustum {
 		}
 
 		return points;
+	}
+
+	getTiles(cameraPosition, zoom = 16) {
+		const intersections = this.project();
+		let points = [];
+
+		points.push(meters2tile(intersections.near[0].x, intersections.near[0].z, zoom));
+		points.push(meters2tile(intersections.far[0].x, intersections.far[0].z, zoom));
+		points.push(meters2tile(intersections.far[1].x, intersections.far[1].z, zoom));
+		points.push(meters2tile(intersections.near[1].x, intersections.near[1].z, zoom));
+
+		let borders = [];
+
+		for(let i = 0; i < 4; i++) {
+			let next = i + 1 > 3 ? 0 : i + 1;
+			let data = calculateLine([points[i].x, points[i].y], [points[next].x, points[next].y]);
+
+			for(let j = 0; j < data.length; j++) {
+				borders.push(data[j]);
+			}
+		}
+
+		let r;
+		borders = borders.filter((r={},a=>!(r[a]=++r[a]|0)));
+
+		let tileYs = [];
+
+		for(let i = 0; i < borders.length; i++) {
+			tileYs.push(borders[i][1]);
+		}
+
+		tileYs = tileYs.filter((v,i) => tileYs.indexOf(v) === i);
+		tileYs = tileYs.sort((a,b) => a-b);
+
+		let tiles = [];
+
+		for(let i = 0; i < tileYs.length; i++) {
+			let currentTileY = tileYs[i];
+
+			let row = [];
+			for(let j = 0; j < borders.length; j++) {
+				if(borders[j][1] === currentTileY) row.push(borders[j][0]);
+			}
+			row = row.sort((a,b) => a-b);
+
+			let cell = row[0];
+			let index = 0;
+			while(cell <= row[row.length-1]) {
+				tiles.push([cell, currentTileY]);
+				if(row[index+1] > cell + 1) {
+					row.splice(index + 1, 0, cell + 1);
+				}
+				index++;
+				cell = row[index];
+			}
+		}
+
+		let tilesList = [];
+
+		for(let i = 0; i < tiles.length; i++) {
+			let worldPosition = tile2meters(tiles[i][0] + 0.5, tiles[i][1] + 0.5, zoom);
+			tilesList.push({
+				distance: Math.sqrt((worldPosition.x - cameraPosition.x) ** 2 + (worldPosition.z - cameraPosition.z) ** 2),
+				x: tiles[i][0],
+				y: tiles[i][1]
+			});
+		}
+
+		tilesList.sort((a, b) => (a.distance > b.distance) ? 1 : -1);
+
+		return tilesList;
 	}
 }

@@ -30,7 +30,7 @@ function init() {
 	camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 15000);
 	scene.add(camera);
 
-	view.frustum = new Frustum(camera.fov, camera.aspect, 1, 1000);
+	view.frustum = new Frustum(camera.fov, camera.aspect, 1, 3000);
 
 	controls = new Controls(camera);
 
@@ -84,14 +84,8 @@ function animate() {
 
 	view.frustum.getViewSpaceVertices();
 	let wsFrustum = view.frustum.toSpace(camera.matrix);
-	let intersections = wsFrustum.project();
 
-	let frustumTiles = [];
-
-	for(let i = 0; i < 2; i++) {
-		frustumTiles.push(meters2tile(intersections.near[i].x, intersections.near[i].z));
-		frustumTiles.push(meters2tile(intersections.far[i].x, intersections.far[i].z));
-	}
+	let frustumTiles = wsFrustum.getTiles(camera.position, 16);
 
 	for(let i = 0; i < frustumTiles.length; i++) {
 		let frustumTile = frustumTiles[i];
@@ -149,7 +143,7 @@ function animate() {
 
 			tiles.set(name, tile);
 
-			let ground = tile.getGroundMesh();
+			let ground = tile.getGroundMesh(renderer.capabilities.getMaxAnisotropy());
 			scene.add(ground);
 
 			tile.load(worker);

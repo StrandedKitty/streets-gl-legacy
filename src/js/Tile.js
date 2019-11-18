@@ -24,7 +24,11 @@ export default class Tile {
 
 		this.objects = data.ids;
 
-		this.callback(data);
+		if(data.code === 'error') {
+			console.error('Worker error:', data.error);
+		} else {
+			this.callback(data);
+		}
 	}
 
 	hideObject(offset, size) {
@@ -43,9 +47,11 @@ export default class Tile {
 		this.mesh.geometry.attributes.display.needsUpdate = true;
 	}
 
-	getGroundMesh() {
+	getGroundMesh(anisotropy) {
+		let texture = new THREE.TextureLoader().load('https://a.tile.openstreetmap.org/16/' + this.x + '/' + this.y + '.png');
+		texture.anisotropy = anisotropy;
 		let material = new THREE.MeshBasicMaterial({
-			map: new THREE.TextureLoader().load('https://a.tile.openstreetmap.org/16/' + this.x + '/' + this.y + '.png')
+			map: texture
 		});
 		let geometry = new THREE.PlaneBufferGeometry(40075016.7 / (1 << 16), 40075016.7 / (1 << 16));
 		geometry.rotateX(toRad(-90));
