@@ -1,4 +1,4 @@
-import {toRad, clamp, degrees2meters} from './Utils';
+import {toRad, clamp, degrees2meters, lerp} from './Utils';
 
 export default class Controls {
 	constructor(camera) {
@@ -24,6 +24,7 @@ export default class Controls {
 
 		this.target = new THREE.Vector3(position.x, 0, position.z);
 		this.distance = 100;
+		this.distanceTarget = this.distance;
 		this.direction = new THREE.Vector3(-1, -1, -1);
 
 		this.addEventListeners();
@@ -97,13 +98,15 @@ export default class Controls {
 		});
 
 		window.addEventListener("wheel", function(e){
-			self.distance += 0.2 * e.deltaY;
-			self.distance = clamp(self.distance, 2, 1000);
+			self.distanceTarget += 0.2 * e.deltaY;
+			self.distanceTarget = clamp(self.distanceTarget, 2, 1000);
 		});
 	}
 
 	update(delta) {
 		const speed = delta * (this.keys.fastMovement ? 1000 : 300);
+
+		this.distance = lerp(this.distance, this.distanceTarget, 0.4);
 
 		if(this.keys.movement.up) {
 			let direction = new THREE.Vector2(this.direction.x, this.direction.z);
