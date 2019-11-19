@@ -1,4 +1,5 @@
 import {meters2degress, meters2tile, tile2meters, toRad} from './Utils';
+import Config from './Config';
 import Frustum from './Frustum';
 import Controls from './Controls';
 import Tile from './Tile';
@@ -30,7 +31,7 @@ function init() {
 	camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 15000);
 	scene.add(camera);
 
-	view.frustum = new Frustum(camera.fov, camera.aspect, 1, 3000);
+	view.frustum = new Frustum(camera.fov, camera.aspect, 1, Config.drawDistance);
 
 	controls = new Controls(camera);
 
@@ -46,6 +47,8 @@ function init() {
 	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 	renderer.precision = 'highp';
 	renderer.sortObjects = true;
+
+	Config.set('textureAnisotropy', renderer.capabilities.getMaxAnisotropy());
 
 	clock = new THREE.Clock();
 
@@ -143,7 +146,7 @@ function animate() {
 
 			tiles.set(name, tile);
 
-			let ground = tile.getGroundMesh(renderer.capabilities.getMaxAnisotropy());
+			let ground = tile.getGroundMesh();
 			scene.add(ground);
 
 			tile.load(worker);

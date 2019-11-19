@@ -1,4 +1,5 @@
 import {tile2meters, toRad} from "./Utils";
+import Config from "./Config";
 
 export default class Tile {
 	constructor(x, y, callback) {
@@ -47,9 +48,9 @@ export default class Tile {
 		this.mesh.geometry.attributes.display.needsUpdate = true;
 	}
 
-	getGroundMesh(anisotropy) {
-		let texture = new THREE.TextureLoader().load('https://a.tile.openstreetmap.org/16/' + this.x + '/' + this.y + '.png');
-		texture.anisotropy = anisotropy;
+	getGroundMesh() {
+		let texture = new THREE.TextureLoader().load('https://c.tile.openstreetmap.org/16/' + this.x + '/' + this.y + '.png');
+		texture.anisotropy = Config.textureAnisotropy;
 		let material = new THREE.MeshBasicMaterial({
 			map: texture
 		});
