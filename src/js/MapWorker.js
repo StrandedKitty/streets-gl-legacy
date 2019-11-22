@@ -16,7 +16,7 @@ export default class MapWorker {
 	}
 
 	onmessage(e) {
+		if(!e.data.type) this.used = false;
 		this.callback(e.data);
-		this.used = false;
 	}
 }

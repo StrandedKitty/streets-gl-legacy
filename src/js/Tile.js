@@ -20,14 +20,14 @@ export default class Tile {
 	}
 
 	onload(data) {
-		this.loaded = true;
-		this.worker = undefined;
-
-		this.objects = data.ids;
-
 		if(data.code === 'error') {
 			console.error('Worker error:', data.error);
+		} else if(data.code === 'info') {
+			console.info('Worker info:', data.info);
 		} else {
+			this.loaded = true;
+			this.worker = undefined;
+			this.objects = data.ids;
 			this.callback(data);
 		}
 	}

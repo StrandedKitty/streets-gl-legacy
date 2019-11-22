@@ -85,7 +85,7 @@ function processData(data, pivot) {
 	for(let i = 0; i < data.length; i++) {
 		let item = data[i];
 
-		if(item.type === 'way' && item.tags && item.tags.building) {
+		if(item.type === 'way' && item.tags) {
 			let vertices = [];
 
 			for(let i = 0; i < item.nodes.length; i++) {
@@ -96,7 +96,7 @@ function processData(data, pivot) {
 			let way = new Way(item.id, item.nodes, vertices, item.tags);
 			ways.set(item.id, way);
 
-			if(way.mesh.vertices.length > 0) {
+			if(way.properties.type === 'building' && way.mesh.vertices.length > 0) {
 				meshData.ids.push(item.id);
 				meshData.offsets.push(meshData.vertices.length / 3);
 

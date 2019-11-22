@@ -1,4 +1,5 @@
 import earcut from './earcut';
+import OSMDescriptor from "./OSMDescriptor";
 
 export default class Way {
 	constructor(id, nodes, vertices, tags) {
@@ -10,6 +11,10 @@ export default class Way {
 			vertices: [],
 			normals: []
 		};
+
+		this.descriptor = new OSMDescriptor(this.tags);
+		this.properties = this.descriptor.properties;
+		//self.postMessage({code: 'info', info: this.descriptor.properties});
 
 		this.closed = this.isClosed();
 
@@ -28,7 +33,7 @@ export default class Way {
 	triangulate() {
 		let flattenVertices = this.flatten();
 		let triangles = earcut(flattenVertices).reverse();
-		let height = 10;
+		let height = this.properties.height || 10;
 
 		for(let i = 0; i < triangles.length; i++) {
 			this.mesh.vertices.push(flattenVertices[triangles[i] * 2], height, flattenVertices[triangles[i] * 2 + 1]);

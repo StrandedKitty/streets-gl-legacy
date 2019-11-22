@@ -1,0 +1,8 @@
+{
+	"building": {
+		"default": {"type": "building"}
+	},
+	"height": {
+		"default": {"height": "@units"}
+	}
+}

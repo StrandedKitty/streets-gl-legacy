@@ -16,7 +16,7 @@ module.exports = [{
 	module: {
 		rules: [
 			{
-				test: /\.vert|.frag$/i,
+				test: /\.vert|.frag|.json$/i,
 				use: 'raw-loader'
 			},
 		]
