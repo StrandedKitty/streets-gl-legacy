@@ -11,6 +11,9 @@ export default class Way {
 			vertices: [],
 			normals: []
 		};
+		this.instances = {
+			trees: []
+		};
 
 		this.descriptor = new OSMDescriptor(this.tags);
 		this.properties = this.descriptor.properties;
@@ -18,14 +21,9 @@ export default class Way {
 
 		this.closed = this.isClosed();
 
-		if(this.closed) {
-			this.clockwise = this.isClockwise();
+		this.fixDirection();
 
-			if(!this.clockwise) {
-				this.nodes.reverse();
-				this.vertices.reverse();
-			}
-
+		if(this.closed && this.properties.type === 'building') {
 			this.triangulate();
 		}
 	}
@@ -82,5 +80,16 @@ export default class Way {
 		}
 
 		return sum > 0
+	}
+
+	fixDirection() {
+		if(this.closed) {
+			const clockwise = this.isClockwise();
+
+			if(!clockwise) {
+				this.nodes.reverse();
+				this.vertices.reverse();
+			}
+		}
 	}
 }

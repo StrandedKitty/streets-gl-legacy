@@ -2,6 +2,9 @@
 	"building": {
 		"default": {"type": "building"}
 	},
+	"natural": {
+		"tree": {"type": "tree"}
+	},
 	"height": {
 		"default": {"height": "@units"}
 	}

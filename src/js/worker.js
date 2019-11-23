@@ -61,10 +61,18 @@ function overpass(x, y) {
 
 function processData(data, pivot) {
 	let metersPivot = degrees2meters(pivot.lat, pivot.lon);
-	let vertices = [];
-	let faces = [];
 	let nodes = new Map();
 	let ways = new Map();
+
+	let meshData = {
+		ids: [],
+		offsets: [],
+		vertices: [],
+		normals: [],
+		instances: {
+			trees: []
+		}
+	};
 
 	for(let i = 0; i < data.length; i++) {
 		let item = data[i];
@@ -72,15 +80,10 @@ function processData(data, pivot) {
 		if(item.type === 'node') {
 			let node = new Node(item.id, item.lat, item.lon, item.tags, metersPivot);
 			nodes.set(item.id, node);
+
+			meshData.instances.trees = [...meshData.instances.trees, ...node.instances.trees];
 		}
 	}
-
-	let meshData = {
-		ids: [],
-		offsets: [],
-		vertices: [],
-		normals: []
-	};
 
 	for(let i = 0; i < data.length; i++) {
 		let item = data[i];
@@ -96,7 +99,7 @@ function processData(data, pivot) {
 			let way = new Way(item.id, item.nodes, vertices, item.tags);
 			ways.set(item.id, way);
 
-			if(way.properties.type === 'building' && way.mesh.vertices.length > 0) {
+			if(way.mesh.vertices.length > 0) {
 				meshData.ids.push(item.id);
 				meshData.offsets.push(meshData.vertices.length / 3);
 

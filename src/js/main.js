@@ -6,6 +6,8 @@ import Tile from './Tile';
 import MapWorkerManager from './MapWorkerManager';
 import MapMesh from './MapMesh';
 import BuildingMaterial from "./BuildingMaterial";
+import Meshes from './Meshes';
+import InstanceMaterial from "./InstanceMaterial";
 
 let scene,
 	camera,
@@ -107,6 +109,7 @@ function animate() {
 				let ids = data.ids;
 				let offsets = data.offsets;
 				let display = new Float32Array(vertices.length / 3);
+				let instances = data.instances;
 
 				tile.displayBuffer = display;
 
@@ -141,6 +144,30 @@ function animate() {
 						objects.meshes.set(id, object);
 					}
 
+				}
+
+				if(instances.trees.length > 0) {
+					let positions = new Float32Array(instances.trees.length / 2 * 3);
+					for(let i = 0; i < instances.trees.length / 2; i++) {
+						positions[i * 3] = instances.trees[i * 2];
+						positions[i * 3 + 1] = 0;
+						positions[i * 3 + 2] = instances.trees[i * 2 + 1];
+					}
+
+					let sourceGeometry = Meshes.tree.geometry;
+					let geometry = new THREE.InstancedBufferGeometry();
+					geometry.index = sourceGeometry.index;
+					geometry.attributes.position = sourceGeometry.attributes.position;
+					geometry.attributes.uv = sourceGeometry.attributes.uv;
+
+					let positionAttribute = new THREE.InstancedBufferAttribute(positions, 3);
+					geometry.setAttribute('iPosition', positionAttribute);
+
+					let mesh = new THREE.Mesh(geometry, new InstanceMaterial().material);
+
+					mesh.frustumCulled = false;
+					mesh.position.set(pivot.x, 0, pivot.z);
+					scene.add(mesh);
 				}
 			});
 
