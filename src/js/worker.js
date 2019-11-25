@@ -81,7 +81,7 @@ function processData(data, pivot) {
 			let node = new Node(item.id, item.lat, item.lon, item.tags, metersPivot);
 			nodes.set(item.id, node);
 
-			meshData.instances.trees = [...meshData.instances.trees, ...node.instances.trees];
+			//meshData.instances.trees = [...meshData.instances.trees, ...node.instances.trees];
 		}
 	}
 
@@ -106,6 +106,8 @@ function processData(data, pivot) {
 				meshData.vertices = [...meshData.vertices, ...way.mesh.vertices];
 				meshData.normals = [...meshData.normals, ...way.mesh.normals];
 			}
+
+			meshData.instances.trees = [...meshData.instances.trees, ...way.instances.trees];
 		}
 	}
 

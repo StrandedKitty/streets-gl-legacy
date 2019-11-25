@@ -20,11 +20,16 @@ export default class Way {
 		//self.postMessage({code: 'info', info: this.descriptor.properties});
 
 		this.closed = this.isClosed();
-
-		this.fixDirection();
+		if(this.closed) this.fixDirection();
 
 		if(this.closed && this.properties.type === 'building') {
 			this.triangulate();
+		}
+
+		if(this.properties.type === 'tree_row') {
+			this.length = this.calculateLength();
+			let points = this.distributeNodes(10);
+			this.instances.trees.push(...points);
 		}
 	}
 
@@ -83,13 +88,73 @@ export default class Way {
 	}
 
 	fixDirection() {
-		if(this.closed) {
-			const clockwise = this.isClockwise();
+		const clockwise = this.isClockwise();
 
-			if(!clockwise) {
-				this.nodes.reverse();
-				this.vertices.reverse();
+		if(!clockwise) {
+			this.nodes.reverse();
+			this.vertices.reverse();
+		}
+	}
+
+	calculateLength() {
+		let length = 0;
+
+		for(let i = 0; i < this.vertices.length - 1; i++) {
+			let point1 = this.vertices[i];
+			let point2 = this.vertices[i + 1];
+			length += Math.sqrt((point2.x - point1.x) ** 2 + (point2.z - point1.z) ** 2);
+		}
+
+		return length;
+	}
+
+	distributeNodes(interval) {
+		let number = Math.floor(this.length / interval);
+		let points = [];
+
+		if(number > 1) {
+			let distance = this.length / (number - 1);
+			let targetNode = 0;
+			let availableDistance = 0;
+			let edge = [];
+			let edgeLength = 0;
+			let cProgress = 0;
+			let nodeProgress = 0;
+
+			points.push(this.vertices[0].x, this.vertices[0].z);
+
+			for(let i = 0; i < number - 1; i++) {
+				while(availableDistance < distance && targetNode < this.vertices.length - 1) {
+					edge = [
+						this.vertices[targetNode],
+						this.vertices[targetNode + 1]
+					];
+
+					edgeLength = Math.sqrt((edge[1].x - edge[0].x) ** 2 + (edge[1].z - edge[0].z) ** 2);
+					availableDistance += edgeLength;
+					nodeProgress += edgeLength;
+
+					targetNode++;
+				}
+
+				availableDistance -= distance;
+				cProgress += distance;
+
+				let vLength = (nodeProgress - cProgress) / edgeLength;
+
+				let vector = {
+					x: edge[1].x - edge[0].x,
+					z: edge[1].z - edge[0].z
+				};
+				let point = {
+					x: edge[1].x - vector.x * vLength,
+					z: edge[1].z - vector.z * vLength
+				};
+
+				points.push(point.x, point.z);
 			}
 		}
+
+		return points;
 	}
 }

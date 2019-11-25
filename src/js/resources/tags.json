@@ -2,8 +2,12 @@
 	"building": {
 		"default": {"type": "building"}
 	},
+	"building:part": {
+		"default": {"type": "building"}
+	},
 	"natural": {
-		"tree": {"type": "tree"}
+		"tree": {"type": "tree"},
+		"tree_row": {"type": "tree_row"}
 	},
 	"height": {
 		"default": {"height": "@units"}
