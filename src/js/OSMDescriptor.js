@@ -1,4 +1,6 @@
+import {hexToRgb} from "./Utils";
 const tagsMap = Object.freeze(require('./resources/tags.json'));
+const colorNamesList = Object.freeze(require('./resources/colors'));
 
 export default class OSMDescriptor {
 	constructor(tags) {
@@ -23,7 +25,11 @@ export default class OSMDescriptor {
 						res[i] = this.parseUnits(value);
 					}
 
-					this.properties[i] = res[i];
+					if(res[i] === '@color') {
+						res[i] = colorNamesList[value] || hexToRgb(value);
+					}
+
+					if(res[i]) this.properties[i] = res[i];
 				}
 			}
 		}

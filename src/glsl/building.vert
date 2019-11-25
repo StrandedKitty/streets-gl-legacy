@@ -1,6 +1,8 @@
 #include <common>
 attribute float display;
+attribute vec3 color;
 varying float vDisplay;
+varying vec3 vColor;
 #include <uv_pars_vertex>
 #include <uv2_pars_vertex>
 #include <envmap_pars_vertex>
@@ -12,6 +14,7 @@ varying float vDisplay;
 #include <clipping_planes_pars_vertex>
 void main() {
     vDisplay = display;
+    vColor = color;
     #include <uv_vertex>
     #include <uv2_vertex>
     #include <color_vertex>

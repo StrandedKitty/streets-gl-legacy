@@ -4,6 +4,7 @@ uniform float opacity;
 varying vec3 vNormal;
 #endif
 varying float vDisplay;
+varying vec3 vColor;
 #include <common>
 #include <color_pars_fragment>
 #include <uv_pars_fragment>
@@ -37,6 +38,7 @@ void main() {
     #endif
     // modulation
     #include <aomap_fragment>
+    diffuseColor.rgb = vColor / 255.;
     reflectedLight.indirectDiffuse *= diffuseColor.rgb;
     vec3 outgoingLight = reflectedLight.indirectDiffuse;
     #include <envmap_fragment>

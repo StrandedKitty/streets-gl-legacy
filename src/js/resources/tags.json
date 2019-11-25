@@ -5,6 +5,9 @@
 	"building:part": {
 		"default": {"type": "building"}
 	},
+	"building:colour": {
+		"default": {"buildingColor": "@color"}
+	},
 	"natural": {
 		"tree": {"type": "tree"},
 		"tree_row": {"type": "tree_row"}

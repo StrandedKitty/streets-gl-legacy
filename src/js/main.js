@@ -109,6 +109,7 @@ function animate() {
 				let ids = data.ids;
 				let offsets = data.offsets;
 				let display = new Float32Array(vertices.length / 3);
+				let colors = new Uint8Array(data.colors);
 				let instances = data.instances;
 
 				tile.displayBuffer = display;
@@ -116,6 +117,7 @@ function animate() {
 				geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 				geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
 				geometry.setAttribute('display', new THREE.BufferAttribute(display, 1));
+				geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
 				let material = new BuildingMaterial().material;
 				tile.mesh = new THREE.Mesh(geometry, material);
