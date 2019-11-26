@@ -1,12 +1,14 @@
 import earcut from './earcut';
 import OSMDescriptor from "./OSMDescriptor";
+import {toRad, mercatorScaleFactor} from "./Utils";
 
 export default class Way {
-	constructor(id, nodes, vertices, tags) {
+	constructor(id, nodes, vertices, tags, pivot) {
 		this.id = id;
 		this.nodes = nodes;
 		this.vertices = vertices;
 		this.tags = tags || {};
+		this.pivot = pivot;
 		this.visible = true;
 		this.mesh = {
 			vertices: [],
@@ -16,6 +18,8 @@ export default class Way {
 		this.instances = {
 			trees: []
 		};
+
+		this.heightFactor = mercatorScaleFactor(toRad(this.pivot.lat));
 
 		this.descriptor = new OSMDescriptor(this.tags);
 		this.properties = this.descriptor.properties;
@@ -42,29 +46,37 @@ export default class Way {
 		let flattenVertices = this.flatten();
 		let triangles = earcut(flattenVertices).reverse();
 		let height = this.properties.height || 10;
-		let color = this.properties.buildingColor || [0, 0, 0];
+		let minHeight = this.properties.minHeight || 0;
+
+		if(minHeight > height) minHeight = 0;
+
+		height *= this.heightFactor;
+		minHeight *= this.heightFactor;
+
+		let facadeColor = this.properties.facadeColor || [0, 0, 0];
+		let roofColor = this.properties.roofColor || [0, 0, 0];
 
 		for(let i = 0; i < triangles.length; i++) {
 			this.mesh.vertices.push(flattenVertices[triangles[i] * 2], height, flattenVertices[triangles[i] * 2 + 1]);
 			this.mesh.normals.push(0, 1, 0);
-			this.mesh.colors.push(...color);
+			this.mesh.colors.push(...roofColor);
 		}
 
 		for(let i = 0; i < this.vertices.length; i++) {
 			let vertex = this.vertices[i];
 			let nextVertex = this.vertices[i + 1] || this.vertices[0];
 
-			this.mesh.vertices.push(nextVertex.x, 0, nextVertex.z);
+			this.mesh.vertices.push(nextVertex.x, minHeight, nextVertex.z);
 			this.mesh.vertices.push(vertex.x, height, vertex.z);
-			this.mesh.vertices.push(vertex.x, 0, vertex.z);
+			this.mesh.vertices.push(vertex.x, minHeight, vertex.z);
 
-			this.mesh.vertices.push(nextVertex.x, 0, nextVertex.z);
+			this.mesh.vertices.push(nextVertex.x, minHeight, nextVertex.z);
 			this.mesh.vertices.push(nextVertex.x, height, nextVertex.z);
 			this.mesh.vertices.push(vertex.x, height, vertex.z);
 
 			for(let j = 0; j < 6; j++) {
 				this.mesh.normals.push(0, 1, 0);
-				this.mesh.colors.push(...color);
+				this.mesh.colors.push(...facadeColor);
 			}
 		}
 	}

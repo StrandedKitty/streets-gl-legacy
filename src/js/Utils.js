@@ -99,3 +99,7 @@ export function hexToRgb(hex) {
 		parseInt(result[3], 16)
 	] : null;
 }
+
+export function mercatorScaleFactor(lat) {
+	return 1 / Math.cos(lat);
+}

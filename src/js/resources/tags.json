@@ -6,7 +6,10 @@
 		"default": {"type": "building"}
 	},
 	"building:colour": {
-		"default": {"buildingColor": "@color"}
+		"default": {"facadeColor": "@color"}
+	},
+	"roof:colour": {
+		"default": {"roofColor": "@color"}
 	},
 	"type": {
 		"building": {"relationType": "building"}
@@ -17,5 +20,8 @@
 	},
 	"height": {
 		"default": {"height": "@units"}
+	},
+	"min_height": {
+		"default": {"minHeight": "@units"}
 	}
 }

@@ -118,7 +118,7 @@ function processData(data, pivot) {
 			vertices.push({x: vertex.x, z: vertex.z});
 		}
 
-		let way = new Way(item.id, item.nodes, vertices, item.tags);
+		let way = new Way(item.id, item.nodes, vertices, item.tags, pivot);
 		ways.set(item.id, way);
 	}
 
