@@ -20,7 +20,7 @@ export default class Controls {
 			fastMovement: false
 		};
 
-		let position = degrees2meters(40.75963, -73.98303);
+		let position = degrees2meters(52.51677, 13.40769);
 
 		this.target = new THREE.Vector3(position.x, 0, position.z);
 		this.distance = 100;

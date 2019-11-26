@@ -8,6 +8,9 @@
 	"building:colour": {
 		"default": {"buildingColor": "@color"}
 	},
+	"type": {
+		"building": {"relationType": "building"}
+	},
 	"natural": {
 		"tree": {"type": "tree"},
 		"tree_row": {"type": "tree_row"}

@@ -15,7 +15,7 @@ export default class OSMDescriptor {
 			let value = this.tags[key];
 
 			if(tagsMap[key]) {
-				let props = tagsMap[key][value] || tagsMap[key].default;
+				let props = tagsMap[key][value] || tagsMap[key].default || {};
 				let res = {};
 
 				for(let i in props) {

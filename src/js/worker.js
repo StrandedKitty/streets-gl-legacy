@@ -1,6 +1,7 @@
 import Node from "./Node";
 import Way from "./Way";
 import {tile2degrees, degrees2meters} from "./Utils";
+import OSMDescriptor from "./OSMDescriptor";
 
 self.addEventListener('message', function(e) {
 	let code = e.data.code;
@@ -37,10 +38,11 @@ function overpass(x, y) {
 		(
 			node(${bbox});
 			way(${bbox});
+			rel["type"="building"](${bbox});
 		);
-		out body;
+		out;
 		>;
-		out skel qt;
+		out;
 	`;
 
 	let httpRequest = new XMLHttpRequest();
@@ -75,42 +77,82 @@ function processData(data, pivot) {
 		}
 	};
 
+	let raw = {
+		nodes: {},
+		ways: {},
+		relations: {}
+	};
+
 	for(let i = 0; i < data.length; i++) {
 		let item = data[i];
 
-		if(item.type === 'node') {
-			let node = new Node(item.id, item.lat, item.lon, item.tags, metersPivot);
-			nodes.set(item.id, node);
-
-			meshData.instances.trees = [...meshData.instances.trees, ...node.instances.trees];
+		switch (item.type) {
+			case 'node':
+				raw.nodes[item.id] = item;
+				break;
+			case 'way':
+				raw.ways[item.id] = item;
+				break;
+			case 'relation':
+				raw.relations[item.id] = item;
+				break;
 		}
 	}
 
-	for(let i = 0; i < data.length; i++) {
-		let item = data[i];
+	for(let id in raw.nodes) {
+		let item = raw.nodes[id];
 
-		if(item.type === 'way' && item.tags) {
-			let vertices = [];
+		let node = new Node(item.id, item.lat, item.lon, item.tags, metersPivot);
+		nodes.set(item.id, node);
 
-			for(let i = 0; i < item.nodes.length; i++) {
-				let vertex = nodes.get(item.nodes[i]);
-				vertices.push({x: vertex.x, z: vertex.z});
-			}
+		meshData.instances.trees = [...meshData.instances.trees, ...node.instances.trees];
+	}
 
-			let way = new Way(item.id, item.nodes, vertices, item.tags);
-			ways.set(item.id, way);
+	for(let id in raw.ways) {
+		let item = raw.ways[id];
 
-			if(way.mesh.vertices.length > 0) {
-				meshData.ids.push(item.id);
-				meshData.offsets.push(meshData.vertices.length / 3);
+		let vertices = [];
 
-				meshData.vertices = [...meshData.vertices, ...way.mesh.vertices];
-				meshData.normals = [...meshData.normals, ...way.mesh.normals];
-				meshData.colors = [...meshData.colors, ...way.mesh.colors];
-			}
-
-			meshData.instances.trees = [...meshData.instances.trees, ...way.instances.trees];
+		for(let i = 0; i < item.nodes.length; i++) {
+			let vertex = nodes.get(item.nodes[i]);
+			vertices.push({x: vertex.x, z: vertex.z});
 		}
+
+		let way = new Way(item.id, item.nodes, vertices, item.tags);
+		ways.set(item.id, way);
+	}
+
+	for(let id in raw.relations) {
+		let item = raw.relations[id];
+
+		let descriptor = new OSMDescriptor(item.tags);
+		let properties = descriptor.properties;
+
+		if(properties.relationType === 'building') {
+			for(let i = 0; i < item.members.length; i++) {
+				let member = item.members[i];
+				if(member.type === 'way' && member.role === 'outline') {
+					ways.get(member.ref).visible = false;
+				}
+			}
+		}
+	}
+
+	//get geometry for ways
+
+	for (const [id, way] of ways.entries()) {
+		way.render();
+
+		if(way.mesh.vertices.length > 0) {
+			meshData.ids.push(id);
+			meshData.offsets.push(meshData.vertices.length / 3);
+
+			meshData.vertices = [...meshData.vertices, ...way.mesh.vertices];
+			meshData.normals = [...meshData.normals, ...way.mesh.normals];
+			meshData.colors = [...meshData.colors, ...way.mesh.colors];
+		}
+
+		meshData.instances.trees = [...meshData.instances.trees, ...way.instances.trees];
 	}
 
 	self.postMessage(meshData);

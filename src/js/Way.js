@@ -7,6 +7,7 @@ export default class Way {
 		this.nodes = nodes;
 		this.vertices = vertices;
 		this.tags = tags || {};
+		this.visible = true;
 		this.mesh = {
 			vertices: [],
 			normals: [],
@@ -21,15 +22,19 @@ export default class Way {
 
 		this.closed = this.isClosed();
 		if(this.closed) this.fixDirection();
+	}
 
-		if(this.closed && this.properties.type === 'building') {
-			this.triangulate();
-		}
+	render() {
+		if(this.visible) {
+			if(this.closed && this.properties.type === 'building') {
+				this.triangulate();
+			}
 
-		if(this.properties.type === 'tree_row') {
-			this.length = this.calculateLength();
-			let points = this.distributeNodes(10);
-			this.instances.trees.push(...points);
+			if(this.properties.type === 'tree_row') {
+				this.length = this.calculateLength();
+				let points = this.distributeNodes(10);
+				this.instances.trees.push(...points);
+			}
 		}
 	}
 
