@@ -117,7 +117,7 @@ function animate() {
 				geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 				geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
 				geometry.setAttribute('display', new THREE.BufferAttribute(display, 1));
-				geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+				geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3, true));
 
 				let material = new BuildingMaterial().material;
 				tile.mesh = new THREE.Mesh(geometry, material);

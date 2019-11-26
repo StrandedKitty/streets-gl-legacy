@@ -38,7 +38,7 @@ void main() {
     #endif
     // modulation
     #include <aomap_fragment>
-    diffuseColor.rgb = vColor / 255.;
+    diffuseColor.rgb = vColor;
     reflectedLight.indirectDiffuse *= diffuseColor.rgb;
     vec3 outgoingLight = reflectedLight.indirectDiffuse;
     #include <envmap_fragment>
