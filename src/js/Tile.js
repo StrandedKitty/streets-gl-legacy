@@ -49,7 +49,9 @@ export default class Tile {
 	}
 
 	getGroundMesh() {
-		let texture = new THREE.TextureLoader().load('https://a.tile.openstreetmap.org/16/' + this.x + '/' + this.y + '.png');
+		let loader = new THREE.TextureLoader();
+		loader.crossOrigin = '';
+		let texture = loader.load('https://tile.osmand.net/hd/16/' + this.x + '/' + this.y + '.png');
 		texture.anisotropy = Config.textureAnisotropy;
 		let material = new THREE.MeshBasicMaterial({
 			map: texture
