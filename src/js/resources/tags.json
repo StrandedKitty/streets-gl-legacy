@@ -18,6 +18,9 @@
 		"tree": {"type": "tree"},
 		"tree_row": {"type": "tree_row"}
 	},
+	"landuse": {
+		"farmland": {"type": "farmland"}
+	},
 	"height": {
 		"default": {"height": "@units"}
 	},

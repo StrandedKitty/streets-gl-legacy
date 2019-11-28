@@ -125,6 +125,7 @@ function animate() {
 				let pivot = tile2meters(this.x, this.y + 1);
 				tile.mesh.position.set(pivot.x, 0, pivot.z);
 
+				tile.mesh.renderOrder = 1;
 				scene.add(tile.mesh);
 
 				for(let i = 0; i < ids.length; i++) {

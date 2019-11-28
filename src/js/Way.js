@@ -31,7 +31,8 @@ export default class Way {
 	render() {
 		if(this.visible) {
 			if(this.closed && this.properties.type === 'building') {
-				this.triangulate();
+				this.triangulateFootprint(false);
+				this.triangulateWalls();
 			}
 
 			if(this.properties.type === 'tree_row') {
@@ -39,12 +40,37 @@ export default class Way {
 				let points = this.distributeNodes(10);
 				this.instances.trees.push(...points);
 			}
+
+			if(this.properties.type === 'farmland') {
+				this.triangulateFootprint(true);
+			}
 		}
 	}
 
-	triangulate() {
+	triangulateFootprint(isFlat) {
 		let flattenVertices = this.flatten();
 		let triangles = earcut(flattenVertices).reverse();
+		let height, color;
+
+		if(isFlat) {
+			height = 0;
+			color = [63, 167, 37];
+		} else {
+			height = this.properties.height || 10;
+			height *= this.heightFactor;
+			color = this.properties.roofColor || [0, 0, 0];
+		}
+
+		for(let i = 0; i < triangles.length; i++) {
+			this.mesh.vertices.push(flattenVertices[triangles[i] * 2], height, flattenVertices[triangles[i] * 2 + 1]);
+			this.mesh.normals.push(0, 1, 0);
+			this.mesh.colors.push(...color);
+		}
+	}
+
+	triangulateWalls() {
+		let facadeColor = this.properties.facadeColor || [0, 0, 0];
+
 		let height = this.properties.height || 10;
 		let minHeight = this.properties.minHeight || 0;
 
@@ -52,15 +78,6 @@ export default class Way {
 
 		height *= this.heightFactor;
 		minHeight *= this.heightFactor;
-
-		let facadeColor = this.properties.facadeColor || [0, 0, 0];
-		let roofColor = this.properties.roofColor || [0, 0, 0];
-
-		for(let i = 0; i < triangles.length; i++) {
-			this.mesh.vertices.push(flattenVertices[triangles[i] * 2], height, flattenVertices[triangles[i] * 2 + 1]);
-			this.mesh.normals.push(0, 1, 0);
-			this.mesh.colors.push(...roofColor);
-		}
 
 		for(let i = 0; i < this.vertices.length; i++) {
 			let vertex = this.vertices[i];

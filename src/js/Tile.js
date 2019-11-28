@@ -54,7 +54,8 @@ export default class Tile {
 		let texture = loader.load('https://tile.osmand.net/hd/16/' + this.x + '/' + this.y + '.png');
 		texture.anisotropy = Config.textureAnisotropy;
 		let material = new THREE.MeshBasicMaterial({
-			map: texture
+			map: texture,
+			depthWrite: false
 		});
 		let geometry = new THREE.PlaneBufferGeometry(40075016.7 / (1 << 16), 40075016.7 / (1 << 16));
 		geometry.rotateX(toRad(-90));
