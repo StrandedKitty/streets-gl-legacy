@@ -5,9 +5,9 @@ import Controls from './Controls';
 import Tile from './Tile';
 import MapWorkerManager from './MapWorkerManager';
 import MapMesh from './MapMesh';
-import BuildingMaterial from "./BuildingMaterial";
+import BuildingMaterial from "./materials/BuildingMaterial";
 import Meshes from './Meshes';
-import InstanceMaterial from "./InstanceMaterial";
+import InstanceMaterial from "./materials/InstanceMaterial";
 
 let scene,
 	camera,
@@ -23,6 +23,7 @@ let objects = {
 	meshes: new Map()
 };
 let meshes = {};
+let renderTarget;
 
 init();
 animate();
@@ -77,6 +78,12 @@ function init() {
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	}, false);
+
+	renderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, {
+		minFilter: THREE.NearestFilter,
+		magFilter: THREE.NearestFilter,
+		format: THREE.RGBFormat
+	});
 }
 
 function animate() {
@@ -182,6 +189,10 @@ function animate() {
 			tile.load(worker);
 		}
 	}
+
+	renderer.setRenderTarget(renderTarget);
+	renderer.render(scene, camera);
+	renderer.setRenderTarget(null);
 
 	renderer.render(scene, camera);
 

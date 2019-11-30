@@ -6,8 +6,8 @@ export default class InstanceMaterial {
 		this.material = new THREE.ShaderMaterial({
 			uniforms: uniforms,
 			defines: {},
-			vertexShader: require('../glsl/instance.vert').default,
-			fragmentShader: require('../glsl/instance.frag').default
+			vertexShader: require('../../glsl/instance.vert').default,
+			fragmentShader: require('../../glsl/instance.frag').default
 		});
 	}
 }

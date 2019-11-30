@@ -10,7 +10,8 @@ module.exports = [{
 	plugins: [
 		new CopyPlugin([
 			{from: '*.html', to: __dirname + '/build', context: './src'},
-			{from: './src/css', to: __dirname + '/build/css'}
+			{from: './src/css', to: __dirname + '/build/css'},
+			{from: './src/js/three.js', to: __dirname + '/build/js/three.js'}
 		])
 	],
 	module: {
