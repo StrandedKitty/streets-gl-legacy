@@ -1,10 +1,10 @@
 let config = {
 	drawDistance: 3000,
-	textureAnisotropy: null
+	textureAnisotropy: undefined
 };
 
 config.set = function (key, value, force) {
-	if(config[key] === null || force)
+	if(config[key] === undefined || force)
 		config[key] = value;
 };
 

@@ -21,11 +21,12 @@ export default class Controls {
 		};
 
 		let position = degrees2meters(49.8969, 36.2894);
+		//position = degrees2meters(0, 0);
 
-		this.target = new THREE.Vector3(position.x, 0, position.z);
+		this.target = {x: position.x, y: 0, z: position.z};
 		this.distance = 100;
 		this.distanceTarget = this.distance;
-		this.direction = new THREE.Vector3(-1, -1, -1);
+		this.direction = {x: -1, y: -1, z: -1};
 
 		this.addEventListeners();
 	}
@@ -109,71 +110,82 @@ export default class Controls {
 		this.distance = lerp(this.distance, this.distanceTarget, 0.4);
 
 		if(this.keys.movement.up) {
-			let direction = new THREE.Vector2(this.direction.x, this.direction.z);
-			direction.normalize();
-			direction.multiplyScalar(speed);
-			this.target.x += direction.x;
-			this.target.z += direction.y;
+			let direction = [this.direction.x, this.direction.z];
+			direction = vec.normalize(direction);
+			direction = vec.multiplyScalar(direction, speed);
+			this.target.x += direction[0];
+			this.target.z += direction[1];
 		}
 
 		if(this.keys.movement.down) {
-			let direction = new THREE.Vector2(this.direction.x, this.direction.z);
-			direction.normalize();
-			direction.multiplyScalar(speed);
-			this.target.x -= direction.x;
-			this.target.z -= direction.y;
+			let direction = [this.direction.x, this.direction.z];
+			direction = vec.normalize(direction);
+			direction = vec.multiplyScalar(direction, speed);
+			this.target.x -= direction[0];
+			this.target.z -= direction[1];
 		}
 
 		if(this.keys.movement.left) {
-			let direction = new THREE.Vector2(this.direction.z, -this.direction.x);
-			direction.normalize();
-			direction.multiplyScalar(speed);
-			this.target.x += direction.x;
-			this.target.z += direction.y;
+			let direction = [this.direction.z, -this.direction.x];
+			direction = vec.normalize(direction);
+			direction = vec.multiplyScalar(direction, speed);
+			this.target.x += direction[0];
+			this.target.z += direction[1];
 		}
 
 		if(this.keys.movement.right) {
-			let direction = new THREE.Vector2(this.direction.z, -this.direction.x);
-			direction.normalize();
-			direction.multiplyScalar(speed);
-			this.target.x -= direction.x;
-			this.target.z -= direction.y;
+			let direction = [this.direction.z, -this.direction.x];
+			direction = vec.normalize(direction);
+			direction = vec.multiplyScalar(direction, speed);
+			this.target.x -= direction[0];
+			this.target.z -= direction[1];
 		}
 
 		if(this.keys.rotation.left) {
-			let axis = new THREE.Vector3(0, 1, 0);
-			const angle = toRad(1.51);
-			this.direction.applyAxisAngle(axis, angle);
+			const axis = [0, 1, 0];
+			const angle = toRad(1.5);
+			const rotationMatrix = m4.axisRotation(axis, angle);
+			const vector = vec.applyMatrix([this.direction.x, this.direction.y, this.direction.z], rotationMatrix);
+			this.direction = {x: vector[0], y: vector[1], z: vector[2]};
 		}
 
 		if(this.keys.rotation.right) {
-			let axis = new THREE.Vector3(0, 1, 0);
-			const angle = toRad(-1.51);
-			this.direction.applyAxisAngle(axis, angle);
+			const axis = [0, 1, 0];
+			const angle = toRad(-1.5);
+			const rotationMatrix = m4.axisRotation(axis, angle);
+			const vector = vec.applyMatrix([this.direction.x, this.direction.y, this.direction.z], rotationMatrix);
+			this.direction = {x: vector[0], y: vector[1], z: vector[2]};
 		}
 
 		if(this.keys.rotation.up) {
-			let perp = new THREE.Vector2(this.direction.z, -this.direction.x);
-			let axis = new THREE.Vector3(perp.x, 0, perp.y);
+			const perp = [this.direction.z, -this.direction.x];
+			const axis = [perp[0], 0, perp[1]];
 			const angle = toRad(1);
-			this.direction.applyAxisAngle(axis, angle);
+			const rotationMatrix = m4.axisRotation(axis, angle);
+			const vector = vec.applyMatrix([this.direction.x, this.direction.y, this.direction.z], rotationMatrix);
+			this.direction = {x: vector[0], y: vector[1], z: vector[2]};
 		}
 
 		if(this.keys.rotation.down) {
-			let perp = new THREE.Vector2(this.direction.z, -this.direction.x);
-			let axis = new THREE.Vector3(perp.x, 0, perp.y);
+			const perp = [this.direction.z, -this.direction.x];
+			const axis = [perp[0], 0, perp[1]];
 			const angle = toRad(-1);
-			this.direction.applyAxisAngle(axis, angle);
+			const rotationMatrix = m4.axisRotation(axis, angle);
+			const vector = vec.applyMatrix([this.direction.x, this.direction.y, this.direction.z], rotationMatrix);
+			this.direction = {x: vector[0], y: vector[1], z: vector[2]};
 		}
 
 		if(this.direction.y > 0) this.direction.y = 0;
-		this.direction.normalize();
 
-		let cameraPosition = new THREE.Vector3();
-		let cameraOffset = this.direction.clone().multiplyScalar(-this.distance);
-		cameraPosition.addVectors(this.target, cameraOffset);
+		const normalizedDirection = vec.normalize([this.direction.x, this.direction.y, this.direction.z]);
+		this.direction.x = normalizedDirection[0];
+		this.direction.y = normalizedDirection[1];
+		this.direction.z = normalizedDirection[2];
 
-		this.camera.position.copy(cameraPosition);
-		this.camera.lookAt(this.target);
+		const cameraOffset = vec.multiplyScalar([this.direction.x, this.direction.y, this.direction.z], -this.distance);
+		const cameraPosition = vec.add([this.target.x, this.target.y, this.target.z], cameraOffset);
+
+		this.camera.setPosition(cameraPosition);
+		this.camera.lookAt([this.target.x, this.target.y, this.target.z], true);
 	}
 }
