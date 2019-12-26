@@ -21,7 +21,7 @@ module.exports = [{
 				test: /\.vert|.frag|.json$/i,
 				use: 'raw-loader'
 			},
-			{
+			/*{
 				test: /\.js/,
 				use: {
 					loader: 'babel-loader',
@@ -34,7 +34,7 @@ module.exports = [{
 						]
 					}
 				}
-			}
+			}*/
 		]
 	}
 },{

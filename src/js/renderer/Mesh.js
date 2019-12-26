@@ -1,4 +1,6 @@
 import Object3D from "./Object3D";
+import Attribute from "./Attribute";
+import VAO from "./VAO";
 
 export default class Mesh extends Object3D {
 	constructor(renderer, params) {
@@ -8,7 +10,7 @@ export default class Mesh extends Object3D {
 		this.gl = renderer.gl;
 
 		this.attributes = {};
-		this.vao = renderer.createVAO();
+		this.vao = new VAO(this.renderer);
 		this.vertices = params.vertices || new Float32Array(0);
 
 		this.addAttribute({
@@ -27,7 +29,7 @@ export default class Mesh extends Object3D {
 
 	addAttribute(params) {
 		params.vao = this.vao;
-		this.attributes[params.name] = this.renderer.createAttribute(params);
+		this.attributes[params.name] = new Attribute(this.renderer, params);
 		return this.attributes[params.name];
 	}
 }

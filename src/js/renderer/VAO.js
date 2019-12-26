@@ -1,5 +1,5 @@
 export default class VAO {
-	constructor(renderer, params) {
+	constructor(renderer) {
 		this.gl = renderer.gl;
 
 		this.vertexArrayObject = this.gl.createVertexArray();

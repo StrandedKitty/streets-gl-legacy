@@ -12,6 +12,7 @@ import Renderer from "./renderer/Renderer";
 import SceneGraph from "./renderer/SceneGraph";
 import PerspectiveCamera from "./renderer/PerspectiveCamera";
 import Object3D from "./renderer/Object3D";
+import Mesh from "./renderer/Mesh";
 
 let scene,
 	camera,
@@ -29,6 +30,7 @@ let meshes = {};
 let mesh, material, wrapper;
 
 const gui = new dat.GUI();
+let time = 0, delta = 0;
 
 init();
 animate();
@@ -76,10 +78,13 @@ function init() {
 
 	RP = new Renderer(canvas);
 	RP.setSize(window.innerWidth, window.innerHeight);
+	RP.culling = true;
+
 	Config.set('textureAnisotropy', RP.capabilities.maxAnisotropy);
 
 	scene = new SceneGraph();
 	wrapper = new Object3D();
+	scene.add(wrapper);
 	camera = new PerspectiveCamera({
 		fov: 70,
 		near: 1,
@@ -96,15 +101,15 @@ function init() {
 		vertexShader: vertexShaderSource,
 		fragmentShader: fragmentShaderSource,
 		uniforms: {
-			uSample: {type: '1f', value: 0.5}
+			uSample: {type: '1f', value: 1}
 		}
 	});
 
 	mesh = RP.createMesh({
 		vertices: new Float32Array([
 			-5, 0, -5,
-			5, 0, -5,
-			0, 0, 5
+			0, 0, 5,
+			5, 0, -5
 		])
 	});
 
@@ -113,15 +118,14 @@ function init() {
 
 	let position = degrees2meters(49.8969, 36.2894);
 	mesh.setPosition([position.x, 0, position.z]);
+	mesh.rotation.x = toRad(30);
 	mesh.updateMatrix();
 
-	let colorAttribute = mesh.addAttribute({
+	mesh.addAttribute({
 		name: 'color',
 		size: 3,
 		type: 'FLOAT'
-	});
-
-	colorAttribute.setData(new Float32Array([
+	}).setData(new Float32Array([
 		0.0, 0.0, 1.0,
 		1.0, 0.0, 0.0,
 		0.0, 1.0, 0.0
@@ -202,8 +206,6 @@ function init() {
 	}, false);
 }
 
-let time = 0, delta = 0;
-
 function animate() {
 	const now = performance.now();
 	delta = (now - time) / 1e3;
@@ -220,17 +222,24 @@ function animate() {
 	camera.updateMatrixWorld();
 	camera.updateMatrixWorldInverse();
 
-	let modelViewMatrix = m4.multiply(camera.matrixWorldInverse, mesh.matrixWorld);
-
-	material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
-	material.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
 	material.use();
-	mesh.draw(material);
+	material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
 
-	/*controls.update(delta);
+	for(let i = 0; i < wrapper.children.length; i++) {
+		let mesh = wrapper.children[i];
 
-	camera.updateProjectionMatrix();
-	camera.updateMatrixWorld();
+		if(mesh instanceof Mesh) {
+			let modelViewMatrix = m4.multiply(camera.matrixWorldInverse, mesh.matrixWorld);
+			material.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
+			mesh.draw(material);
+
+		}
+	}
+
+	/*view.frustum.getViewSpaceVertices();
+	let wsFrustum = view.frustum.toSpace(camera.matrix);
+
+	let frustumTiles = wsFrustum.getTiles(camera.position, 16);
 
 	view.frustum.getViewSpaceVertices();
 	let wsFrustum = view.frustum.toSpace(camera.matrix);
