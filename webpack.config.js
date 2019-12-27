@@ -10,9 +10,9 @@ module.exports = [{
 	plugins: [
 		new CopyPlugin([
 			{from: '*.html', to: __dirname + '/build', context: './src'},
-			{from: './src/css', to: __dirname + '/build/css'},
-			{from: './src/js/vec.js', to: __dirname + '/build/js/vec.js'},
-			{from: './src/js/m4.js', to: __dirname + '/build/js/m4.js'}
+			{from: './src/css', to: __dirname + '/build/css'}
+			//{from: './src/js/vec.js', to: __dirname + '/build/js/vec.js'},
+			//{from: './src/js/m4.js', to: __dirname + '/build/js/m4.js'}
 		])
 	],
 	module: {

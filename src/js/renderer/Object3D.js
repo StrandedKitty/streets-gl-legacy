@@ -1,9 +1,12 @@
+import mat4 from "../math/mat4";
+import vec3 from "../math/vec3";
+
 export default class Object3D {
 	constructor(params) {
 		this.children = [];
 		this.parent = null;
-		this.matrix = m4.identity();
-		this.matrixWorld = m4.identity();
+		this.matrix = mat4.identity();
+		this.matrixWorld = mat4.identity();
 		this.position = {
 			x: 0,
 			y: 0,
@@ -22,21 +25,21 @@ export default class Object3D {
 	}
 
 	updateMatrix() {
-		this.matrix = m4.identity();
-		this.matrix = m4.translate(this.matrix, this.position.x, this.position.y, this.position.z);
-		this.matrix = m4.scale(this.matrix, this.scale.x, this.scale.y, this.scale.z);
-		this.matrix = m4.xRotate(this.matrix, this.rotation.x);
-		this.matrix = m4.yRotate(this.matrix, this.rotation.y);
-		this.matrix = m4.zRotate(this.matrix, this.rotation.z);
+		this.matrix = mat4.identity();
+		this.matrix = mat4.translate(this.matrix, this.position.x, this.position.y, this.position.z);
+		this.matrix = mat4.scale(this.matrix, this.scale.x, this.scale.y, this.scale.z);
+		this.matrix = mat4.xRotate(this.matrix, this.rotation.x);
+		this.matrix = mat4.yRotate(this.matrix, this.rotation.y);
+		this.matrix = mat4.zRotate(this.matrix, this.rotation.z);
 		this.updateMatrixWorld();
 		return this.matrix;
 	}
 
 	updateMatrixWorld() {
 		if(this.parent) {
-			this.matrixWorld = m4.multiply(this.parent.updateMatrixWorld(), this.matrix);
+			this.matrixWorld = mat4.multiply(this.parent.updateMatrixWorld(), this.matrix);
 		} else {
-			this.matrixWorld = m4.copy(this.matrix);
+			this.matrixWorld = mat4.copy(this.matrix);
 		}
 
 		return this.matrixWorld;
@@ -49,17 +52,13 @@ export default class Object3D {
 	}
 
 	lookAt(target, isWorldPosition) {
-		const position = isWorldPosition ? vec.applyMatrix(target, this.parent.updateMatrixWorld()) : target;
-		this.matrix = m4.lookAt(this.positionArray, target, [0, 1, 0]);
+		const position = isWorldPosition ? vec3.applyMatrix(target, this.parent.updateMatrixWorld()) : target;
+		this.matrix = mat4.lookAt(this.position, target, {x: 0, y: 1, z: 0});
 	}
 
-	setPosition(pos) {
-		this.position.x = pos[0];
-		this.position.y = pos[1];
-		this.position.z = pos[2];
-	}
-
-	get positionArray() {
-		return [this.position.x, this.position.y, this.position.z];
+	setPosition(x, y, z) {
+		this.position.x = x;
+		this.position.y = y;
+		this.position.z = z;
 	}
 }

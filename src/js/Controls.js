@@ -1,4 +1,7 @@
-import {toRad, clamp, degrees2meters, lerp} from './Utils';
+import {clamp, degrees2meters, lerp, toRad} from './Utils';
+import mat4 from "./math/mat4";
+import vec3 from "./math/vec3";
+import vec2 from "./math/vec2";
 
 export default class Controls {
 	constructor(camera) {
@@ -110,82 +113,73 @@ export default class Controls {
 		this.distance = lerp(this.distance, this.distanceTarget, 0.4);
 
 		if(this.keys.movement.up) {
-			let direction = [this.direction.x, this.direction.z];
-			direction = vec.normalize(direction);
-			direction = vec.multiplyScalar(direction, speed);
-			this.target.x += direction[0];
-			this.target.z += direction[1];
+			let direction = {x: this.direction.x, y: this.direction.z};
+			direction = vec2.normalize(direction);
+			direction = vec2.multiplyScalar(direction, speed);
+			this.target.x += direction.x;
+			this.target.z += direction.y;
 		}
 
 		if(this.keys.movement.down) {
-			let direction = [this.direction.x, this.direction.z];
-			direction = vec.normalize(direction);
-			direction = vec.multiplyScalar(direction, speed);
-			this.target.x -= direction[0];
-			this.target.z -= direction[1];
+			let direction = {x: this.direction.x, y: this.direction.z};
+			direction = vec2.normalize(direction);
+			direction = vec2.multiplyScalar(direction, speed);
+			this.target.x -= direction.x;
+			this.target.z -= direction.y;
 		}
 
 		if(this.keys.movement.left) {
-			let direction = [this.direction.z, -this.direction.x];
-			direction = vec.normalize(direction);
-			direction = vec.multiplyScalar(direction, speed);
-			this.target.x += direction[0];
-			this.target.z += direction[1];
+			let direction = {x: this.direction.z, y: -this.direction.x};
+			direction = vec2.normalize(direction);
+			direction = vec2.multiplyScalar(direction, speed);
+			this.target.x += direction.x;
+			this.target.z += direction.y;
 		}
 
 		if(this.keys.movement.right) {
-			let direction = [this.direction.z, -this.direction.x];
-			direction = vec.normalize(direction);
-			direction = vec.multiplyScalar(direction, speed);
-			this.target.x -= direction[0];
-			this.target.z -= direction[1];
+			let direction = {x: this.direction.z, y: -this.direction.x};
+			direction = vec2.normalize(direction);
+			direction = vec2.multiplyScalar(direction, speed);
+			this.target.x -= direction.x;
+			this.target.z -= direction.y;
 		}
 
 		if(this.keys.rotation.left) {
-			const axis = [0, 1, 0];
+			const axis = {x: 0, y: 1, z: 0};
 			const angle = toRad(1.5);
-			const rotationMatrix = m4.axisRotation(axis, angle);
-			const vector = vec.applyMatrix([this.direction.x, this.direction.y, this.direction.z], rotationMatrix);
-			this.direction = {x: vector[0], y: vector[1], z: vector[2]};
+			const rotationMatrix = mat4.axisRotation(axis, angle);
+			this.direction = vec3.applyMatrix(this.direction, rotationMatrix);
 		}
 
 		if(this.keys.rotation.right) {
-			const axis = [0, 1, 0];
+			const axis = {x: 0, y: 1, z: 0};
 			const angle = toRad(-1.5);
-			const rotationMatrix = m4.axisRotation(axis, angle);
-			const vector = vec.applyMatrix([this.direction.x, this.direction.y, this.direction.z], rotationMatrix);
-			this.direction = {x: vector[0], y: vector[1], z: vector[2]};
+			const rotationMatrix = mat4.axisRotation(axis, angle);
+			this.direction = vec3.applyMatrix(this.direction, rotationMatrix);
 		}
 
 		if(this.keys.rotation.up) {
-			const perp = [this.direction.z, -this.direction.x];
-			const axis = [perp[0], 0, perp[1]];
+			const axis = {x: this.direction.z, y: 0, z: -this.direction.x};
 			const angle = toRad(1);
-			const rotationMatrix = m4.axisRotation(axis, angle);
-			const vector = vec.applyMatrix([this.direction.x, this.direction.y, this.direction.z], rotationMatrix);
-			this.direction = {x: vector[0], y: vector[1], z: vector[2]};
+			const rotationMatrix = mat4.axisRotation(axis, angle);
+			this.direction = vec3.applyMatrix(this.direction, rotationMatrix);
 		}
 
 		if(this.keys.rotation.down) {
-			const perp = [this.direction.z, -this.direction.x];
-			const axis = [perp[0], 0, perp[1]];
+			const axis = {x: this.direction.z, y: 0, z: -this.direction.x};
 			const angle = toRad(-1);
-			const rotationMatrix = m4.axisRotation(axis, angle);
-			const vector = vec.applyMatrix([this.direction.x, this.direction.y, this.direction.z], rotationMatrix);
-			this.direction = {x: vector[0], y: vector[1], z: vector[2]};
+			const rotationMatrix = mat4.axisRotation(axis, angle);
+			this.direction = vec3.applyMatrix(this.direction, rotationMatrix);
 		}
 
 		if(this.direction.y > 0) this.direction.y = 0;
 
-		const normalizedDirection = vec.normalize([this.direction.x, this.direction.y, this.direction.z]);
-		this.direction.x = normalizedDirection[0];
-		this.direction.y = normalizedDirection[1];
-		this.direction.z = normalizedDirection[2];
+		this.direction = vec3.normalize(this.direction);
 
-		const cameraOffset = vec.multiplyScalar([this.direction.x, this.direction.y, this.direction.z], -this.distance);
-		const cameraPosition = vec.add([this.target.x, this.target.y, this.target.z], cameraOffset);
+		const cameraOffset = vec3.multiplyScalar(this.direction, -this.distance);
+		const cameraPosition = vec3.add(this.target, cameraOffset);
 
-		this.camera.setPosition(cameraPosition);
-		this.camera.lookAt([this.target.x, this.target.y, this.target.z], true);
+		this.camera.setPosition(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+		this.camera.lookAt(this.target, true);
 	}
 }

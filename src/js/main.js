@@ -13,6 +13,8 @@ import SceneGraph from "./renderer/SceneGraph";
 import PerspectiveCamera from "./renderer/PerspectiveCamera";
 import Object3D from "./renderer/Object3D";
 import Mesh from "./renderer/Mesh";
+import vec3 from "./math/vec3";
+import mat4 from "./math/mat4";
 
 let scene,
 	camera,
@@ -117,7 +119,7 @@ function init() {
 	console.log(scene);
 
 	let position = degrees2meters(49.8969, 36.2894);
-	mesh.setPosition([position.x, 0, position.z]);
+	mesh.setPosition(position.x, 0, position.z);
 	mesh.rotation.x = toRad(30);
 	mesh.updateMatrix();
 
@@ -229,10 +231,9 @@ function animate() {
 		let mesh = wrapper.children[i];
 
 		if(mesh instanceof Mesh) {
-			let modelViewMatrix = m4.multiply(camera.matrixWorldInverse, mesh.matrixWorld);
+			let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, mesh.matrixWorld);
 			material.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
 			mesh.draw(material);
-
 		}
 	}
 
