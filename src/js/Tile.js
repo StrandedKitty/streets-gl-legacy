@@ -1,11 +1,11 @@
-import {tile2meters, toRad} from "./Utils";
+import {tile2meters, tileEncode, toRad} from "./Utils";
 import Config from "./Config";
 
 export default class Tile {
 	constructor(x, y, callback) {
 		this.x = x;
 		this.y = y;
-		this.id = this.y * 65536 + this.x;
+		this.id = tileEncode(this.x, this.y);
 		this.callback = callback;
 		this.loaded = false;
 		this.worker = undefined;

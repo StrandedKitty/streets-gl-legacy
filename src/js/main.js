@@ -1,4 +1,4 @@
-import {degrees2meters, meters2degress, meters2tile, tile2meters, toRad} from './Utils';
+import {degrees2meters, meters2degress, meters2tile, tile2meters, tileEncode, toRad} from './Utils';
 import Config from './Config';
 import Frustum from './Frustum';
 import Controls from './Controls';
@@ -195,9 +195,9 @@ function init() {
 
 	let tileGeometry = new THREE.PlaneBufferGeometry(40075016.7 / (1 << 16), 40075016.7 / (1 << 16));
 	tileGeometry.rotateX(toRad(-90));
-	meshes.tile = new THREE.Mesh(tileGeometry, new THREE.MeshBasicMaterial({color: '#4084ff'}));
+	meshes.tile = new THREE.Mesh(tileGeometry, new THREE.MeshBasicMaterial({color: '#4084ff'}));*/
 
-	workerManager = new MapWorkerManager(navigator.hardwareConcurrency, './js/worker.js');*/
+	workerManager = new MapWorkerManager(navigator.hardwareConcurrency, './js/worker.js');
 
 	window.addEventListener('resize', function() {
 		camera.aspect = window.innerWidth / window.innerHeight;
@@ -237,14 +237,8 @@ function animate() {
 		}
 	}
 
-	/*view.frustum.getViewSpaceVertices();
-	let wsFrustum = view.frustum.toSpace(camera.matrix);
-
-	let frustumTiles = wsFrustum.getTiles(camera.position, 16);
-
 	view.frustum.getViewSpaceVertices();
 	let wsFrustum = view.frustum.toSpace(camera.matrix);
-
 	let frustumTiles = wsFrustum.getTiles(camera.position, 16);
 
 	for(let i = 0; i < frustumTiles.length; i++) {
@@ -253,10 +247,10 @@ function animate() {
 		frustumTile.x = Math.floor(frustumTile.x);
 		frustumTile.y = Math.floor(frustumTile.y);
 
-		let name = frustumTile.x + ' ' + frustumTile.y;
+		const name = tileEncode(frustumTile.x, frustumTile.y);
 		let worker = workerManager.getFreeWorker();
 
-		if(!tiles.get(name) && worker) {
+		/*if(!tiles.get(name) && worker) {
 			let tile = new Tile(frustumTile.x, frustumTile.y, function (data) {
 				let geometry = new THREE.BufferGeometry();
 				let vertices = new Float32Array(data.vertices);
@@ -335,10 +329,10 @@ function animate() {
 			//scene.add(ground);
 
 			tile.load(worker);
-		}
+		}*/
 	}
 
-	renderer.render(scene, camera);*/
+	//renderer.render(scene, camera);
 
 	requestAnimationFrame(animate);
 }

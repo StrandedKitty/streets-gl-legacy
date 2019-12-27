@@ -103,3 +103,13 @@ export function hexToRgb(hex) {
 export function mercatorScaleFactor(lat) {
 	return 1 / Math.cos(lat);
 }
+
+export function tileEncode(x, y) {
+	return y * 65536 + x;
+}
+
+export function tileDecode(id) {
+	const y = Math.floor(id / 65536);
+	const x = id % 65536;
+	return {x, y};
+}
