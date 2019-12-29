@@ -2,7 +2,6 @@ export default class Attribute {
 	constructor(renderer, params) {
 		this.gl = renderer.gl;
 		this.name = params.name;
-		this.vao = params.vao;
 		this.size = params.size || 3;
 		this.type = params.type || 'FLOAT';
 		this.normalized = params.normalized || false;
@@ -15,8 +14,6 @@ export default class Attribute {
 	locate(program) {
 		this.program = program;
 
-		this.vao.bind();
-
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
 
 		this.location = this.gl.getAttribLocation(this.program.WebGLProgram, this.name);
@@ -25,8 +22,6 @@ export default class Attribute {
 		this.gl.enableVertexAttribArray(this.location);
 
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
-
-		this.vao.unbind();
 	}
 
 	setData(typedArray) {

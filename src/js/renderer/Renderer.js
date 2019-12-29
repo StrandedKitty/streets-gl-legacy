@@ -15,6 +15,9 @@ export default class Renderer {
 		}
 
 		this.capabilities = new WebGLCapabilities(this.gl);
+
+		this.gl.enable(this.gl.DEPTH_TEST);
+		this.gl.depthFunc(this.gl.LEQUAL);
 	}
 
 	createMaterial(params) {
@@ -34,6 +37,15 @@ export default class Renderer {
 	set culling(state) {
 		if(state) this.gl.enable(this.gl.CULL_FACE);
 		else this.gl.disable(this.gl.CULL_FACE);
+	}
+
+	set depthTest(state) {
+		if(state) this.gl.enable(this.gl.DEPTH_TEST);
+		else this.gl.disable(this.gl.DEPTH_TEST);
+	}
+
+	set depthWrite(state) {
+		this.gl.depthMask(state);
 	}
 }
 

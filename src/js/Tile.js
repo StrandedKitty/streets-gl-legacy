@@ -1,5 +1,6 @@
 import {tile2meters, tileEncode, toRad} from "./Utils";
 import Config from "./Config";
+import Shapes from "./renderer/Shapes";
 
 export default class Tile {
 	constructor(x, y, callback) {
@@ -8,8 +9,8 @@ export default class Tile {
 		this.id = tileEncode(this.x, this.y);
 		this.callback = callback;
 		this.loaded = false;
-		this.worker = undefined;
-		this.mesh = new THREE.Object3D();
+		this.worker = null;
+		this.mesh = null;
 		this.displayBuffer = new Uint8Array();
 		this.objects = [];
 	}
@@ -26,7 +27,7 @@ export default class Tile {
 			console.info('Worker info:', data.info);
 		} else {
 			this.loaded = true;
-			this.worker = undefined;
+			this.worker = null;
 			this.objects = data.ids;
 			this.callback(data);
 		}
@@ -48,22 +49,35 @@ export default class Tile {
 		this.mesh.geometry.attributes.display.needsUpdate = true;
 	}
 
-	getGroundMesh() {
-		let loader = new THREE.TextureLoader();
+	getGroundMesh(renderer) {
+		/*let loader = new THREE.TextureLoader();
 		loader.crossOrigin = '';
 		let texture = loader.load('https://tile.osmand.net/hd/16/' + this.x + '/' + this.y + '.png');
 		texture.anisotropy = Config.textureAnisotropy;
 		let material = new THREE.MeshBasicMaterial({
 			map: texture,
 			depthWrite: false
-		});
-		let geometry = new THREE.PlaneBufferGeometry(40075016.7 / (1 << 16), 40075016.7 / (1 << 16));
-		geometry.rotateX(toRad(-90));
-		geometry.rotateY(toRad(-90));
-		this.groundMesh = new THREE.Mesh(geometry,material);
+		});*/
+		const tileSize = 40075016.7 / (1 << 16);
+		const position = tile2meters(this.x, this.y + 1);
+		let vertices = (new Shapes.plane(tileSize, tileSize)).vertices;
 
-		let position = tile2meters(this.x, this.y + 1);
-		this.groundMesh.position.set(position.x + 20037508.34 / (1 << 16), 0, position.z + 20037508.34 / (1 << 16));
+		this.groundMesh = renderer.createMesh({
+			vertices: vertices
+		});
+
+		this.groundMesh.addAttribute({
+			name: 'color',
+			size: 3,
+			type: 'FLOAT'
+		});
+
+		this.groundMesh.setAttributeData('color', vertices);
+
+		this.groundMesh.id = ~~(Math.random() * 1000);
+
+		this.groundMesh.setPosition(position.x + tileSize / 2, 0, position.z + tileSize / 2);
+		this.groundMesh.updateMatrix();
 
 		return this.groundMesh;
 	}

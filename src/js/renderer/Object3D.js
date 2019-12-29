@@ -31,7 +31,7 @@ export default class Object3D {
 		this.matrix = mat4.xRotate(this.matrix, this.rotation.x);
 		this.matrix = mat4.yRotate(this.matrix, this.rotation.y);
 		this.matrix = mat4.zRotate(this.matrix, this.rotation.z);
-		this.updateMatrixWorld();
+		//this.updateMatrixWorld();
 		return this.matrix;
 	}
 
@@ -52,8 +52,8 @@ export default class Object3D {
 	}
 
 	lookAt(target, isWorldPosition) {
-		const position = isWorldPosition ? vec3.applyMatrix(target, this.parent.updateMatrixWorld()) : target;
-		this.matrix = mat4.lookAt(this.position, target, {x: 0, y: 1, z: 0});
+		const targetPosition = isWorldPosition ? vec3.applyMatrix(target, this.updateMatrixWorld()) : target;
+		this.matrix = mat4.lookAt(this.position, targetPosition, {x: 0, y: 1, z: 0});
 	}
 
 	setPosition(x, y, z) {

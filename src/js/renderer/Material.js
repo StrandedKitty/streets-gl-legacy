@@ -36,4 +36,15 @@ export default class Material {
 			}
 		}
 	}
+
+	updateUniform(name) {
+		let uniform = this.uniforms[name];
+		let location = this.uniformsLocations[name];
+
+		if(uniform.type[0] === 'M') {
+			this.gl['uniform' + uniform.type](location, false, uniform.value);
+		} else {
+			this.gl['uniform' + uniform.type](location, uniform.value);
+		}
+	}
 }

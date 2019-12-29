@@ -23,8 +23,7 @@ export default class Controls {
 			fastMovement: false
 		};
 
-		let position = degrees2meters(49.8969, 36.2894);
-		//position = degrees2meters(0, 0);
+		let position = degrees2meters(40.76038, -73.97885);
 
 		this.target = {x: position.x, y: 0, z: position.z};
 		this.distance = 100;
@@ -103,7 +102,7 @@ export default class Controls {
 
 		window.addEventListener("wheel", function(e){
 			self.distanceTarget += 0.2 * e.deltaY;
-			self.distanceTarget = clamp(self.distanceTarget, 2, 1000);
+			self.distanceTarget = clamp(self.distanceTarget, 2, 1500);
 		});
 	}
 
@@ -180,6 +179,6 @@ export default class Controls {
 		const cameraPosition = vec3.add(this.target, cameraOffset);
 
 		this.camera.setPosition(cameraPosition.x, cameraPosition.y, cameraPosition.z);
-		this.camera.lookAt(this.target, true);
+		this.camera.lookAt(this.target, false);
 	}
 }

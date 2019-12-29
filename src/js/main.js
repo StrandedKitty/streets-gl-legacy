@@ -29,7 +29,7 @@ let objects = {
 };
 let meshes = {};
 
-let mesh, material, wrapper;
+let mesh, material, wrapper, buildings, buildingMaterial;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
@@ -72,10 +72,36 @@ function init() {
 	precision highp float;
 	out vec4 FragColor;
 	in vec3 vColor;
-	uniform float uSample;
+	uniform vec3 uSample;
 	
 	void main() {
-	  FragColor = vec4(vColor * uSample, 1);
+	  FragColor = vec4(0.2, 0.8, 0.2, 1);
+	}`;
+
+	const vertexShaderSource2 = `#version 300 es
+	precision highp float;
+	in vec3 position;
+	in vec3 color;
+	in vec3 normal;
+	out vec3 vColor;
+	out vec3 vNormal;
+	uniform mat4 projectionMatrix;
+	uniform mat4 modelViewMatrix;
+	
+	void main() {
+		vColor = color;
+		vNormal = normal;
+		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+	}`;
+	const fragmentShaderSource2 = `#version 300 es
+	precision highp float;
+	out vec4 FragColor;
+	in vec3 vColor;
+	in vec3 vNormal;
+	uniform vec3 uSample;
+	
+	void main() {
+	  FragColor = vec4(vColor, 1);
 	}`;
 
 	RP = new Renderer(canvas);
@@ -85,12 +111,16 @@ function init() {
 	Config.set('textureAnisotropy', RP.capabilities.maxAnisotropy);
 
 	scene = new SceneGraph();
+
 	wrapper = new Object3D();
 	scene.add(wrapper);
+	buildings = new Object3D();
+	wrapper.add(buildings);
+
 	camera = new PerspectiveCamera({
 		fov: 70,
 		near: 1,
-		far: 2000,
+		far: 10000,
 		aspect: window.innerWidth / window.innerHeight
 	});
 	wrapper.add(camera);
@@ -103,7 +133,16 @@ function init() {
 		vertexShader: vertexShaderSource,
 		fragmentShader: fragmentShaderSource,
 		uniforms: {
-			uSample: {type: '1f', value: 1}
+			uSample: {type: '3fv', value: [0.8, 0.1, 0]}
+		}
+	});
+
+	buildingMaterial = RP.createMaterial({
+		name: 'buildingMaterial',
+		vertexShader: vertexShaderSource2,
+		fragmentShader: fragmentShaderSource2,
+		uniforms: {
+			uSample: {type: '3fv', value: [0, 1, 0]}
 		}
 	});
 
@@ -120,14 +159,14 @@ function init() {
 
 	let position = degrees2meters(49.8969, 36.2894);
 	mesh.setPosition(position.x, 0, position.z);
-	mesh.rotation.x = toRad(30);
 	mesh.updateMatrix();
 
 	mesh.addAttribute({
 		name: 'color',
 		size: 3,
 		type: 'FLOAT'
-	}).setData(new Float32Array([
+	});
+	mesh.setAttributeData('color', new Float32Array([
 		0.0, 0.0, 1.0,
 		1.0, 0.0, 0.0,
 		0.0, 1.0, 0.0
@@ -209,6 +248,8 @@ function init() {
 }
 
 function animate() {
+	requestAnimationFrame(animate);
+
 	const now = performance.now();
 	delta = (now - time) / 1e3;
 	time = now;
@@ -218,23 +259,50 @@ function animate() {
 	wrapper.position.x = -camera.position.x;
 	wrapper.position.z = -camera.position.z;
 	wrapper.updateMatrix();
+	wrapper.updateMatrixWorld();
 
-	mesh.updateMatrix();
+	buildings.updateMatrix();
+	buildings.updateMatrixWorld();
 
 	camera.updateMatrixWorld();
 	camera.updateMatrixWorldInverse();
 
-	material.use();
 	material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
+	material.use();
+
+	RP.depthWrite = false;
 
 	for(let i = 0; i < wrapper.children.length; i++) {
-		let mesh = wrapper.children[i];
+		let object = wrapper.children[i];
 
-		if(mesh instanceof Mesh) {
-			let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, mesh.matrixWorld);
+		if(object instanceof Mesh) {
+			object.updateMatrix();
+			object.updateMatrixWorld();
+
+			let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, object.matrixWorld);
 			material.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
-			mesh.draw(material);
+			material.updateUniform('modelViewMatrix');
+
+			object.draw(material);
 		}
+	}
+
+	buildingMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
+	buildingMaterial.use();
+
+	RP.depthWrite = true;
+
+	for(let i = 0; i < buildings.children.length; i++) {
+		let object = buildings.children[i];
+
+		object.updateMatrix();
+		object.updateMatrixWorld();
+
+		let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, object.matrixWorld);
+		buildingMaterial.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
+		buildingMaterial.updateUniform('modelViewMatrix');
+
+		object.draw(buildingMaterial);
 	}
 
 	view.frustum.getViewSpaceVertices();
@@ -248,19 +316,44 @@ function animate() {
 		frustumTile.y = Math.floor(frustumTile.y);
 
 		const name = tileEncode(frustumTile.x, frustumTile.y);
-		let worker = workerManager.getFreeWorker();
+		const worker = workerManager.getFreeWorker();
 
-		/*if(!tiles.get(name) && worker) {
+		if(!tiles.get(name) && worker) {
 			let tile = new Tile(frustumTile.x, frustumTile.y, function (data) {
-				let geometry = new THREE.BufferGeometry();
-				let vertices = new Float32Array(data.vertices);
-				let normals = new Float32Array(data.normals);
-				let ids = data.ids;
-				let offsets = data.offsets;
-				let display = new Float32Array(vertices.length / 3);
-				let colors = new Uint8Array(data.colors);
-				let instances = data.instances;
+				const vertices = new Float32Array(data.vertices);
+				const normals = new Float32Array(data.normals);
+				const ids = data.ids;
+				const offsets = data.offsets;
+				const display = new Float32Array(vertices.length / 3);
+				const colors = new Uint8Array(data.colors);
+				const instances = data.instances;
 
+				let mesh = RP.createMesh({
+					vertices: vertices
+				});
+
+				mesh.addAttribute({
+					name: 'color',
+					size: 3,
+					type: 'UNSIGNED_BYTE',
+					normalized: true
+				});
+				mesh.addAttribute({
+					name: 'normal',
+					size: 3,
+					type: 'FLOAT',
+					normalized: false
+				});
+
+				mesh.setAttributeData('color', colors);
+				mesh.setAttributeData('normal', normals);
+
+				const pivot = tile2meters(this.x, this.y + 1);
+				mesh.setPosition(pivot.x, 0, pivot.z);
+
+				buildings.add(mesh);
+
+				/*let geometry = new THREE.BufferGeometry();
 				tile.displayBuffer = display;
 
 				geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
@@ -320,21 +413,19 @@ function animate() {
 					mesh.frustumCulled = false;
 					mesh.position.set(pivot.x, 0, pivot.z);
 					scene.add(mesh);
-				}
+				}*/
 			});
 
 			tiles.set(name, tile);
 
-			let ground = tile.getGroundMesh();
-			//scene.add(ground);
+			let ground = tile.getGroundMesh(RP);
+			wrapper.add(ground);
 
 			tile.load(worker);
-		}*/
+		}
+
+		RP.gl.clearDepth(1.0);
 	}
-
-	//renderer.render(scene, camera);
-
-	requestAnimationFrame(animate);
 }
 
 export {scene};
