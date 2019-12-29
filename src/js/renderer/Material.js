@@ -21,6 +21,8 @@ export default class Material {
 	use() {
 		this.gl.useProgram(this.program.WebGLProgram);
 
+		let texturesUsed = 0;
+
 		for (const [name, uniform] of Object.entries(this.uniforms)) {
 			let location = this.uniformsLocations[name];
 
@@ -31,6 +33,11 @@ export default class Material {
 
 			if(uniform.type[0] === 'M') {
 				this.gl['uniform' + uniform.type](location, false, uniform.value);
+			} else if(uniform.type === 'texture') {
+				this.gl.activeTexture(this.gl.TEXTURE0 + texturesUsed);
+				this.gl.bindTexture(this.gl.TEXTURE_2D, uniform.value.WebGLTexture);
+				this.gl.uniform1i(this.uniformsLocations.name, texturesUsed);
+				++texturesUsed;
 			} else {
 				this.gl['uniform' + uniform.type](location, uniform.value);
 			}

@@ -11,6 +11,14 @@ Shapes.plane = function(x, z) {
 		-hx, 0, -hz,
 		-hx, 0, hz
 	]);
+	this.uv = new Float32Array([
+		1, 0,
+		0, 0,
+		1, 1,
+		1, 1,
+		0, 0,
+		0, 1
+	]);
 };
 
 export default Shapes;

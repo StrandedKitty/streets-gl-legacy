@@ -4,6 +4,8 @@ import Mesh from "./Mesh";
 import WebGLCapabilities from "./WebGLCapabilities";
 import VAO from "./VAO";
 import Attribute from "./Attribute";
+import Texture from "./Texture";
+import Extensions from "./Extensions";
 
 export default class Renderer {
 	constructor(canvas) {
@@ -15,6 +17,7 @@ export default class Renderer {
 		}
 
 		this.capabilities = new WebGLCapabilities(this.gl);
+		this.extensions = new Extensions(this.gl);
 
 		this.gl.enable(this.gl.DEPTH_TEST);
 		this.gl.depthFunc(this.gl.LEQUAL);
@@ -26,6 +29,10 @@ export default class Renderer {
 
 	createMesh(params) {
 		return new Mesh(this, params);
+	}
+
+	createTexture(params) {
+		return new Texture(this, params);
 	}
 
 	setSize(width, height) {

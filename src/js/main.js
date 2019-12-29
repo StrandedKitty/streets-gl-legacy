@@ -15,6 +15,7 @@ import Object3D from "./renderer/Object3D";
 import Mesh from "./renderer/Mesh";
 import vec3 from "./math/vec3";
 import mat4 from "./math/mat4";
+import Texture from "./renderer/Texture";
 
 let scene,
 	camera,
@@ -59,23 +60,26 @@ function init() {
 	const vertexShaderSource = `#version 300 es
 	precision highp float;
 	in vec3 position;
-	in vec3 color;
-	out vec3 vColor;
+	in vec2 uv;
+	out vec2 vUv;
+	
 	uniform mat4 projectionMatrix;
 	uniform mat4 modelViewMatrix;
 	
 	void main() {
-		vColor = color;
+		vUv = uv;
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	}`;
 	const fragmentShaderSource = `#version 300 es
 	precision highp float;
 	out vec4 FragColor;
-	in vec3 vColor;
+	in vec2 vUv;
+	
 	uniform vec3 uSample;
+	uniform sampler2D sampleTexture;
 	
 	void main() {
-	  FragColor = vec4(0.2, 0.8, 0.2, 1);
+	  FragColor = texture(sampleTexture, vUv);
 	}`;
 
 	const vertexShaderSource2 = `#version 300 es
@@ -85,6 +89,7 @@ function init() {
 	in vec3 normal;
 	out vec3 vColor;
 	out vec3 vNormal;
+	
 	uniform mat4 projectionMatrix;
 	uniform mat4 modelViewMatrix;
 	
@@ -98,6 +103,7 @@ function init() {
 	out vec4 FragColor;
 	in vec3 vColor;
 	in vec3 vNormal;
+	
 	uniform vec3 uSample;
 	
 	void main() {
@@ -133,7 +139,8 @@ function init() {
 		vertexShader: vertexShaderSource,
 		fragmentShader: fragmentShaderSource,
 		uniforms: {
-			uSample: {type: '3fv', value: [0.8, 0.1, 0]}
+			uSample: {type: '3fv', value: [0.8, 0.1, 0]},
+			sampleTexture: {type: 'texture', value: RP.createTexture({url: '/textures/grid.jpg'})}
 		}
 	});
 
@@ -160,17 +167,6 @@ function init() {
 	let position = degrees2meters(49.8969, 36.2894);
 	mesh.setPosition(position.x, 0, position.z);
 	mesh.updateMatrix();
-
-	mesh.addAttribute({
-		name: 'color',
-		size: 3,
-		type: 'FLOAT'
-	});
-	mesh.setAttributeData('color', new Float32Array([
-		0.0, 0.0, 1.0,
-		1.0, 0.0, 0.0,
-		0.0, 1.0, 0.0
-	]));
 
 	/*let params = {
 		meshRotationY: 0,

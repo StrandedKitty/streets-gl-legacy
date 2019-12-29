@@ -61,18 +61,20 @@ export default class Tile {
 		const tileSize = 40075016.7 / (1 << 16);
 		const position = tile2meters(this.x, this.y + 1);
 		let vertices = (new Shapes.plane(tileSize, tileSize)).vertices;
+		let uv = (new Shapes.plane(tileSize, tileSize)).uv;
 
 		this.groundMesh = renderer.createMesh({
 			vertices: vertices
 		});
 
 		this.groundMesh.addAttribute({
-			name: 'color',
-			size: 3,
+			name: 'uv',
+			size: 2,
 			type: 'FLOAT'
 		});
 
-		this.groundMesh.setAttributeData('color', vertices);
+		this.groundMesh.setAttributeData('uv', uv);
+		this.groundMesh.updateAttribute('uv');
 
 		this.groundMesh.id = ~~(Math.random() * 1000);
 
