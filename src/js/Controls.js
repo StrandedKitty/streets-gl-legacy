@@ -26,7 +26,7 @@ export default class Controls {
 		let position = degrees2meters(40.76038, -73.97885);
 
 		this.target = {x: position.x, y: 0, z: position.z};
-		this.distance = 100;
+		this.distance = 1200;
 		this.distanceTarget = this.distance;
 		this.direction = {x: -1, y: -1, z: -1};
 
@@ -102,7 +102,7 @@ export default class Controls {
 
 		window.addEventListener("wheel", function(e){
 			self.distanceTarget += 0.2 * e.deltaY;
-			self.distanceTarget = clamp(self.distanceTarget, 2, 1500);
+			self.distanceTarget = clamp(self.distanceTarget, 2, 2500);
 		});
 	}
 

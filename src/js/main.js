@@ -140,7 +140,7 @@ function init() {
 		fragmentShader: fragmentShaderSource,
 		uniforms: {
 			uSample: {type: '3fv', value: [0.8, 0.1, 0]},
-			sampleTexture: {type: 'texture', value: RP.createTexture({url: '/textures/grid.jpg'})}
+			sampleTexture: {type: 'texture', value: RP.createTexture({url: '/textures/grid.jpg', anisotropy: Config.textureAnisotropy})}
 		}
 	});
 
