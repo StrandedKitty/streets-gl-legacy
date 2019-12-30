@@ -1,11 +1,9 @@
-import Program from "./Program";
 import Material from "./Material";
 import Mesh from "./Mesh";
 import WebGLCapabilities from "./WebGLCapabilities";
-import VAO from "./VAO";
-import Attribute from "./Attribute";
 import Texture from "./Texture";
 import Extensions from "./Extensions";
+import Framebuffer from "./Framebuffer";
 
 export default class Renderer {
 	constructor(canvas) {
@@ -33,6 +31,10 @@ export default class Renderer {
 
 	createTexture(params) {
 		return new Texture(this, params);
+	}
+
+	createFramebuffer(params) {
+		return new Framebuffer(this, params);
 	}
 
 	setSize(width, height) {

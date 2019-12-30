@@ -1,4 +1,4 @@
-import {degrees2meters, meters2degress, meters2tile, tile2meters, tileEncode, toRad} from './Utils';
+import {degrees2meters, tile2meters, tileEncode, toRad} from './Utils';
 import Config from './Config';
 import Frustum from './Frustum';
 import Controls from './Controls';
@@ -15,7 +15,6 @@ import Object3D from "./renderer/Object3D";
 import Mesh from "./renderer/Mesh";
 import vec3 from "./math/vec3";
 import mat4 from "./math/mat4";
-import Texture from "./renderer/Texture";
 
 let scene,
 	camera,
