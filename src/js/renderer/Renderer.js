@@ -43,6 +43,14 @@ export default class Renderer {
 		this.gl.viewport(0, 0, width, height);
 	}
 
+	bindFramebuffer(fb) {
+		if(fb instanceof Framebuffer) {
+			this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, fb.WebGLFramebuffer);
+		} else {
+			this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, null);
+		}
+	}
+
 	set culling(state) {
 		if(state) this.gl.enable(this.gl.CULL_FACE);
 		else this.gl.disable(this.gl.CULL_FACE);

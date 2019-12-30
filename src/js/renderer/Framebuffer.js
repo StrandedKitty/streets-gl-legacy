@@ -5,20 +5,12 @@ export default class Framebuffer {
 		this.textures = params.textures || [];
 		this.WebGLFramebuffer = this.gl.createFramebuffer();
 
-		this.bind();
+		renderer.bindFramebuffer(this);
 
 		for(let i = 0; i < this.textures.length; i++) {
-			this.gl.framebufferTexture2D(this.gl.DRAW_FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0 + i, this.gl.TEXTURE_2D, this.textures[i], 0);
+			this.gl.framebufferTexture2D(this.gl.DRAW_FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0 + i, this.gl.TEXTURE_2D, this.textures[i].WebGLTexture, 0);
 		}
 
-		this.unbind();
-	}
-
-	bind() {
-		this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, this.WebGLFramebuffer);
-	}
-
-	unbind() {
-		this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, null);
+		renderer.bindFramebuffer(null);
 	}
 }
