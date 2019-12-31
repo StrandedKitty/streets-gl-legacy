@@ -12,10 +12,6 @@ export default class Material {
 		this.defines = params.defines || {};
 		this.name = params.name;
 		this.program = new Program(renderer, this.shaders);
-
-		for (const [name, uniform] of Object.entries(this.uniforms)) {
-			this.uniformsLocations[name] = this.gl.getUniformLocation(this.program.WebGLProgram, name);
-		}
 	}
 
 	use() {
@@ -26,9 +22,10 @@ export default class Material {
 		for (const [name, uniform] of Object.entries(this.uniforms)) {
 			let location = this.uniformsLocations[name];
 
-			if(location === undefined) {
-				this.uniformsLocations[name] = this.gl.getUniformLocation(this.program.WebGLProgram, name);
-				location = this.uniformsLocations[name];
+			if(location === undefined || location === null) {
+				location = this.gl.getUniformLocation(this.program.WebGLProgram, name);
+				if(location === null) console.error('Location for uniform ' + name + ' is null.');
+				this.uniformsLocations[name] = location;
 			}
 
 			if(uniform.type[0] === 'M') {
@@ -36,7 +33,7 @@ export default class Material {
 			} else if(uniform.type === 'texture') {
 				this.gl.activeTexture(this.gl.TEXTURE0 + texturesUsed);
 				this.gl.bindTexture(this.gl.TEXTURE_2D, uniform.value.WebGLTexture);
-				this.gl.uniform1i(this.uniformsLocations.name, texturesUsed);
+				this.gl.uniform1i(this.uniformsLocations[name], texturesUsed);
 				++texturesUsed;
 			} else {
 				this.gl['uniform' + uniform.type](location, uniform.value);

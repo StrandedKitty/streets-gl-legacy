@@ -9,7 +9,7 @@ export default class Renderer {
 	constructor(canvas) {
 		this.canvas = canvas;
 
-		this.gl = canvas.getContext("webgl2");
+		this.gl = canvas.getContext("webgl2", { antialias: false });
 		if (!this.gl) {
 			console.error("WebGL 2 not available");
 		}
@@ -19,6 +19,8 @@ export default class Renderer {
 
 		this.gl.enable(this.gl.DEPTH_TEST);
 		this.gl.depthFunc(this.gl.LEQUAL);
+		this.gl.clearDepth(1);
+		this.gl.clearColor(0.7, 0.9, 0.9, 1);
 	}
 
 	createMaterial(params) {
@@ -45,9 +47,9 @@ export default class Renderer {
 
 	bindFramebuffer(fb) {
 		if(fb instanceof Framebuffer) {
-			this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, fb.WebGLFramebuffer);
+			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, fb.WebGLFramebuffer);
 		} else {
-			this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, null);
+			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
 		}
 	}
 

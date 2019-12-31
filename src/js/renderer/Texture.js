@@ -8,8 +8,8 @@ export default class Texture {
 		this.minFilter = params.minFilter || 'LINEAR_MIPMAP_LINEAR';
 		this.magFilter = params.magFilter || 'LINEAR';
 		this.wrap = params.wrap || 'repeat';
-		this.sizeX = params.sizeX || 1;
-		this.sizeY = params.sizeY || 1;
+		this.width = params.width || 1;
+		this.height = params.height || 1;
 		this.format = params.format || 'RGBA';
 		this.internalFormat = params.internalFormat || 'RGBA';
 		this.type = params.type || 'UNSIGNED_BYTE';
@@ -18,7 +18,7 @@ export default class Texture {
 		this.gl.bindTexture(this.gl.TEXTURE_2D, this.WebGLTexture);
 
 		if(this.url) {
-			this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
+			this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl[this.minFilter]);
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl[this.magFilter]);
 			this.gl.generateMipmap(this.gl.TEXTURE_2D);
@@ -26,7 +26,7 @@ export default class Texture {
 			this.updateWrapping();
 			this.load();
 		} else {
-			this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl[this.internalFormat], this.sizeX, this.sizeY, 0, this.gl[this.format], this.gl[this.type], null);
+			this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl[this.internalFormat], this.width, this.height, 0, this.gl[this.format], this.gl[this.type], null);
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl[this.minFilter]);
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl[this.magFilter]);
 		}

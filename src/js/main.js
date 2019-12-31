@@ -30,6 +30,9 @@ let objects = {
 let meshes = {};
 
 let mesh, material, wrapper, buildings, buildingMaterial;
+let quad, quadMaterial;
+
+let MRT = {};
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
@@ -56,6 +59,38 @@ function init() {
 	renderer.precision = 'highp';
 	renderer.sortObjects = true;*/
 
+	const vertexShaderSourceQuad = `#version 300 es
+	precision highp float;
+	in vec3 position;
+	
+	void main() {
+		gl_Position = vec4(position, 1.0);
+	}`;
+	const fragmentShaderSourceQuad = `#version 300 es
+	precision highp float;
+	out vec4 FragColor;
+	
+	uniform sampler2D uColor;
+	uniform sampler2D uDepth;
+	
+	float perspectiveDepthToViewZ( const in float invClipZ, const in float near, const in float far ) {
+		return (near * far) / ((far - near) * invClipZ - far);
+	}
+	float viewZToOrthographicDepth( const in float viewZ, const in float near, const in float far ) {
+		return (viewZ + near) / (near - far);
+	}
+	float readDepth(float depth, float near, float far) {
+		float viewZ = perspectiveDepthToViewZ(depth, near, far);
+		return viewZToOrthographicDepth(viewZ, near, far);
+	}
+	
+	void main() {
+		vec2 fragmentPosition = vec2(gl_FragCoord.xy) / vec2(textureSize(uColor, 0));
+		vec4 color = texture(uColor, fragmentPosition);
+		float depth = readDepth(texture(uDepth, fragmentPosition).x, 1., 10000.);
+		FragColor = vec4(color.xyz, 1.);
+	}`;
+
 	const vertexShaderSource = `#version 300 es
 	precision highp float;
 	in vec3 position;
@@ -71,14 +106,13 @@ function init() {
 	}`;
 	const fragmentShaderSource = `#version 300 es
 	precision highp float;
-	out vec4 FragColor;
+	layout(location = 0) out vec4 FragColor;
 	in vec2 vUv;
 	
-	uniform vec3 uSample;
 	uniform sampler2D sampleTexture;
 	
 	void main() {
-	  FragColor = texture(sampleTexture, vUv);
+		FragColor = texture(sampleTexture, vUv);
 	}`;
 
 	const vertexShaderSource2 = `#version 300 es
@@ -99,14 +133,12 @@ function init() {
 	}`;
 	const fragmentShaderSource2 = `#version 300 es
 	precision highp float;
-	out vec4 FragColor;
+	layout(location = 0) out vec4 FragColor;
 	in vec3 vColor;
 	in vec3 vNormal;
 	
-	uniform vec3 uSample;
-	
 	void main() {
-	  FragColor = vec4(vColor, 1);
+		FragColor = vec4(vColor, 1);
 	}`;
 
 	RP = new Renderer(canvas);
@@ -138,7 +170,6 @@ function init() {
 		vertexShader: vertexShaderSource,
 		fragmentShader: fragmentShaderSource,
 		uniforms: {
-			uSample: {type: '3fv', value: [0.8, 0.1, 0]},
 			sampleTexture: {type: 'texture', value: RP.createTexture({url: '/textures/grid.jpg', anisotropy: Config.textureAnisotropy})}
 		}
 	});
@@ -147,9 +178,7 @@ function init() {
 		name: 'buildingMaterial',
 		vertexShader: vertexShaderSource2,
 		fragmentShader: fragmentShaderSource2,
-		uniforms: {
-			uSample: {type: '3fv', value: [0, 1, 0]}
-		}
+		uniforms: {}
 	});
 
 	mesh = RP.createMesh({
@@ -167,69 +196,43 @@ function init() {
 	mesh.setPosition(position.x, 0, position.z);
 	mesh.updateMatrix();
 
-	/*let params = {
-		meshRotationY: 0,
-		cameraPositionY: 0,
-		cameraPositionX: 0
-	};
-	gui.add(params, 'meshRotationY', 0, 360).onChange(function(value) {
-		mesh.rotation.y = toRad(value);
-		mesh.updateMatrix();
+	MRT.color = RP.createTexture({
+		width: window.innerWidth,
+		height: window.innerHeight,
+		minFilter: 'NEAREST',
+		magFilter: 'NEAREST',
+		wrap: 'clamp',
+		format: 'RGBA',
+		internalFormat: 'RGBA',
+		type: 'UNSIGNED_BYTE'
 	});
-	gui.add(params, 'cameraPositionY', 0, 5).onChange(function(value) {
-		camera.position.y = value;
-		camera.lookAt([0,0,-2]);
-		camera.updateMatrixWorld();
-		camera.updateMatrixWorldInverse();
+
+	MRT.fb = RP.createFramebuffer({
+		width: window.innerWidth,
+		height: window.innerHeight,
+		textures: [MRT.color]
 	});
-	gui.add(params, 'cameraPositionX', -5, 5).onChange(function(value) {
-		camera.position.x = value;
-		camera.lookAt([0,0,-2]);
-		camera.updateMatrixWorld();
-		camera.updateMatrixWorldInverse();
-	});*/
 
-	/*let vao = gl.createVertexArray();
-	gl.bindVertexArray(vao);
+	quad = RP.createMesh({
+		vertices: new Float32Array([
+			-1, 1, 0,
+			-1, -1, 0,
+			1, 1, 0,
+			-1, -1, 0,
+			1, -1, 0,
+			1, 1, 0
+		])
+	});
 
-	let colorBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-	let colors = [
-		0.0, 0.0, 1.0,
-		1.0, 0.0, 0.0,
-		0.0, 1.0, 0.0
-	];
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-	let colorAttributeLocation = gl.getAttribLocation(material.program.WebGLProgram, "color");
-	gl.vertexAttribPointer(colorAttributeLocation, 3, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(colorAttributeLocation);
-	gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-	let positionBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-	let positions = [
-		-0.5, -0.5, 0.0,
-		0.5, -0.5, 0.0,
-		0.0, 0.5, 0.0
-	];
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-	let positionAttributeLocation = gl.getAttribLocation(material.program.WebGLProgram, "position");
-	gl.vertexAttribPointer(positionAttributeLocation, 3, gl.FLOAT, false, 0, 0);
-	gl.enableVertexAttribArray(positionAttributeLocation);
-	gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-	gl.bindVertexArray(null);
-
-	gl.bindVertexArray(vao);
-	gl.drawArrays(gl.TRIANGLES, 0, 3);*/
-	/*let groundGeometry = new THREE.PlaneBufferGeometry(1000, 1000);
-	groundGeometry.rotateX(toRad(-90));
-	let ground = new THREE.Mesh(groundGeometry, new THREE.MeshBasicMaterial({color: '#5b8648'}));
-	scene.add(ground);
-
-	let tileGeometry = new THREE.PlaneBufferGeometry(40075016.7 / (1 << 16), 40075016.7 / (1 << 16));
-	tileGeometry.rotateX(toRad(-90));
-	meshes.tile = new THREE.Mesh(tileGeometry, new THREE.MeshBasicMaterial({color: '#4084ff'}));*/
+	quadMaterial = RP.createMaterial({
+		name: 'quad',
+		vertexShader: vertexShaderSourceQuad,
+		fragmentShader: fragmentShaderSourceQuad,
+		uniforms: {
+			uColor: {type: 'texture', value: MRT.color},
+			uDepth: {type: 'texture', value: MRT.fb.depth}
+		}
+	});
 
 	workerManager = new MapWorkerManager(navigator.hardwareConcurrency, './js/worker.js');
 
@@ -239,6 +242,7 @@ function init() {
 		camera.updateProjectionMatrix();
 
 		RP.setSize(window.innerWidth, window.innerHeight);
+		MRT.fb.setSize(window.innerWidth, window.innerHeight);
 	}, false);
 }
 
@@ -262,6 +266,15 @@ function animate() {
 	camera.updateMatrixWorld();
 	camera.updateMatrixWorldInverse();
 
+	let gl = RP.gl;
+
+	RP.depthTest = true;
+
+	RP.bindFramebuffer(MRT.fb);
+
+	RP.depthWrite = true;
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
 	material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
 	material.use();
 
@@ -284,7 +297,6 @@ function animate() {
 
 	buildingMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
 	buildingMaterial.use();
-
 	RP.depthWrite = true;
 
 	for(let i = 0; i < buildings.children.length; i++) {
@@ -299,6 +311,13 @@ function animate() {
 
 		object.draw(buildingMaterial);
 	}
+	RP.bindFramebuffer(null);
+
+	RP.depthWrite = false;
+	RP.depthTest = false;
+
+	quadMaterial.use();
+	quad.draw(quadMaterial);
 
 	view.frustum.getViewSpaceVertices();
 	let wsFrustum = view.frustum.toSpace(camera.matrix);
@@ -418,8 +437,6 @@ function animate() {
 
 			tile.load(worker);
 		}
-
-		RP.gl.clearDepth(1.0);
 	}
 }
 
