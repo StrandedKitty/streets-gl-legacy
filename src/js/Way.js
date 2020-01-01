@@ -1,6 +1,7 @@
 import earcut from './earcut';
 import OSMDescriptor from "./OSMDescriptor";
 import {toRad, mercatorScaleFactor} from "./Utils";
+import vec3 from "./math/vec3";
 
 export default class Way {
 	constructor(id, nodes, vertices, tags, pivot) {
@@ -87,12 +88,18 @@ export default class Way {
 			this.mesh.vertices.push(vertex.x, height, vertex.z);
 			this.mesh.vertices.push(vertex.x, minHeight, vertex.z);
 
+			const normal = this.calculateNormal(
+				new vec3(nextVertex.x, minHeight, nextVertex.z),
+				new vec3(vertex.x, height, vertex.z),
+				new vec3(vertex.x, minHeight, vertex.z)
+			);
+
 			this.mesh.vertices.push(nextVertex.x, minHeight, nextVertex.z);
 			this.mesh.vertices.push(nextVertex.x, height, nextVertex.z);
 			this.mesh.vertices.push(vertex.x, height, vertex.z);
 
 			for(let j = 0; j < 6; j++) {
-				this.mesh.normals.push(0, 1, 0);
+				this.mesh.normals.push(normal.x, normal.y, normal.z);
 				this.mesh.colors.push(...facadeColor);
 			}
 		}
@@ -193,5 +200,12 @@ export default class Way {
 		}
 
 		return points;
+	}
+
+	calculateNormal(vA, vB, vC) {
+		let cb = vec3.sub(vC, vB);
+		let ab = vec3.sub(vA, vB);
+		cb = vec3.cross(cb, ab);
+		return vec3.normalize(cb);
 	}
 }

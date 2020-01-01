@@ -96,23 +96,29 @@ function init() {
 	in vec3 position;
 	in vec2 uv;
 	out vec2 vUv;
+	out vec3 vNormal;
 	
 	uniform mat4 projectionMatrix;
 	uniform mat4 modelViewMatrix;
+	uniform mat3 normalMatrix;
 	
 	void main() {
 		vUv = uv;
+		vec3 normal = normalMatrix * vec3(0, 1, 0);
+		vNormal = normal;
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	}`;
 	const fragmentShaderSource = `#version 300 es
 	precision highp float;
 	layout(location = 0) out vec4 FragColor;
 	in vec2 vUv;
+	in vec3 vNormal;
 	
 	uniform sampler2D sampleTexture;
 	
 	void main() {
-		FragColor = texture(sampleTexture, vUv);
+		//FragColor = texture(sampleTexture, vUv);
+		FragColor = vec4(vNormal * 0.5 + 0.5, 1);
 	}`;
 
 	const vertexShaderSource2 = `#version 300 es
@@ -125,10 +131,13 @@ function init() {
 	
 	uniform mat4 projectionMatrix;
 	uniform mat4 modelViewMatrix;
+	uniform mat3 normalMatrix;
 	
 	void main() {
 		vColor = color;
-		vNormal = normal;
+		vec3 transformedNormal = normal;
+		transformedNormal = vec3(normalMatrix * transformedNormal);
+		vNormal = transformedNormal;
 		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 	}`;
 	const fragmentShaderSource2 = `#version 300 es
@@ -138,7 +147,7 @@ function init() {
 	in vec3 vNormal;
 	
 	void main() {
-		FragColor = vec4(vColor, 1);
+		FragColor = vec4(vNormal * 0.5 + 0.5, 1);
 	}`;
 
 	RP = new Renderer(canvas);
@@ -288,8 +297,11 @@ function animate() {
 			object.updateMatrixWorld();
 
 			let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, object.matrixWorld);
+			let normalMatrix = mat4.normalMatrix(modelViewMatrix);
 			material.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
+			material.uniforms.normalMatrix = {type: 'Matrix3fv', value: normalMatrix};
 			material.updateUniform('modelViewMatrix');
+			material.updateUniform('normalMatrix');
 
 			object.draw(material);
 		}
@@ -306,8 +318,11 @@ function animate() {
 		object.updateMatrixWorld();
 
 		let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, object.matrixWorld);
+		let normalMatrix = mat4.normalMatrix(modelViewMatrix);
 		buildingMaterial.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
+		buildingMaterial.uniforms.normalMatrix = {type: 'Matrix3fv', value: normalMatrix};
 		buildingMaterial.updateUniform('modelViewMatrix');
+		buildingMaterial.updateUniform('normalMatrix');
 
 		object.draw(buildingMaterial);
 	}

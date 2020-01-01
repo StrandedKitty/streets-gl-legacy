@@ -24,19 +24,21 @@ export default class Material {
 
 			if(location === undefined || location === null) {
 				location = this.gl.getUniformLocation(this.program.WebGLProgram, name);
-				if(location === null) console.error('Location for uniform ' + name + ' is null.');
+				if(location === null) console.error('Location for uniform ' + name + ' is ' + location);
 				this.uniformsLocations[name] = location;
 			}
 
-			if(uniform.type[0] === 'M') {
-				this.gl['uniform' + uniform.type](location, false, uniform.value);
-			} else if(uniform.type === 'texture') {
-				this.gl.activeTexture(this.gl.TEXTURE0 + texturesUsed);
-				this.gl.bindTexture(this.gl.TEXTURE_2D, uniform.value.WebGLTexture);
-				this.gl.uniform1i(this.uniformsLocations[name], texturesUsed);
-				++texturesUsed;
-			} else {
-				this.gl['uniform' + uniform.type](location, uniform.value);
+			if(location !== null) {
+				if(uniform.type[0] === 'M') {
+					this.gl['uniform' + uniform.type](location, false, uniform.value);
+				} else if(uniform.type === 'texture') {
+					this.gl.activeTexture(this.gl.TEXTURE0 + texturesUsed);
+					this.gl.bindTexture(this.gl.TEXTURE_2D, uniform.value.WebGLTexture);
+					this.gl.uniform1i(this.uniformsLocations[name], texturesUsed);
+					++texturesUsed;
+				} else {
+					this.gl['uniform' + uniform.type](location, uniform.value);
+				}
 			}
 		}
 	}
