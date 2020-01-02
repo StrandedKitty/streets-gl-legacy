@@ -15,6 +15,7 @@ import Object3D from "./renderer/Object3D";
 import Mesh from "./renderer/Mesh";
 import vec3 from "./math/vec3";
 import mat4 from "./math/mat4";
+import GBuffer from "./renderer/GBuffer";
 
 let scene,
 	camera,
@@ -36,6 +37,7 @@ let MRT = {};
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
+let gBuffer;
 
 init();
 animate();
@@ -210,6 +212,20 @@ function init() {
 	mesh.setPosition(position.x, 0, position.z);
 	mesh.updateMatrix();
 
+	gBuffer = new GBuffer(RP, window.innerWidth, window.innerHeight, [
+		{
+			name: 'color',
+			internalFormat: 'RGBA8',
+			format: 'RGBA',
+		}, {
+			name: 'normal',
+			internalFormat: 'RGB8',
+			format: 'RGB',
+		}
+	]);
+
+	console.log(gBuffer)
+
 	MRT.color = RP.createTexture({
 		width: window.innerWidth,
 		height: window.innerHeight,
@@ -270,9 +286,9 @@ function init() {
 		vertexShader: vertexShaderSourceQuad,
 		fragmentShader: fragmentShaderSourceQuad,
 		uniforms: {
-			uColor: {type: 'texture', value: MRT.color},
-			uNormal: {type: 'texture', value: MRT.normal},
-			uDepth: {type: 'texture', value: MRT.framebufferFinal.depth}
+			uColor: {type: 'texture', value: gBuffer.textures.color},
+			uNormal: {type: 'texture', value: gBuffer.textures.normal},
+			uDepth: {type: 'texture', value: gBuffer.framebuffer.depth}
 		}
 	});
 
@@ -313,7 +329,7 @@ function animate() {
 
 	RP.depthTest = true;
 
-	RP.bindFramebuffer(MRT.framebuffer);
+	RP.bindFramebuffer(gBuffer.framebufferSource);
 
 	RP.depthWrite = true;
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -361,7 +377,7 @@ function animate() {
 		object.draw(buildingMaterial);
 	}
 
-	RP.blitFramebuffer(MRT.framebuffer, MRT.framebufferFinal);
+	RP.blitFramebuffer(gBuffer.framebufferSource, gBuffer.framebuffer);
 
 	RP.bindFramebuffer(null);
 
