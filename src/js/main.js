@@ -70,6 +70,7 @@ function init() {
 	precision highp float;
 	out vec4 FragColor;
 	
+	uniform sampler2D uNormal;
 	uniform sampler2D uColor;
 	uniform sampler2D uDepth;
 	
@@ -87,8 +88,9 @@ function init() {
 	void main() {
 		vec2 fragmentPosition = vec2(gl_FragCoord.xy) / vec2(textureSize(uColor, 0));
 		vec4 color = texture(uColor, fragmentPosition);
+		vec3 normal = vec3(texture(uNormal, fragmentPosition)) * 2. - 1.;
 		float depth = readDepth(texture(uDepth, fragmentPosition).x, 1., 10000.);
-		FragColor = vec4(color.xyz, 1.);
+		FragColor = fragmentPosition.x > .5 ? vec4(normal, 1.) : color;
 	}`;
 
 	const vertexShaderSource = `#version 300 es
@@ -110,15 +112,16 @@ function init() {
 	}`;
 	const fragmentShaderSource = `#version 300 es
 	precision highp float;
-	layout(location = 0) out vec4 FragColor;
+	layout(location = 0) out vec4 outColor;
+	layout(location = 1) out vec3 outNormal;
 	in vec2 vUv;
 	in vec3 vNormal;
 	
 	uniform sampler2D sampleTexture;
 	
 	void main() {
-		//FragColor = texture(sampleTexture, vUv);
-		FragColor = vec4(vNormal * 0.5 + 0.5, 1);
+		outColor = texture(sampleTexture, vUv);
+		outNormal = vNormal * 0.5 + 0.5;
 	}`;
 
 	const vertexShaderSource2 = `#version 300 es
@@ -142,12 +145,14 @@ function init() {
 	}`;
 	const fragmentShaderSource2 = `#version 300 es
 	precision highp float;
-	layout(location = 0) out vec4 FragColor;
+	layout(location = 0) out vec4 outColor;
+	layout(location = 1) out vec3 outNormal;
 	in vec3 vColor;
 	in vec3 vNormal;
 	
 	void main() {
-		FragColor = vec4(vNormal * 0.5 + 0.5, 1);
+		outColor = vec4(vColor, 1.);
+		outNormal = vNormal * 0.5 + 0.5;
 	}`;
 
 	RP = new Renderer(canvas);
@@ -212,14 +217,41 @@ function init() {
 		magFilter: 'NEAREST',
 		wrap: 'clamp',
 		format: 'RGBA',
-		internalFormat: 'RGBA',
+		internalFormat: 'RGBA8',
+		type: 'UNSIGNED_BYTE'
+	});
+	MRT.normal = RP.createTexture({
+		width: window.innerWidth,
+		height: window.innerHeight,
+		minFilter: 'NEAREST',
+		magFilter: 'NEAREST',
+		wrap: 'clamp',
+		format: 'RGB',
+		internalFormat: 'RGB8',
 		type: 'UNSIGNED_BYTE'
 	});
 
-	MRT.fb = RP.createFramebuffer({
+	MRT.framebufferFinal = RP.createFramebuffer({
 		width: window.innerWidth,
 		height: window.innerHeight,
-		textures: [MRT.color]
+		textures: [MRT.color, MRT.normal]
+	});
+
+	MRT.framebuffer = RP.createFramebufferMultisample({
+		width: window.innerWidth,
+		height: window.innerHeight,
+		renderbuffers: [
+			RP.createRenderbuffer({
+				width: window.innerWidth,
+				height: window.innerHeight,
+				internalFormat: 'RGBA8'
+			}),
+			RP.createRenderbuffer({
+				width: window.innerWidth,
+				height: window.innerHeight,
+				internalFormat: 'RGB8'
+			})
+		]
 	});
 
 	quad = RP.createMesh({
@@ -239,7 +271,8 @@ function init() {
 		fragmentShader: fragmentShaderSourceQuad,
 		uniforms: {
 			uColor: {type: 'texture', value: MRT.color},
-			uDepth: {type: 'texture', value: MRT.fb.depth}
+			uNormal: {type: 'texture', value: MRT.normal},
+			uDepth: {type: 'texture', value: MRT.framebufferFinal.depth}
 		}
 	});
 
@@ -251,7 +284,8 @@ function init() {
 		camera.updateProjectionMatrix();
 
 		RP.setSize(window.innerWidth, window.innerHeight);
-		MRT.fb.setSize(window.innerWidth, window.innerHeight);
+		MRT.framebuffer.setSize(window.innerWidth, window.innerHeight);
+		MRT.framebufferFinal.setSize(window.innerWidth, window.innerHeight);
 	}, false);
 }
 
@@ -279,7 +313,7 @@ function animate() {
 
 	RP.depthTest = true;
 
-	RP.bindFramebuffer(MRT.fb);
+	RP.bindFramebuffer(MRT.framebuffer);
 
 	RP.depthWrite = true;
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -326,6 +360,9 @@ function animate() {
 
 		object.draw(buildingMaterial);
 	}
+
+	RP.blitFramebuffer(MRT.framebuffer, MRT.framebufferFinal);
+
 	RP.bindFramebuffer(null);
 
 	RP.depthWrite = false;

@@ -1,9 +1,9 @@
-export default class Framebuffer {
+export default class FramebufferMultisample {
 	constructor(renderer, params) {
 		this.renderer = renderer;
 		this.gl = renderer.gl;
 
-		this.textures = params.textures || [];
+		this.renderbuffers = params.renderbuffers || [];
 		this.width = params.width || 1;
 		this.height = params.height || 1;
 		this.WebGLFramebuffer = this.gl.createFramebuffer();
@@ -12,24 +12,18 @@ export default class Framebuffer {
 
 		let attachments = [];
 
-		for(let i = 0; i < this.textures.length; i++) {
+		for(let i = 0; i < this.renderbuffers.length; i++) {
 			const attachment = this.gl.COLOR_ATTACHMENT0 + i;
-			this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, attachment, this.gl.TEXTURE_2D, this.textures[i].WebGLTexture, 0);
+			this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, attachment, this.gl.RENDERBUFFER, this.renderbuffers[i].WebGLRenderbuffer);
 			attachments.push(attachment);
 		}
 
-		let depthTexture = this.renderer.createTexture({
-			width: window.innerWidth,
-			height: window.innerHeight,
-			minFilter: 'NEAREST',
-			magFilter: 'NEAREST',
-			wrap: 'clamp',
+		let depthTexture = this.renderer.createRenderbuffer({
 			internalFormat: 'DEPTH_COMPONENT32F',
-			format: 'DEPTH_COMPONENT',
-			type: 'FLOAT'
+			width: window.innerWidth,
+			height: window.innerHeight
 		});
-
-		this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, depthTexture.WebGLTexture, 0);
+		this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, depthTexture.WebGLRenderbuffer);
 		this.depth = depthTexture;
 
 		this.gl.drawBuffers(attachments);
