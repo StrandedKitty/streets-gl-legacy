@@ -1,9 +1,8 @@
 #version 300 es
 precision highp float;
 in vec3 position;
-in vec3 color;
-in vec3 normal;
-out vec3 vColor;
+in vec2 uv;
+out vec2 vUv;
 out vec3 vNormal;
 
 uniform mat4 projectionMatrix;
@@ -11,9 +10,8 @@ uniform mat4 modelViewMatrix;
 uniform mat3 normalMatrix;
 
 void main() {
-    vColor = color;
-    vec3 transformedNormal = normal;
-    transformedNormal = vec3(normalMatrix * transformedNormal);
-    vNormal = transformedNormal;
+    vUv = uv;
+    vec3 normal = normalMatrix * vec3(0, 1, 0);
+    vNormal = normal;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }

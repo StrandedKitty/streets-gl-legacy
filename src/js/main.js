@@ -5,9 +5,7 @@ import Controls from './Controls';
 import Tile from './Tile';
 import MapWorkerManager from './MapWorkerManager';
 import MapMesh from './MapMesh';
-import BuildingMaterial from "./materials/BuildingMaterial";
 import Meshes from './Meshes';
-import InstanceMaterial from "./materials/InstanceMaterial";
 import Renderer from "./renderer/Renderer";
 import SceneGraph from "./renderer/SceneGraph";
 import PerspectiveCamera from "./renderer/PerspectiveCamera";
@@ -16,6 +14,7 @@ import Mesh from "./renderer/Mesh";
 import vec3 from "./math/vec3";
 import mat4 from "./math/mat4";
 import GBuffer from "./renderer/GBuffer";
+import shaders from "./Shaders";
 
 let scene,
 	camera,
@@ -59,102 +58,6 @@ function init() {
 	renderer.precision = 'highp';
 	renderer.sortObjects = true;*/
 
-	const vertexShaderSourceQuad = `#version 300 es
-	precision highp float;
-	in vec3 position;
-	
-	void main() {
-		gl_Position = vec4(position, 1.0);
-	}`;
-	const fragmentShaderSourceQuad = `#version 300 es
-	precision highp float;
-	out vec4 FragColor;
-	
-	uniform sampler2D uNormal;
-	uniform sampler2D uColor;
-	uniform sampler2D uDepth;
-	
-	float perspectiveDepthToViewZ( const in float invClipZ, const in float near, const in float far ) {
-		return (near * far) / ((far - near) * invClipZ - far);
-	}
-	float viewZToOrthographicDepth( const in float viewZ, const in float near, const in float far ) {
-		return (viewZ + near) / (near - far);
-	}
-	float readDepth(float depth, float near, float far) {
-		float viewZ = perspectiveDepthToViewZ(depth, near, far);
-		return viewZToOrthographicDepth(viewZ, near, far);
-	}
-	
-	void main() {
-		vec2 fragmentPosition = vec2(gl_FragCoord.xy) / vec2(textureSize(uColor, 0));
-		vec4 color = texture(uColor, fragmentPosition);
-		vec3 normal = vec3(texture(uNormal, fragmentPosition)) * 2. - 1.;
-		float depth = readDepth(texture(uDepth, fragmentPosition).x, 1., 10000.);
-		FragColor = color;
-	}`;
-
-	const vertexShaderSource = `#version 300 es
-	precision highp float;
-	in vec3 position;
-	in vec2 uv;
-	out vec2 vUv;
-	out vec3 vNormal;
-	
-	uniform mat4 projectionMatrix;
-	uniform mat4 modelViewMatrix;
-	uniform mat3 normalMatrix;
-	
-	void main() {
-		vUv = uv;
-		vec3 normal = normalMatrix * vec3(0, 1, 0);
-		vNormal = normal;
-		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-	}`;
-	const fragmentShaderSource = `#version 300 es
-	precision highp float;
-	layout(location = 0) out vec4 outColor;
-	layout(location = 1) out vec3 outNormal;
-	in vec2 vUv;
-	in vec3 vNormal;
-	
-	uniform sampler2D sampleTexture;
-	
-	void main() {
-		outColor = texture(sampleTexture, vUv);
-		outNormal = vNormal * 0.5 + 0.5;
-	}`;
-
-	const vertexShaderSource2 = `#version 300 es
-	precision highp float;
-	in vec3 position;
-	in vec3 color;
-	in vec3 normal;
-	out vec3 vColor;
-	out vec3 vNormal;
-	
-	uniform mat4 projectionMatrix;
-	uniform mat4 modelViewMatrix;
-	uniform mat3 normalMatrix;
-	
-	void main() {
-		vColor = color;
-		vec3 transformedNormal = normal;
-		transformedNormal = vec3(normalMatrix * transformedNormal);
-		vNormal = transformedNormal;
-		gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-	}`;
-	const fragmentShaderSource2 = `#version 300 es
-	precision highp float;
-	layout(location = 0) out vec4 outColor;
-	layout(location = 1) out vec3 outNormal;
-	in vec3 vColor;
-	in vec3 vNormal;
-	
-	void main() {
-		outColor = vec4(vColor, 1.);
-		outNormal = vNormal * 0.5 + 0.5;
-	}`;
-
 	RP = new Renderer(canvas);
 	RP.setSize(window.innerWidth, window.innerHeight);
 	RP.culling = true;
@@ -181,8 +84,8 @@ function init() {
 
 	material = RP.createMaterial({
 		name: 'basic',
-		vertexShader: vertexShaderSource,
-		fragmentShader: fragmentShaderSource,
+		vertexShader: shaders.ground.vertex,
+		fragmentShader: shaders.ground.fragment,
 		uniforms: {
 			sampleTexture: {type: 'texture', value: RP.createTexture({url: '/textures/grid.jpg', anisotropy: Config.textureAnisotropy})}
 		}
@@ -190,8 +93,8 @@ function init() {
 
 	buildingMaterial = RP.createMaterial({
 		name: 'buildingMaterial',
-		vertexShader: vertexShaderSource2,
-		fragmentShader: fragmentShaderSource2,
+		vertexShader: shaders.building.vertex,
+		fragmentShader: shaders.building.fragment,
 		uniforms: {}
 	});
 
@@ -235,8 +138,8 @@ function init() {
 
 	quadMaterial = RP.createMaterial({
 		name: 'quad',
-		vertexShader: vertexShaderSourceQuad,
-		fragmentShader: fragmentShaderSourceQuad,
+		vertexShader: shaders.quad.vertex,
+		fragmentShader: shaders.quad.fragment,
 		uniforms: {
 			uColor: {type: 'texture', value: gBuffer.textures.color},
 			uNormal: {type: 'texture', value: gBuffer.textures.normal},
