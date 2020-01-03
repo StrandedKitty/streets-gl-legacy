@@ -33,8 +33,6 @@ let meshes = {};
 let mesh, material, wrapper, buildings, buildingMaterial;
 let quad, quadMaterial;
 
-let MRT = {};
-
 const gui = new dat.GUI();
 let time = 0, delta = 0;
 let gBuffer;
@@ -92,7 +90,7 @@ function init() {
 		vec4 color = texture(uColor, fragmentPosition);
 		vec3 normal = vec3(texture(uNormal, fragmentPosition)) * 2. - 1.;
 		float depth = readDepth(texture(uDepth, fragmentPosition).x, 1., 10000.);
-		FragColor = fragmentPosition.x > .5 ? vec4(normal, 1.) : color;
+		FragColor = color;
 	}`;
 
 	const vertexShaderSource = `#version 300 es
@@ -216,59 +214,13 @@ function init() {
 		{
 			name: 'color',
 			internalFormat: 'RGBA8',
-			format: 'RGBA',
+			format: 'RGBA'
 		}, {
 			name: 'normal',
 			internalFormat: 'RGB8',
-			format: 'RGB',
+			format: 'RGB'
 		}
 	]);
-
-	console.log(gBuffer)
-
-	MRT.color = RP.createTexture({
-		width: window.innerWidth,
-		height: window.innerHeight,
-		minFilter: 'NEAREST',
-		magFilter: 'NEAREST',
-		wrap: 'clamp',
-		format: 'RGBA',
-		internalFormat: 'RGBA8',
-		type: 'UNSIGNED_BYTE'
-	});
-	MRT.normal = RP.createTexture({
-		width: window.innerWidth,
-		height: window.innerHeight,
-		minFilter: 'NEAREST',
-		magFilter: 'NEAREST',
-		wrap: 'clamp',
-		format: 'RGB',
-		internalFormat: 'RGB8',
-		type: 'UNSIGNED_BYTE'
-	});
-
-	MRT.framebufferFinal = RP.createFramebuffer({
-		width: window.innerWidth,
-		height: window.innerHeight,
-		textures: [MRT.color, MRT.normal]
-	});
-
-	MRT.framebuffer = RP.createFramebufferMultisample({
-		width: window.innerWidth,
-		height: window.innerHeight,
-		renderbuffers: [
-			RP.createRenderbuffer({
-				width: window.innerWidth,
-				height: window.innerHeight,
-				internalFormat: 'RGBA8'
-			}),
-			RP.createRenderbuffer({
-				width: window.innerWidth,
-				height: window.innerHeight,
-				internalFormat: 'RGB8'
-			})
-		]
-	});
 
 	quad = RP.createMesh({
 		vertices: new Float32Array([
@@ -300,8 +252,7 @@ function init() {
 		camera.updateProjectionMatrix();
 
 		RP.setSize(window.innerWidth, window.innerHeight);
-		MRT.framebuffer.setSize(window.innerWidth, window.innerHeight);
-		MRT.framebufferFinal.setSize(window.innerWidth, window.innerHeight);
+		gBuffer.setSize(window.innerWidth, window.innerHeight);
 	}, false);
 }
 
@@ -329,7 +280,7 @@ function animate() {
 
 	RP.depthTest = true;
 
-	RP.bindFramebuffer(gBuffer.framebufferSource);
+	RP.bindFramebuffer(gBuffer.framebuffer);
 
 	RP.depthWrite = true;
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -376,8 +327,6 @@ function animate() {
 
 		object.draw(buildingMaterial);
 	}
-
-	RP.blitFramebuffer(gBuffer.framebufferSource, gBuffer.framebuffer);
 
 	RP.bindFramebuffer(null);
 

@@ -6,8 +6,6 @@ export default class GBuffer {
 		this.height = height;
 		this.textures = {};
 		this.texturesArray = [];
-		this.renderbuffers = {};
-		this.renderbuffersArray = [];
 
 		this.initTextures();
 		this.initFramebuffers();
@@ -29,30 +27,22 @@ export default class GBuffer {
 				anisotropy: 1
 			});
 
-			const renderbuffer = this.renderer.createRenderbuffer({
-				width: this.width,
-				height: this.height,
-				internalFormat: element.internalFormat
-			});
-
 			this.texturesArray.push(texture);
 			this.textures[element.name] = texture;
-			this.renderbuffersArray.push(renderbuffer);
-			this.renderbuffers[element.name] = renderbuffer;
 		}
 	}
 
 	initFramebuffers() {
-		this.framebufferSource = this.renderer.createFramebufferMultisample({
-			width: this.width,
-			height: this.height,
-			renderbuffers: this.renderbuffersArray
-		});
-
 		this.framebuffer = this.renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
 			textures: this.texturesArray
 		});
+	}
+
+	setSize(width, height) {
+		this.width = width;
+		this.height = height;
+		this.framebuffer.setSize(width, height);
 	}
 }
