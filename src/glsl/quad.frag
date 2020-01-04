@@ -2,6 +2,8 @@
 precision highp float;
 out vec4 FragColor;
 
+in vec2 vUv;
+
 uniform sampler2D uNormal;
 uniform sampler2D uColor;
 uniform sampler2D uDepth;
@@ -18,7 +20,8 @@ float readDepth(float depth, float near, float far) {
 }
 
 void main() {
-    vec2 fragmentPosition = vec2(gl_FragCoord.xy) / vec2(textureSize(uColor, 0));
+    //vec2 fragmentPosition = vec2(gl_FragCoord.xy) / vec2(textureSize(uColor, 0));
+    vec2 fragmentPosition = vUv;
     vec4 color = texture(uColor, fragmentPosition);
     vec3 normal = vec3(texture(uNormal, fragmentPosition)) * 2. - 1.;
     float depth = readDepth(texture(uDepth, fragmentPosition).x, 1., 10000.);

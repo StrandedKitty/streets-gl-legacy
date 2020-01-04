@@ -38,11 +38,30 @@ export default class GBuffer {
 			height: this.height,
 			textures: this.texturesArray
 		});
+
+		this.framebufferFinal = this.renderer.createFramebuffer({
+			width: this.width,
+			height: this.height,
+			textures: [
+				this.renderer.createTexture({
+					width: this.width,
+					height: this.height,
+					minFilter: 'LINEAR',
+					magFilter: 'LINEAR',
+					wrap: 'clamp',
+					format: 'RGBA',
+					internalFormat: 'RGBA8',
+					type: 'UNSIGNED_BYTE',
+					anisotropy: 1
+				})
+			]
+		});
 	}
 
 	setSize(width, height) {
 		this.width = width;
 		this.height = height;
 		this.framebuffer.setSize(width, height);
+		this.framebufferFinal.setSize(width, height);
 	}
 }

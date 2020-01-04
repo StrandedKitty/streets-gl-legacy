@@ -31,6 +31,8 @@ export default class Texture {
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl[this.magFilter]);
 			this.updateWrapping();
 		}
+
+		this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 	}
 
 	load() {
@@ -61,5 +63,14 @@ export default class Texture {
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, value);
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, value);
 		}
+	}
+
+	setSize(width, height) {
+		this.width = width;
+		this.height = height;
+
+		this.gl.bindTexture(this.gl.TEXTURE_2D, this.WebGLTexture);
+		this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl[this.internalFormat], this.width, this.height, 0, this.gl[this.format], this.gl[this.type], null);
+		this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 	}
 }

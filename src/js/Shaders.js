@@ -12,6 +12,20 @@ class Shaders {
 			fragment: require('../glsl/quad.frag').default,
 			vertex: require('../glsl/quad.vert').default
 		};
+		this.smaa = {
+			blend: {
+				fragment: require('../glsl/smaa/blend.frag').default,
+				vertex: require('../glsl/smaa/blend.vert').default,
+			},
+			edges: {
+				fragment: require('../glsl/smaa/edges.frag').default,
+				vertex: require('../glsl/smaa/edges.vert').default
+			},
+			weights: {
+				fragment: require('../glsl/smaa/weights.frag').default,
+				vertex: require('../glsl/smaa/weights.vert').default
+			}
+		};
 	}
 }
 

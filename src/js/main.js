@@ -15,6 +15,7 @@ import vec3 from "./math/vec3";
 import mat4 from "./math/mat4";
 import GBuffer from "./renderer/GBuffer";
 import shaders from "./Shaders";
+import SMAA from "./materials/SMAA";
 
 let scene,
 	camera,
@@ -34,7 +35,7 @@ let quad, quadMaterial;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
-let gBuffer;
+let gBuffer, smaa;
 
 init();
 animate();
@@ -125,6 +126,8 @@ function init() {
 		}
 	]);
 
+	smaa = new SMAA(RP, window.innerWidth, window.innerHeight);
+
 	quad = RP.createMesh({
 		vertices: new Float32Array([
 			-1, 1, 0,
@@ -135,6 +138,22 @@ function init() {
 			1, 1, 0
 		])
 	});
+
+	quad.addAttribute({
+		name: 'uv',
+		size: 2,
+		type: 'FLOAT',
+		normalized: false
+	});
+
+	quad.setAttributeData('uv', new Float32Array([
+		0, 1,
+		0, 0,
+		1, 1,
+		0, 0,
+		1, 0,
+		1, 1
+	]));
 
 	quadMaterial = RP.createMaterial({
 		name: 'quad',
@@ -156,6 +175,7 @@ function init() {
 
 		RP.setSize(window.innerWidth, window.innerHeight);
 		gBuffer.setSize(window.innerWidth, window.innerHeight);
+		smaa.setSize(window.innerWidth, window.innerHeight);
 	}, false);
 }
 
@@ -183,9 +203,13 @@ function animate() {
 
 	RP.depthTest = true;
 
+	// Draw to g-buffer
+
 	RP.bindFramebuffer(gBuffer.framebuffer);
 
 	RP.depthWrite = true;
+
+	gl.clearColor(0.7, 0.9, 0.9, 1);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
@@ -231,13 +255,37 @@ function animate() {
 		object.draw(buildingMaterial);
 	}
 
-	RP.bindFramebuffer(null);
+	// Combine g-buffer textures
+
+	RP.bindFramebuffer(gBuffer.framebufferFinal);
 
 	RP.depthWrite = false;
 	RP.depthTest = false;
 
 	quadMaterial.use();
 	quad.draw(quadMaterial);
+
+	// SMAA
+
+	RP.bindFramebuffer(smaa.edgesFB);
+
+	gl.clearColor(0, 0, 0, 1);
+	gl.clear(gl.COLOR_BUFFER_BIT);
+
+	smaa.materials.edges.uniforms.tDiffuse.value = gBuffer.framebufferFinal.textures[0];
+	smaa.materials.edges.use();
+	quad.draw(smaa.materials.edges);
+
+	RP.bindFramebuffer(smaa.weightsFB);
+
+	smaa.materials.weights.use();
+	quad.draw(smaa.materials.weights);
+
+	RP.bindFramebuffer(null);
+
+	smaa.materials.blend.uniforms.tColor.value = gBuffer.framebufferFinal.textures[0];
+	smaa.materials.blend.use();
+	quad.draw(smaa.materials.blend);
 
 	view.frustum.getViewSpaceVertices();
 	let wsFrustum = view.frustum.toSpace(camera.matrix);

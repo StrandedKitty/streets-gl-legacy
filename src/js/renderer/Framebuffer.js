@@ -18,9 +18,9 @@ export default class Framebuffer {
 			attachments.push(attachment);
 		}
 
-		let depthTexture = this.renderer.createTexture({
-			width: window.innerWidth,
-			height: window.innerHeight,
+		this.depth = this.renderer.createTexture({
+			width: this.width,
+			height: this.height,
 			minFilter: 'NEAREST',
 			magFilter: 'NEAREST',
 			wrap: 'clamp',
@@ -29,8 +29,7 @@ export default class Framebuffer {
 			type: 'FLOAT'
 		});
 
-		this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, depthTexture.WebGLTexture, 0);
-		this.depth = depthTexture;
+		this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.depth.WebGLTexture, 0);
 
 		this.gl.drawBuffers(attachments);
 

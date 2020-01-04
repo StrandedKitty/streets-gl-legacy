@@ -22,7 +22,6 @@ export default class Renderer {
 		this.gl.enable(this.gl.DEPTH_TEST);
 		this.gl.depthFunc(this.gl.LEQUAL);
 		this.gl.clearDepth(1);
-		this.gl.clearColor(0.7, 0.9, 0.9, 1);
 	}
 
 	createMaterial(params) {
@@ -57,8 +56,10 @@ export default class Renderer {
 
 	bindFramebuffer(fb) {
 		if(fb instanceof Framebuffer || fb instanceof FramebufferMultisample) {
+			this.gl.viewport(0, 0, fb.width, fb.height);
 			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, fb.WebGLFramebuffer);
 		} else {
+			this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
 			this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
 		}
 	}
