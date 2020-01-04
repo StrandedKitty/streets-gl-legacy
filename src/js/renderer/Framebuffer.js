@@ -39,5 +39,15 @@ export default class Framebuffer {
 	setSize(width, height) {
 		this.width = width;
 		this.height = height;
+
+		this.renderer.bindFramebuffer(this);
+
+		this.depth.setSize(width, height);
+
+		for(let i = 0; i < this.textures.length; i++) {
+			this.textures[i].setSize(width, height);
+		}
+
+		this.renderer.bindFramebuffer(null);
 	}
 }
