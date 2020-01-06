@@ -11,7 +11,7 @@ export default class Tile {
 		this.loaded = false;
 		this.worker = null;
 		this.mesh = null;
-		this.displayBuffer = new Uint8Array();
+		this.displayBuffer = null;
 		this.objects = [];
 	}
 
@@ -29,16 +29,18 @@ export default class Tile {
 			this.loaded = true;
 			this.worker = null;
 			this.objects = data.ids;
+			this.displayBuffer = new Uint8Array(data.vertices.length / 3);
 			this.callback(data);
 		}
 	}
 
 	hideObject(offset, size) {
 		for(let i = offset; i < size + offset; i++) {
-			this.displayBuffer[i] = 1;
+			this.displayBuffer[i] = 255;
 		}
 
-		this.mesh.geometry.attributes.display.needsUpdate = true;
+		this.mesh.setAttributeData('display', this.displayBuffer);
+		this.mesh.updateAttribute('display');
 	}
 
 	showObject(offset, size) {
@@ -46,7 +48,8 @@ export default class Tile {
 			this.displayBuffer[i] = 0;
 		}
 
-		this.mesh.geometry.attributes.display.needsUpdate = true;
+		this.mesh.setAttributeData('display', this.displayBuffer);
+		this.mesh.updateAttribute('display');
 	}
 
 	getGroundMesh(renderer) {

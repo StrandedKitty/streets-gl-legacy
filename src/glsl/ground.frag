@@ -10,7 +10,7 @@ in vec3 vPosition;
 uniform sampler2D sampleTexture;
 
 void main() {
-    outColor = texture(sampleTexture, vUv);
+    outColor = texture(sampleTexture, vUv * 8.);
     outNormal = vNormal * 0.5 + 0.5;
     outPosition = vPosition;
 }

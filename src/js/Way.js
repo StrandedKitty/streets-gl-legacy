@@ -60,7 +60,7 @@ export default class Way {
 		} else {
 			height = this.properties.height || 10;
 			height *= this.heightFactor;
-			color = this.properties.roofColor || [0, 0, 0];
+			color = this.properties.roofColor || [79, 89, 88];
 		}
 
 		for(let i = 0; i < triangles.length; i++) {
@@ -72,7 +72,7 @@ export default class Way {
 	}
 
 	triangulateWalls() {
-		let facadeColor = this.properties.facadeColor || [0, 0, 0];
+		let facadeColor = this.properties.facadeColor || [231, 216, 185];
 
 		let height = this.properties.height || 10;
 		let minHeight = this.properties.minHeight || 0;

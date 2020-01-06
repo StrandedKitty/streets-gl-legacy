@@ -26,7 +26,7 @@ export default class Attribute {
 
 	setData(typedArray) {
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
-		this.gl.bufferData(this.gl.ARRAY_BUFFER, typedArray, this.gl.STATIC_DRAW);
+		this.gl.bufferData(this.gl.ARRAY_BUFFER, typedArray, this.gl.DYNAMIC_DRAW);
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
 		this.data = typedArray;
 	}

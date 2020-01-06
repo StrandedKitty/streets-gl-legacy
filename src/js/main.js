@@ -85,11 +85,11 @@ function init() {
 	controls = new Controls(camera);
 
 	material = RP.createMaterial({
-		name: 'basic',
+		name: 'ground',
 		vertexShader: shaders.ground.vertex,
 		fragmentShader: shaders.ground.fragment,
 		uniforms: {
-			sampleTexture: {type: 'texture', value: RP.createTexture({url: '/textures/grid.jpg', anisotropy: Config.textureAnisotropy})}
+			sampleTexture: {type: 'texture', value: RP.createTexture({url: '/textures/grass.jpg', anisotropy: Config.textureAnisotropy})}
 		}
 	});
 
@@ -332,7 +332,7 @@ function animate() {
 				const uvs = new Float32Array(data.uvs);
 				const ids = data.ids;
 				const offsets = data.offsets;
-				const display = new Float32Array(vertices.length / 3);
+				const display = new Uint8Array(vertices.length / 3);
 				const colors = new Uint8Array(data.colors);
 				const instances = data.instances;
 
@@ -346,44 +346,38 @@ function animate() {
 					type: 'UNSIGNED_BYTE',
 					normalized: true
 				});
+				mesh.setAttributeData('color', colors);
+
 				mesh.addAttribute({
 					name: 'normal',
 					size: 3,
 					type: 'FLOAT',
 					normalized: false
 				});
+				mesh.setAttributeData('normal', normals);
+
 				mesh.addAttribute({
 					name: 'uv',
 					size: 2,
 					type: 'FLOAT',
 					normalized: false
 				});
-
-				mesh.setAttributeData('color', colors);
-				mesh.setAttributeData('normal', normals);
 				mesh.setAttributeData('uv', uvs);
+
+				mesh.addAttribute({
+					name: 'display',
+					size: 1,
+					type: 'UNSIGNED_BYTE',
+					normalized: true
+				});
+				mesh.setAttributeData('display', display);
 
 				const pivot = tile2meters(this.x, this.y + 1);
 				mesh.setPosition(pivot.x, 0, pivot.z);
 
 				buildings.add(mesh);
 
-				/*let geometry = new THREE.BufferGeometry();
-				tile.displayBuffer = display;
-
-				geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-				geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
-				geometry.setAttribute('display', new THREE.BufferAttribute(display, 1));
-				geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3, true));
-
-				let material = new BuildingMaterial().material;
-				tile.mesh = new THREE.Mesh(geometry, material);
-
-				let pivot = tile2meters(this.x, this.y + 1);
-				tile.mesh.position.set(pivot.x, 0, pivot.z);
-
-				tile.mesh.renderOrder = 1;
-				scene.add(tile.mesh);
+				this.mesh = mesh;
 
 				for(let i = 0; i < ids.length; i++) {
 					let id = ids[i];
@@ -405,30 +399,6 @@ function animate() {
 					}
 
 				}
-
-				if(instances.trees.length > 0) {
-					let positions = new Float32Array(instances.trees.length / 2 * 3);
-					for(let i = 0; i < instances.trees.length / 2; i++) {
-						positions[i * 3] = instances.trees[i * 2];
-						positions[i * 3 + 1] = 0;
-						positions[i * 3 + 2] = instances.trees[i * 2 + 1];
-					}
-
-					let sourceGeometry = Meshes.tree.geometry;
-					let geometry = new THREE.InstancedBufferGeometry();
-					geometry.index = sourceGeometry.index;
-					geometry.attributes.position = sourceGeometry.attributes.position;
-					geometry.attributes.uv = sourceGeometry.attributes.uv;
-
-					let positionAttribute = new THREE.InstancedBufferAttribute(positions, 3);
-					geometry.setAttribute('iPosition', positionAttribute);
-
-					let mesh = new THREE.Mesh(geometry, new InstanceMaterial().material);
-
-					mesh.frustumCulled = false;
-					mesh.position.set(pivot.x, 0, pivot.z);
-					scene.add(mesh);
-				}*/
 			});
 
 			tiles.set(name, tile);
