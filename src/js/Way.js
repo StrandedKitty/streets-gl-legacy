@@ -58,7 +58,13 @@ export default class Way {
 			height = 0;
 			color = [63, 167, 37];
 		} else {
-			height = this.properties.height || 10;
+			if(this.properties.height) {
+				height = this.properties.height;
+			} else if(this.properties.levels) {
+				height = this.properties.levels * 3.5;
+			} else {
+				height = 10;
+			}
 			height *= this.heightFactor;
 			color = this.properties.roofColor || [79, 89, 88];
 		}
@@ -73,13 +79,27 @@ export default class Way {
 
 	triangulateWalls() {
 		let facadeColor = this.properties.facadeColor || [231, 216, 185];
+		let height, minHeight, levels;
 
-		let height = this.properties.height || 10;
-		let minHeight = this.properties.minHeight || 0;
+		if(this.properties.height) {
+			height = this.properties.height;
+		} else if(this.properties.levels) {
+			height = this.properties.levels * 3.5;
+		} else {
+			height = 10;
+		}
+
+		if(this.properties.minHeight) {
+			minHeight = this.properties.minHeight;
+		} else if(this.properties.minLevel) {
+			minHeight = this.properties.minLevel * 3.5;
+		} else {
+			minHeight = 0;
+		}
 
 		if(minHeight > height) minHeight = 0;
 
-		let levels = this.properties.levels ? this.properties.levels : Math.floor((height - minHeight) / 3.5);
+		levels = this.properties.levels || Math.floor((height - minHeight) / 3.5);
 		if(this.properties.minLevel) levels -= this.properties.minLevel;
 
 		height *= this.heightFactor;

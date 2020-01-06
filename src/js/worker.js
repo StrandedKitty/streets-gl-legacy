@@ -2,6 +2,7 @@ import Node from "./Node";
 import Way from "./Way";
 import {tile2degrees, degrees2meters} from "./Utils";
 import OSMDescriptor from "./OSMDescriptor";
+const overlap = require('polygon-overlap');
 
 self.addEventListener('message', function(e) {
 	let code = e.data.code;
@@ -134,6 +135,22 @@ function processData(data, pivot) {
 				let member = item.members[i];
 				if(member.type === 'way' && member.role === 'outline') {
 					ways.get(member.ref).visible = false;
+				}
+			}
+		}
+	}
+
+	for (const [id, way] of ways.entries()) {
+		if(way.properties.buildingPart) {
+			let verticesA = [];
+			for(let i = 0; i < way.vertices.length; i++) verticesA.push([way.vertices[i].x, way.vertices[i].z]);
+
+			for (const [id2, way2] of ways.entries()) {
+				if(!way2.properties.buildingPart) {
+					let verticesB = [];
+					for(let i = 0; i < way2.vertices.length; i++) verticesB.push([way2.vertices[i].x, way2.vertices[i].z]);
+
+					if(overlap(verticesA, verticesB)) way2.visible = false;
 				}
 			}
 		}

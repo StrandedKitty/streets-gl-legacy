@@ -1,7 +1,7 @@
 let config = {
 	drawDistance: 3000,
 	textureAnisotropy: undefined,
-	SSAA: 1
+	SSAA: 2
 };
 
 config.set = function (key, value, force) {

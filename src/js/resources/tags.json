@@ -3,7 +3,7 @@
 		"default": {"type": "building"}
 	},
 	"building:part": {
-		"default": {"type": "building"}
+		"default": {"type": "building", "buildingPart": true}
 	},
 	"building:colour": {
 		"default": {"facadeColor": "@color"}
