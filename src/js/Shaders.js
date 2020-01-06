@@ -26,6 +26,10 @@ class Shaders {
 				vertex: require('../glsl/smaa/weights.vert').default
 			}
 		};
+		this.sao = {
+			fragment: require('../glsl/sao.frag').default,
+			vertex: require('../glsl/sao.vert').default
+		}
 	}
 }
 

@@ -2,6 +2,7 @@
 precision highp float;
 in vec3 position;
 in vec2 uv;
+out vec3 vPosition;
 out vec2 vUv;
 out vec3 vNormal;
 
@@ -13,5 +14,7 @@ void main() {
     vUv = uv;
     vec3 normal = normalMatrix * vec3(0, 1, 0);
     vNormal = normal;
+
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    vPosition = gl_Position.xyz;
 }

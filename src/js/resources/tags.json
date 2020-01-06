@@ -26,5 +26,11 @@
 	},
 	"min_height": {
 		"default": {"minHeight": "@units"}
+	},
+	"building:levels": {
+		"default": {"levels": "@int"}
+	},
+	"min_level": {
+		"default": {"minLevel": "@int"}
 	}
 }

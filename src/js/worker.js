@@ -72,6 +72,7 @@ function processData(data, pivot) {
 		vertices: [],
 		normals: [],
 		colors: [],
+		uvs: [],
 		instances: {
 			trees: []
 		}
@@ -150,6 +151,7 @@ function processData(data, pivot) {
 			meshData.vertices = [...meshData.vertices, ...way.mesh.vertices];
 			meshData.normals = [...meshData.normals, ...way.mesh.normals];
 			meshData.colors = [...meshData.colors, ...way.mesh.colors];
+			meshData.uvs = [...meshData.uvs, ...way.mesh.uvs];
 		}
 
 		meshData.instances.trees = [...meshData.instances.trees, ...way.instances.trees];

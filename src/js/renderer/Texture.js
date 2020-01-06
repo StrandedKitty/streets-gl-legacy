@@ -13,6 +13,7 @@ export default class Texture {
 		this.format = params.format || 'RGBA';
 		this.internalFormat = params.internalFormat || 'RGBA';
 		this.type = params.type || 'UNSIGNED_BYTE';
+		this.data = params.data || null;
 
 		this.WebGLTexture = this.gl.createTexture();
 		this.gl.bindTexture(this.gl.TEXTURE_2D, this.WebGLTexture);
@@ -26,7 +27,7 @@ export default class Texture {
 			this.updateWrapping();
 			this.load();
 		} else {
-			this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl[this.internalFormat], this.width, this.height, 0, this.gl[this.format], this.gl[this.type], null);
+			this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl[this.internalFormat], this.width, this.height, 0, this.gl[this.format], this.gl[this.type], this.data);
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl[this.minFilter]);
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl[this.magFilter]);
 			this.updateWrapping();
@@ -70,7 +71,7 @@ export default class Texture {
 		this.height = height;
 
 		this.gl.bindTexture(this.gl.TEXTURE_2D, this.WebGLTexture);
-		this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl[this.internalFormat], this.width, this.height, 0, this.gl[this.format], this.gl[this.type], null);
+		this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl[this.internalFormat], this.width, this.height, 0, this.gl[this.format], this.gl[this.type], this.data);
 		this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 	}
 }

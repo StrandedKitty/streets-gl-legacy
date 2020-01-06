@@ -29,6 +29,10 @@ export default class OSMDescriptor {
 						res[i] = colorNamesList[value] || hexToRgb(value);
 					}
 
+					if(res[i] === '@int') {
+						res[i] = parseInt(value);
+					}
+
 					if(res[i]) this.properties[i] = res[i];
 				}
 			}

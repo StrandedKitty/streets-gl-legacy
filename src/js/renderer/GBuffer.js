@@ -23,7 +23,7 @@ export default class GBuffer {
 				wrap: 'clamp',
 				format: element.format,
 				internalFormat: element.internalFormat,
-				type: 'UNSIGNED_BYTE',
+				type: element.type,
 				anisotropy: 1
 			});
 

@@ -14,7 +14,8 @@ export default class Way {
 		this.mesh = {
 			vertices: [],
 			normals: [],
-			colors: []
+			colors: [],
+			uvs: []
 		};
 		this.instances = {
 			trees: []
@@ -66,6 +67,7 @@ export default class Way {
 			this.mesh.vertices.push(flattenVertices[triangles[i] * 2], height, flattenVertices[triangles[i] * 2 + 1]);
 			this.mesh.normals.push(0, 1, 0);
 			this.mesh.colors.push(...color);
+			this.mesh.uvs.push(0, 0);
 		}
 	}
 
@@ -76,6 +78,9 @@ export default class Way {
 		let minHeight = this.properties.minHeight || 0;
 
 		if(minHeight > height) minHeight = 0;
+
+		let levels = this.properties.levels ? this.properties.levels : Math.floor((height - minHeight) / 3.5);
+		if(this.properties.minLevel) levels -= this.properties.minLevel;
 
 		height *= this.heightFactor;
 		minHeight *= this.heightFactor;
@@ -88,15 +93,26 @@ export default class Way {
 			this.mesh.vertices.push(vertex.x, height, vertex.z);
 			this.mesh.vertices.push(vertex.x, minHeight, vertex.z);
 
+			this.mesh.vertices.push(nextVertex.x, minHeight, nextVertex.z);
+			this.mesh.vertices.push(nextVertex.x, height, nextVertex.z);
+			this.mesh.vertices.push(vertex.x, height, vertex.z);
+
+			const segmentWidth = Math.sqrt((nextVertex.x - vertex.x) ** 2 + (nextVertex.z - vertex.z) ** 2);
+			const repeats = Math.floor(segmentWidth / 4);
+
+			this.mesh.uvs.push(repeats, levels);
+			this.mesh.uvs.push(0, 0);
+			this.mesh.uvs.push(0, levels);
+
+			this.mesh.uvs.push(repeats, levels);
+			this.mesh.uvs.push(repeats, 0);
+			this.mesh.uvs.push(0, 0);
+
 			const normal = this.calculateNormal(
 				new vec3(nextVertex.x, minHeight, nextVertex.z),
 				new vec3(vertex.x, height, vertex.z),
 				new vec3(vertex.x, minHeight, vertex.z)
 			);
-
-			this.mesh.vertices.push(nextVertex.x, minHeight, nextVertex.z);
-			this.mesh.vertices.push(nextVertex.x, height, nextVertex.z);
-			this.mesh.vertices.push(vertex.x, height, vertex.z);
 
 			for(let j = 0; j < 6; j++) {
 				this.mesh.normals.push(normal.x, normal.y, normal.z);

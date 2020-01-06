@@ -16,6 +16,7 @@ import mat4 from "./math/mat4";
 import GBuffer from "./renderer/GBuffer";
 import shaders from "./Shaders";
 import SMAA from "./materials/SMAA";
+import SAO from "./materials/SAO";
 
 let scene,
 	camera,
@@ -35,7 +36,7 @@ let quad, quadMaterial;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
-let gBuffer, smaa;
+let gBuffer, smaa, sao;
 
 init();
 animate();
@@ -96,7 +97,9 @@ function init() {
 		name: 'buildingMaterial',
 		vertexShader: shaders.building.vertex,
 		fragmentShader: shaders.building.fragment,
-		uniforms: {}
+		uniforms: {
+			tSample: {type: 'texture', value: RP.createTexture({url: './textures/window.png', anisotropy: Config.textureAnisotropy})}
+		}
 	});
 
 	mesh = RP.createMesh({
@@ -114,19 +117,27 @@ function init() {
 	mesh.setPosition(position.x, 0, position.z);
 	mesh.updateMatrix();
 
-	gBuffer = new GBuffer(RP, window.innerWidth, window.innerHeight, [
+	gBuffer = new GBuffer(RP, window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA, [
 		{
 			name: 'color',
 			internalFormat: 'RGBA8',
-			format: 'RGBA'
+			format: 'RGBA',
+			type: 'UNSIGNED_BYTE'
 		}, {
 			name: 'normal',
 			internalFormat: 'RGB8',
-			format: 'RGB'
+			format: 'RGB',
+			type: 'UNSIGNED_BYTE'
+		}, {
+			name: 'position',
+			internalFormat: 'RGBA32F',
+			format: 'RGBA',
+			type: 'FLOAT'
 		}
 	]);
 
-	smaa = new SMAA(RP, window.innerWidth, window.innerHeight);
+	smaa = new SMAA(RP, window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
+	sao = new SAO(RP, window.innerWidth, window.innerHeight);
 
 	quad = RP.createMesh({
 		vertices: new Float32Array([
@@ -162,6 +173,7 @@ function init() {
 		uniforms: {
 			uColor: {type: 'texture', value: gBuffer.textures.color},
 			uNormal: {type: 'texture', value: gBuffer.textures.normal},
+			uPosition: {type: 'texture', value: gBuffer.textures.position},
 			uDepth: {type: 'texture', value: gBuffer.framebuffer.depth}
 		}
 	});
@@ -174,8 +186,8 @@ function init() {
 		camera.updateProjectionMatrix();
 
 		RP.setSize(window.innerWidth, window.innerHeight);
-		gBuffer.setSize(window.innerWidth, window.innerHeight);
-		smaa.setSize(window.innerWidth, window.innerHeight);
+		gBuffer.setSize(window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
+		smaa.setSize(window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
 	}, false);
 }
 
@@ -215,7 +227,7 @@ function animate() {
 	material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
 	material.use();
 
-	RP.depthWrite = false;
+	RP.depthWrite = true;
 
 	for(let i = 0; i < wrapper.children.length; i++) {
 		let object = wrapper.children[i];
@@ -265,6 +277,19 @@ function animate() {
 	quadMaterial.use();
 	quad.draw(quadMaterial);
 
+	// SAO
+
+	/*RP.bindFramebuffer(null);
+
+	gl.clearColor(1, 1, 1, 1);
+	gl.clear(gl.COLOR_BUFFER_BIT);
+
+	sao.material.uniforms.gPosition.value = gBuffer.textures.position;
+	sao.material.uniforms.gNormal.value = gBuffer.textures.normal;
+	sao.material.uniforms.cameraProjectionMatrix.value = camera.projectionMatrix;
+	sao.material.use();
+	quad.draw(sao.material);*/
+
 	// SMAA
 
 	RP.bindFramebuffer(smaa.edgesFB);
@@ -304,6 +329,7 @@ function animate() {
 			let tile = new Tile(frustumTile.x, frustumTile.y, function (data) {
 				const vertices = new Float32Array(data.vertices);
 				const normals = new Float32Array(data.normals);
+				const uvs = new Float32Array(data.uvs);
 				const ids = data.ids;
 				const offsets = data.offsets;
 				const display = new Float32Array(vertices.length / 3);
@@ -326,9 +352,16 @@ function animate() {
 					type: 'FLOAT',
 					normalized: false
 				});
+				mesh.addAttribute({
+					name: 'uv',
+					size: 2,
+					type: 'FLOAT',
+					normalized: false
+				});
 
 				mesh.setAttributeData('color', colors);
 				mesh.setAttributeData('normal', normals);
+				mesh.setAttributeData('uv', uvs);
 
 				const pivot = tile2meters(this.x, this.y + 1);
 				mesh.setPosition(pivot.x, 0, pivot.z);
