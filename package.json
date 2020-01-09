@@ -21,6 +21,8 @@
 		"webpack-cli": "^3.3.9"
 	},
 	"dependencies": {
-		"polygon-overlap": "^1.0.5"
+		"polygon-overlap": "^1.0.5",
+		"robust-point-in-polygon": "^1.0.3",
+		"turf-overlaps": "^1.0.3"
 	}
 }

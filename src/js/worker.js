@@ -2,11 +2,12 @@ import Node from "./Node";
 import Way from "./Way";
 import {tile2degrees, degrees2meters} from "./Utils";
 import OSMDescriptor from "./OSMDescriptor";
-const overlap = require('polygon-overlap');
 
-self.addEventListener('message', function(e) {
+const classifyPoint = require("robust-point-in-polygon");
+
+self.addEventListener('message', function (e) {
 	let code = e.data.code;
-	switch(code) {
+	switch (code) {
 		case 'init':
 			break;
 		case 'start':
@@ -85,7 +86,7 @@ function processData(data, pivot) {
 		relations: {}
 	};
 
-	for(let i = 0; i < data.length; i++) {
+	for (let i = 0; i < data.length; i++) {
 		let item = data[i];
 
 		switch (item.type) {
@@ -101,7 +102,7 @@ function processData(data, pivot) {
 		}
 	}
 
-	for(let id in raw.nodes) {
+	for (let id in raw.nodes) {
 		let item = raw.nodes[id];
 
 		let node = new Node(item.id, item.lat, item.lon, item.tags, metersPivot);
@@ -110,12 +111,12 @@ function processData(data, pivot) {
 		meshData.instances.trees = [...meshData.instances.trees, ...node.instances.trees];
 	}
 
-	for(let id in raw.ways) {
+	for (let id in raw.ways) {
 		let item = raw.ways[id];
 
 		let vertices = [];
 
-		for(let i = 0; i < item.nodes.length; i++) {
+		for (let i = 0; i < item.nodes.length; i++) {
 			let vertex = nodes.get(item.nodes[i]);
 			vertices.push({x: vertex.x, z: vertex.z});
 		}
@@ -124,16 +125,16 @@ function processData(data, pivot) {
 		ways.set(item.id, way);
 	}
 
-	for(let id in raw.relations) {
+	for (let id in raw.relations) {
 		let item = raw.relations[id];
 
 		let descriptor = new OSMDescriptor(item.tags);
 		let properties = descriptor.properties;
 
-		if(properties.relationType === 'building') {
-			for(let i = 0; i < item.members.length; i++) {
+		if (properties.relationType === 'building') {
+			for (let i = 0; i < item.members.length; i++) {
 				let member = item.members[i];
-				if(member.type === 'way' && member.role === 'outline') {
+				if (member.type === 'way' && member.role === 'outline') {
 					ways.get(member.ref).visible = false;
 				}
 			}
@@ -141,16 +142,16 @@ function processData(data, pivot) {
 	}
 
 	for (const [id, way] of ways.entries()) {
-		if(way.properties.buildingPart) {
+		if (way.properties.buildingPart) {
 			let verticesA = [];
-			for(let i = 0; i < way.vertices.length; i++) verticesA.push([way.vertices[i].x, way.vertices[i].z]);
+			for (let i = 0; i < way.vertices.length; i++) verticesA.push([way.vertices[i].x, way.vertices[i].z]);
 
 			for (const [id2, way2] of ways.entries()) {
-				if(!way2.properties.buildingPart) {
+				if (!way2.properties.buildingPart) {
 					let verticesB = [];
-					for(let i = 0; i < way2.vertices.length; i++) verticesB.push([way2.vertices[i].x, way2.vertices[i].z]);
+					for (let i = 0; i < way2.vertices.length; i++) verticesB.push([way2.vertices[i].x, way2.vertices[i].z]);
 
-					if(overlap(verticesA, verticesB)) way2.visible = false;
+					if (intersect(verticesA, verticesB)) way2.visible = false;
 				}
 			}
 		}
@@ -161,7 +162,7 @@ function processData(data, pivot) {
 	for (const [id, way] of ways.entries()) {
 		way.render();
 
-		if(way.mesh.vertices.length > 0) {
+		if (way.mesh.vertices.length > 0) {
 			meshData.ids.push(id);
 			meshData.offsets.push(meshData.vertices.length / 3);
 
@@ -175,4 +176,24 @@ function processData(data, pivot) {
 	}
 
 	self.postMessage(meshData);
+}
+
+function intersect(p0, p1) {
+	let i;
+
+	for (i = 0; i < p0.length; ++i) {
+		const res = classifyPoint(p1, p0[i]);
+		if (res === -1) {
+			return true;
+		}
+	}
+
+	for (i = 0; i < p1.length; ++i) {
+		const res = classifyPoint(p0, p1[i]);
+		if (res === -1) {
+			return true;
+		}
+	}
+
+	return false;
 }
