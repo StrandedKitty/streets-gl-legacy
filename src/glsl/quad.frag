@@ -8,6 +8,7 @@ uniform sampler2D uNormal;
 uniform sampler2D uColor;
 uniform sampler2D uDepth;
 uniform sampler2D uPosition;
+uniform sampler2D ao;
 
 float perspectiveDepthToViewZ( const in float invClipZ, const in float near, const in float far ) {
     return (near * far) / ((far - near) * invClipZ - far);
@@ -21,11 +22,14 @@ float readDepth(float depth, float near, float far) {
 }
 
 void main() {
-    //vec2 fragmentPosition = vec2(gl_FragCoord.xy) / vec2(textureSize(uColor, 0));
     vec2 fragmentPosition = vUv;
     vec4 color = texture(uColor, fragmentPosition);
     vec3 normal = vec3(texture(uNormal, fragmentPosition)) * 2. - 1.;
     vec3 position = vec3(texture(uPosition, fragmentPosition));
     float depth = readDepth(texture(uDepth, fragmentPosition).x, 1., 10000.);
-    FragColor = color;
+    float ambientOcclusion = texture(ao, fragmentPosition).x;
+
+    FragColor = color * ambientOcclusion;
+    if(color.a == 0.) FragColor.xyz = vec3(0.7, 0.9, 0.9);
+    FragColor.a = 1.;
 }

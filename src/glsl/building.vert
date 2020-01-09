@@ -25,5 +25,5 @@ void main() {
     if(display == 1.) transformedPosition = vec3(0);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(transformedPosition, 1.0);
-    vPosition = gl_Position.xyz;
+    vPosition = vec3(modelViewMatrix * vec4(transformedPosition, 1.0));
 }

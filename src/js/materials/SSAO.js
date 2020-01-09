@@ -2,7 +2,7 @@ import shaders from '../Shaders';
 import vec3 from "../math/vec3";
 import {lerp} from "../Utils";
 
-export default class SAO {
+export default class SSAO {
 	constructor(renderer, width, height) {
 		this.width = width;
 		this.height = height;
@@ -26,13 +26,14 @@ export default class SAO {
 			vertexShader: shaders.sao.vertex,
 			fragmentShader: shaders.sao.fragment,
 			uniforms: {
-				cameraNear: {type: '1f', value: 1},
-				cameraFar: {type: '1f', value: 10000},
+				//cameraNear: {type: '1f', value: 1},
+				//cameraFar: {type: '1f', value: 10000},
 				resolution: {type: '2fv', value: [window.innerWidth, window.innerHeight]},
-				gPosition: {type: 'texture', value: null},
-				gNormal: {type: 'texture', value: null},
+				tPosition: {type: 'texture', value: null},
+				tNormal: {type: 'texture', value: null},
+				//tDepth: {type: 'texture', value: null},
 				cameraProjectionMatrix: {type: 'Matrix4fv', value: null},
-				texNoise: {type: 'texture', value: renderer.createTexture({
+				tNoise: {type: 'texture', value: renderer.createTexture({
 					width: 4,
 					height: 4,
 					minFilter: 'NEAREST',
@@ -81,5 +82,6 @@ export default class SAO {
 		this.height = height;
 
 		this.framebuffer.setSize(width, height);
+		this.material.uniforms.resolution.value = [width, height];
 	}
 }

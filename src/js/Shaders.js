@@ -29,7 +29,11 @@ class Shaders {
 		this.sao = {
 			fragment: require('../glsl/sao.frag').default,
 			vertex: require('../glsl/sao.vert').default
-		}
+		};
+		this.blur = {
+			fragment: require('../glsl/blur.frag').default,
+			vertex: require('../glsl/quad.vert').default
+		};
 	}
 }
 

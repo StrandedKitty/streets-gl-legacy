@@ -16,7 +16,8 @@ import mat4 from "./math/mat4";
 import GBuffer from "./renderer/GBuffer";
 import shaders from "./Shaders";
 import SMAA from "./materials/SMAA";
-import SAO from "./materials/SAO";
+import SSAO from "./materials/SSAO";
+import Blur from "./materials/Blur";
 
 let scene,
 	camera,
@@ -36,7 +37,7 @@ let quad, quadMaterial;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
-let gBuffer, smaa, sao;
+let gBuffer, smaa, ssao, blur;
 
 init();
 animate();
@@ -137,7 +138,8 @@ function init() {
 	]);
 
 	smaa = new SMAA(RP, window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
-	sao = new SAO(RP, window.innerWidth, window.innerHeight);
+	ssao = new SSAO(RP, window.innerWidth * Config.SSAO, window.innerHeight * Config.SSAO);
+	blur = new Blur(RP, window.innerWidth, window.innerHeight);
 
 	quad = RP.createMesh({
 		vertices: new Float32Array([
@@ -174,7 +176,8 @@ function init() {
 			uColor: {type: 'texture', value: gBuffer.textures.color},
 			uNormal: {type: 'texture', value: gBuffer.textures.normal},
 			uPosition: {type: 'texture', value: gBuffer.textures.position},
-			uDepth: {type: 'texture', value: gBuffer.framebuffer.depth}
+			uDepth: {type: 'texture', value: gBuffer.framebuffer.depth},
+			ao: {type: 'texture', value: null}
 		}
 	});
 
@@ -188,6 +191,7 @@ function init() {
 		RP.setSize(window.innerWidth, window.innerHeight);
 		gBuffer.setSize(window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
 		smaa.setSize(window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
+		ssao.setSize(window.innerWidth * Config.SSAO, window.innerHeight * Config.SSAO);
 	}, false);
 }
 
@@ -221,7 +225,7 @@ function animate() {
 
 	RP.depthWrite = true;
 
-	gl.clearColor(0.7, 0.9, 0.9, 1);
+	gl.clearColor(0, 0, 0, 0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
@@ -267,28 +271,52 @@ function animate() {
 		object.draw(buildingMaterial);
 	}
 
+	RP.depthWrite = false;
+	RP.depthTest = false;
+
+	// SSAO
+
+	RP.bindFramebuffer(ssao.framebuffer);
+
+	gl.clearColor(1, 1, 1, 1);
+	gl.clear(gl.COLOR_BUFFER_BIT);
+
+	ssao.material.uniforms.tPosition.value = gBuffer.textures.position;
+	ssao.material.uniforms.tNormal.value = gBuffer.textures.normal;
+	ssao.material.uniforms.cameraProjectionMatrix.value = camera.projectionMatrix;
+	ssao.material.use();
+	quad.draw(ssao.material);
+
+	// Blur
+
+	RP.bindFramebuffer(blur.framebufferTemp);
+
+	blur.material.uniforms.tColor.value = ssao.framebuffer.textures[0];
+	blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
+	blur.material.uniforms.direction.value = [0, 1];
+	blur.material.use();
+	quad.draw(blur.material);
+
+	RP.bindFramebuffer(blur.framebuffer);
+
+	blur.material.uniforms.tColor.value = blur.framebufferTemp.textures[0];
+	blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
+	blur.material.uniforms.direction.value = [1, 0];
+	blur.material.use();
+	quad.draw(blur.material);
+
 	// Combine g-buffer textures
+
+	const blurSSAO = true;
 
 	RP.bindFramebuffer(gBuffer.framebufferFinal);
 
 	RP.depthWrite = false;
 	RP.depthTest = false;
 
+	quadMaterial.uniforms.ao.value = blurSSAO ? blur.framebuffer.textures[0] : ssao.framebuffer.textures[0];
 	quadMaterial.use();
 	quad.draw(quadMaterial);
-
-	// SAO
-
-	/*RP.bindFramebuffer(null);
-
-	gl.clearColor(1, 1, 1, 1);
-	gl.clear(gl.COLOR_BUFFER_BIT);
-
-	sao.material.uniforms.gPosition.value = gBuffer.textures.position;
-	sao.material.uniforms.gNormal.value = gBuffer.textures.normal;
-	sao.material.uniforms.cameraProjectionMatrix.value = camera.projectionMatrix;
-	sao.material.use();
-	quad.draw(sao.material);*/
 
 	// SMAA
 
@@ -311,6 +339,8 @@ function animate() {
 	smaa.materials.blend.uniforms.tColor.value = gBuffer.framebufferFinal.textures[0];
 	smaa.materials.blend.use();
 	quad.draw(smaa.materials.blend);
+
+	//
 
 	view.frustum.getViewSpaceVertices();
 	let wsFrustum = view.frustum.toSpace(camera.matrix);
