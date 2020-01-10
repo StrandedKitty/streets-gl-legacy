@@ -10,6 +10,7 @@ import FramebufferMultisample from "./FramebufferMultisample";
 export default class Renderer {
 	constructor(canvas) {
 		this.canvas = canvas;
+		this.pixelRatio = 1;
 
 		this.gl = canvas.getContext("webgl2", { antialias: false });
 		if (!this.gl) {
@@ -49,9 +50,12 @@ export default class Renderer {
 	}
 
 	setSize(width, height) {
-		this.canvas.width = width;
-		this.canvas.height = height;
-		this.gl.viewport(0, 0, width, height);
+		this.canvas.width = width * this.pixelRatio;
+		this.canvas.height = height * this.pixelRatio;
+	}
+
+	setPixelRatio(ratio) {
+		this.pixelRatio = ratio;
 	}
 
 	bindFramebuffer(fb) {

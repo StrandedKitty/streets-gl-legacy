@@ -32,9 +32,9 @@ float readDepth(const vec2 uv) {
 	return readPosition(uv).z;
 }
 
-const int kernelSize = 64;
-const float radius = 10.;
-const float bias = 1.;
+const int kernelSize = 32;
+const float radius = 15.;
+const float bias = 1.0;
 
 void main() {
 	vec2 noiseScale = resolution / 4.;
@@ -49,6 +49,7 @@ void main() {
 	mat3 TBN = mat3(tangent, bitangent, normal);
 
 	float occlusion = 0.0;
+
 	for(int i = 0; i < kernelSize; ++i) {
 		vec3 smple = TBN * samples[i];
 		smple = fragPos + smple * radius;
@@ -58,13 +59,14 @@ void main() {
 		offset.xyz /= offset.w;
 		offset.xyz = offset.xyz * 0.5 + 0.5;
 
-		//float sampleDepth = texture(tPosition, offset.xy).z;
 		float sampleDepth = readDepth(offset.xy);
 
 		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(depth - sampleDepth));
 		occlusion += (sampleDepth >= smple.z + bias ? 1.0 : 0.0) * rangeCheck;
 	}
+
 	occlusion = 1.0 - (occlusion / float(kernelSize));
 
 	FragColor = vec4(vec3(occlusion), 1.0);
+	FragColor.a = 1.;
 }

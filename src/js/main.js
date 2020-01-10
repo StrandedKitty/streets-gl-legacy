@@ -63,6 +63,7 @@ function init() {
 
 	RP = new Renderer(canvas);
 	RP.setSize(window.innerWidth, window.innerHeight);
+	RP.setPixelRatio(Config.SSAA);
 	RP.culling = true;
 
 	Config.set('textureAnisotropy', RP.capabilities.maxAnisotropy);
@@ -183,15 +184,21 @@ function init() {
 
 	workerManager = new MapWorkerManager(navigator.hardwareConcurrency, './js/worker.js');
 
+	gui.add(Config, 'SMAA');
+	gui.add(Config, 'SSAO');
+	gui.add(Config, 'SSAOBlur');
+
 	window.addEventListener('resize', function() {
 		camera.aspect = window.innerWidth / window.innerHeight;
 		view.frustum.aspect = camera.aspect;
 		camera.updateProjectionMatrix();
 
 		RP.setSize(window.innerWidth, window.innerHeight);
+		RP.setPixelRatio(Config.SSAA);
 		gBuffer.setSize(window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
 		smaa.setSize(window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
-		ssao.setSize(window.innerWidth * Config.SSAO, window.innerHeight * Config.SSAO);
+		ssao.setSize(window.innerWidth * Config.SSAOResolution, window.innerHeight * Config.SSAOResolution);
+		blur.setSize(window.innerWidth, window.innerHeight);
 	}, false);
 }
 
@@ -276,69 +283,81 @@ function animate() {
 
 	// SSAO
 
-	RP.bindFramebuffer(ssao.framebuffer);
+	if(Config.SSAO) {
+		RP.bindFramebuffer(ssao.framebuffer);
 
-	gl.clearColor(1, 1, 1, 1);
-	gl.clear(gl.COLOR_BUFFER_BIT);
+		gl.clearColor(1, 1, 1, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT);
 
-	ssao.material.uniforms.tPosition.value = gBuffer.textures.position;
-	ssao.material.uniforms.tNormal.value = gBuffer.textures.normal;
-	ssao.material.uniforms.cameraProjectionMatrix.value = camera.projectionMatrix;
-	ssao.material.use();
-	quad.draw(ssao.material);
+		ssao.material.uniforms.tPosition.value = gBuffer.textures.position;
+		ssao.material.uniforms.tNormal.value = gBuffer.textures.normal;
+		ssao.material.uniforms.cameraProjectionMatrix.value = camera.projectionMatrix;
+		ssao.material.use();
+		quad.draw(ssao.material);
 
-	// Blur
+		// Blur
 
-	RP.bindFramebuffer(blur.framebufferTemp);
+		RP.bindFramebuffer(blur.framebufferTemp);
 
-	blur.material.uniforms.tColor.value = ssao.framebuffer.textures[0];
-	blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
-	blur.material.uniforms.direction.value = [0, 1];
-	blur.material.use();
-	quad.draw(blur.material);
+		blur.material.uniforms.tColor.value = ssao.framebuffer.textures[0];
+		blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
+		blur.material.uniforms.direction.value = [0, 1];
+		blur.material.use();
+		quad.draw(blur.material);
 
-	RP.bindFramebuffer(blur.framebuffer);
+		RP.bindFramebuffer(blur.framebuffer);
 
-	blur.material.uniforms.tColor.value = blur.framebufferTemp.textures[0];
-	blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
-	blur.material.uniforms.direction.value = [1, 0];
-	blur.material.use();
-	quad.draw(blur.material);
+		blur.material.uniforms.tColor.value = blur.framebufferTemp.textures[0];
+		blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
+		blur.material.uniforms.direction.value = [1, 0];
+		blur.material.use();
+		quad.draw(blur.material);
+	} else {
+		RP.bindFramebuffer(blur.framebuffer);
+
+		gl.clearColor(1, 1, 1, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		RP.bindFramebuffer(ssao.framebuffer);
+
+		gl.clearColor(1, 1, 1, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+	}
 
 	// Combine g-buffer textures
 
-	const blurSSAO = true;
-
-	RP.bindFramebuffer(gBuffer.framebufferFinal);
+	RP.bindFramebuffer(Config.SMAA ? gBuffer.framebufferFinal : null);
 
 	RP.depthWrite = false;
 	RP.depthTest = false;
 
-	quadMaterial.uniforms.ao.value = blurSSAO ? blur.framebuffer.textures[0] : ssao.framebuffer.textures[0];
+	quadMaterial.uniforms.ao.value = Config.SSAOBlur ? blur.framebuffer.textures[0] : ssao.framebuffer.textures[0];
 	quadMaterial.use();
 	quad.draw(quadMaterial);
 
 	// SMAA
 
-	RP.bindFramebuffer(smaa.edgesFB);
+	if(Config.SMAA) {
+		RP.bindFramebuffer(smaa.edgesFB);
 
-	gl.clearColor(0, 0, 0, 1);
-	gl.clear(gl.COLOR_BUFFER_BIT);
+		gl.clearColor(0, 0, 0, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT);
 
-	smaa.materials.edges.uniforms.tDiffuse.value = gBuffer.framebufferFinal.textures[0];
-	smaa.materials.edges.use();
-	quad.draw(smaa.materials.edges);
+		smaa.materials.edges.uniforms.tDiffuse.value = gBuffer.framebufferFinal.textures[0];
+		smaa.materials.edges.use();
+		quad.draw(smaa.materials.edges);
 
-	RP.bindFramebuffer(smaa.weightsFB);
+		RP.bindFramebuffer(smaa.weightsFB);
 
-	smaa.materials.weights.use();
-	quad.draw(smaa.materials.weights);
+		smaa.materials.weights.use();
+		quad.draw(smaa.materials.weights);
 
-	RP.bindFramebuffer(null);
+		RP.bindFramebuffer(null);
 
-	smaa.materials.blend.uniforms.tColor.value = gBuffer.framebufferFinal.textures[0];
-	smaa.materials.blend.use();
-	quad.draw(smaa.materials.blend);
+		smaa.materials.blend.uniforms.tColor.value = gBuffer.framebufferFinal.textures[0];
+		smaa.materials.blend.use();
+		quad.draw(smaa.materials.blend);
+	}
 
 	//
 

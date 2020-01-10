@@ -2,7 +2,10 @@ let config = {
 	drawDistance: 3000,
 	textureAnisotropy: undefined,
 	SSAA: 2,
-	SSAO: 1
+	SMAA: true,
+	SSAO: true,
+	SSAOResolution: 1,
+	SSAOBlur: true
 };
 
 config.set = function (key, value, force) {

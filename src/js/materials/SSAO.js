@@ -28,10 +28,9 @@ export default class SSAO {
 			uniforms: {
 				//cameraNear: {type: '1f', value: 1},
 				//cameraFar: {type: '1f', value: 10000},
-				resolution: {type: '2fv', value: [window.innerWidth, window.innerHeight]},
+				resolution: {type: '2fv', value: [this.width, this.height]},
 				tPosition: {type: 'texture', value: null},
 				tNormal: {type: 'texture', value: null},
-				//tDepth: {type: 'texture', value: null},
 				cameraProjectionMatrix: {type: 'Matrix4fv', value: null},
 				tNoise: {type: 'texture', value: renderer.createTexture({
 					width: 4,

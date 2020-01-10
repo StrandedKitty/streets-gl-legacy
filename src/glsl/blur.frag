@@ -17,12 +17,14 @@ float linearizeDepth(float depth) {
     float near = 1.;
     float far = 10000.;
     float z = depth * 2.0 - 1.0;
-    return ((2.0 * near * far) / (far + near - z * (far - near)) - near) / (far - near);
+    return ((2.0 * near * far) / (far + near - z * (far - near))) / far;
 }
 
 void main() {
     float compareDepth = linearizeDepth(texture(tDepth, vUv).r);
     float size = texelSize / (length(resolution * direction));
+    if(direction.x == 1.) size = texelSize / resolution.x;
+    if(direction.y == 1.) size = texelSize / resolution.y;
     vec3 result = vec3(0);
     float weightSum = 0.0;
 
@@ -30,7 +32,7 @@ void main() {
         vec2 sampleOffset = vec2(size * samplerOffsets[i]) * direction;
         vec2 samplePos = vUv + sampleOffset;
         float sampleDepth = linearizeDepth(texture(tDepth, samplePos).r);
-        float weight = clamp(1.0 / ( 0.003 + abs(compareDepth - sampleDepth)), 0.0, 30000.0);
+        float weight = clamp(1.0 / (0.003 + abs(compareDepth - sampleDepth)), 0.0, 30000.0);
         result += texture(tColor, samplePos).rgb * weight;
         weightSum += weight;
     }
