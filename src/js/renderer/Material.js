@@ -29,11 +29,16 @@ export default class Material {
 			}
 
 			if(location !== null) {
-				if(uniform.type[0] === 'M') {
+				if (uniform.type[0] === 'M') {
 					this.gl['uniform' + uniform.type](location, false, uniform.value);
-				} else if(uniform.type === 'texture') {
+				} else if (uniform.type === 'texture') {
 					this.gl.activeTexture(this.gl.TEXTURE0 + texturesUsed);
 					this.gl.bindTexture(this.gl.TEXTURE_2D, uniform.value.WebGLTexture);
+					this.gl.uniform1i(this.uniformsLocations[name], texturesUsed);
+					++texturesUsed;
+				} else if (uniform.type === 'textureCube') {
+					this.gl.activeTexture(this.gl.TEXTURE0 + texturesUsed);
+					if(uniform.value.loaded) this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, uniform.value.WebGLTexture);
 					this.gl.uniform1i(this.uniformsLocations[name], texturesUsed);
 					++texturesUsed;
 				} else {

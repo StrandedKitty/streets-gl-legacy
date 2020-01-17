@@ -6,6 +6,7 @@ import Extensions from "./Extensions";
 import Framebuffer from "./Framebuffer";
 import Renderbuffer from "./Renderbuffer";
 import FramebufferMultisample from "./FramebufferMultisample";
+import TextureCube from "./TextureCube";
 
 export default class Renderer {
 	constructor(canvas) {
@@ -35,6 +36,10 @@ export default class Renderer {
 
 	createTexture(params) {
 		return new Texture(this, params);
+	}
+
+	createTextureCube(params) {
+		return new TextureCube(this, params);
 	}
 
 	createFramebuffer(params) {

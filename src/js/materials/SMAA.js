@@ -48,8 +48,8 @@ export default class SMAA {
 		this.materials = {
 			edges: renderer.createMaterial({
 				name: 'SMAA_edges',
-				vertexShader: shaders.smaa.edges.vertex,
-				fragmentShader: shaders.smaa.edges.fragment,
+				vertexShader: shaders.smaaEdges.vertex,
+				fragmentShader: shaders.smaaEdges.fragment,
 				uniforms: {
 					resolution: {type: '2fv', value: [1 / this.width, 1 / this.height]},
 					tDiffuse: {type: 'texture', value: null}
@@ -57,8 +57,8 @@ export default class SMAA {
 			}),
 			weights: renderer.createMaterial({
 				name: 'SMAA_weights',
-				vertexShader: shaders.smaa.weights.vertex,
-				fragmentShader: shaders.smaa.weights.fragment,
+				vertexShader: shaders.smaaWeights.vertex,
+				fragmentShader: shaders.smaaWeights.fragment,
 				uniforms: {
 					resolution: {type: '2fv', value: [1 / this.width, 1 / this.height]},
 					tDiffuse: {type: 'texture', value: this.edgesFB.textures[0]},
@@ -68,8 +68,8 @@ export default class SMAA {
 			}),
 			blend: renderer.createMaterial({
 				name: 'SMAA_blend',
-				vertexShader: shaders.smaa.blend.vertex,
-				fragmentShader: shaders.smaa.blend.fragment,
+				vertexShader: shaders.smaaBlend.vertex,
+				fragmentShader: shaders.smaaBlend.fragment,
 				uniforms: {
 					resolution: {type: '2fv', value: [1 / this.width, 1 / this.height]},
 					tDiffuse: {type: 'texture', value: this.weightsFB.textures[0]},

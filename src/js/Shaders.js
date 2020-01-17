@@ -1,40 +1,75 @@
 class Shaders {
 	constructor() {
-		this.building = {
+		this.shaders = {};
+		this.raw = {};
+		this.includes = {};
+
+		this.raw.building = {
 			fragment: require('../glsl/building.frag').default,
 			vertex: require('../glsl/building.vert').default
 		};
-		this.ground = {
+		this.raw.ground = {
 			fragment: require('../glsl/ground.frag').default,
 			vertex: require('../glsl/ground.vert').default
 		};
-		this.quad = {
+		this.raw.quad = {
 			fragment: require('../glsl/quad.frag').default,
 			vertex: require('../glsl/quad.vert').default
 		};
-		this.smaa = {
-			blend: {
-				fragment: require('../glsl/smaa/blend.frag').default,
-				vertex: require('../glsl/smaa/blend.vert').default,
-			},
-			edges: {
-				fragment: require('../glsl/smaa/edges.frag').default,
-				vertex: require('../glsl/smaa/edges.vert').default
-			},
-			weights: {
-				fragment: require('../glsl/smaa/weights.frag').default,
-				vertex: require('../glsl/smaa/weights.vert').default
-			}
+		this.raw.smaaBlend = {
+			fragment: require('../glsl/smaa/blend.frag').default,
+			vertex: require('../glsl/smaa/blend.vert').default,
 		};
-		this.sao = {
+		this.raw.smaaEdges = {
+			fragment: require('../glsl/smaa/edges.frag').default,
+			vertex: require('../glsl/smaa/edges.vert').default
+		};
+		this.raw.smaaWeights = {
+			fragment: require('../glsl/smaa/weights.frag').default,
+			vertex: require('../glsl/smaa/weights.vert').default
+		};
+		this.raw.sao = {
 			fragment: require('../glsl/sao.frag').default,
 			vertex: require('../glsl/sao.vert').default
 		};
-		this.blur = {
+		this.raw.blur = {
 			fragment: require('../glsl/blur.frag').default,
 			vertex: require('../glsl/quad.vert').default
 		};
+
+		this.includes.tonemapping = require('../glsl/includes/tonemapping.glsl').default;
+
+		this.addIncludes();
+	}
+
+	addIncludes() {
+		const includePattern = /^[ \t]*#include +<([\w\d./]+)>/gm;
+		const chunks = this.includes;
+
+		for(const [name, raw] of Object.entries(this.raw)) {
+			this.shaders[name] = {};
+
+			this.shaders[name].vertex = raw.vertex.replace(includePattern, function (match, include) {
+				const string = chunks[include];
+
+				if (string === undefined) {
+					throw new Error('Can not resolve #include <' + include + '>');
+				}
+
+				return string;
+			});
+
+			this.shaders[name].fragment = raw.fragment.replace(includePattern, function (match, include) {
+				const string = chunks[include];
+
+				if (string === undefined) {
+					throw new Error('Can not resolve #include <' + include + '>');
+				}
+
+				return string;
+			});
+		}
 	}
 }
 
-export default new Shaders();
+export default new Shaders().shaders;

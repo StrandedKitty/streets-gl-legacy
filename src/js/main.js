@@ -95,6 +95,17 @@ function init() {
 		}
 	});
 
+	const sky = RP.createTextureCube({
+		urls: [
+			'/textures/sky/px.png',
+			'/textures/sky/nx.png',
+			'/textures/sky/py.png',
+			'/textures/sky/ny.png',
+			'/textures/sky/pz.png',
+			'/textures/sky/nz.png',
+		]
+	});
+
 	buildingMaterial = RP.createMaterial({
 		name: 'buildingMaterial',
 		vertexShader: shaders.building.vertex,
@@ -169,6 +180,18 @@ function init() {
 		1, 1
 	]));
 
+	const light = {
+		direction: new Float32Array([-1, -1, -1]),
+		range: -1,
+		color: new Float32Array([1, 1, 1]),
+		intensity: 2,
+		position: new Float32Array([0, 0, 0]),
+		innerConeCos: 1,
+		outerConeCos: 0.7071067811865476,
+		type: 0,
+		padding: new Float32Array([0, 0])
+	};
+
 	quadMaterial = RP.createMaterial({
 		name: 'quad',
 		vertexShader: shaders.quad.vertex,
@@ -177,8 +200,21 @@ function init() {
 			uColor: {type: 'texture', value: gBuffer.textures.color},
 			uNormal: {type: 'texture', value: gBuffer.textures.normal},
 			uPosition: {type: 'texture', value: gBuffer.textures.position},
-			uDepth: {type: 'texture', value: gBuffer.framebuffer.depth},
-			ao: {type: 'texture', value: null}
+			uAO: {type: 'texture', value: null},
+			sky: {type: 'textureCube', value: sky},
+			tBRDF: {type: 'texture', value: RP.createTexture({url: '/textures/brdf.png', minFilter: 'LINEAR', wrap: 'clamp'})},
+			'uLight.direction': {type: '3fv', value: light.direction},
+			'uLight.range': {type: '1f', value: light.range},
+			'uLight.color': {type: '3fv', value: light.color},
+			'uLight.intensity': {type: '1f', value: light.intensity},
+			'uLight.position': {type: '3fv', value: light.position},
+			'uLight.innerConeCos': {type: '1f', value: light.innerConeCos},
+			'uLight.outerConeCos': {type: '1f', value: light.outerConeCos},
+			'uLight.type': {type: '1i', value: light.type},
+			'uLight.padding': {type: '2fv', value: light.padding},
+			normalMatrix: {type: 'Matrix3fv', value: null},
+			'ambientIntensity': {type: '1f', value: 0.2},
+			'uExposure': {type: '1f', value: 1.}
 		}
 	});
 
@@ -187,6 +223,8 @@ function init() {
 	gui.add(Config, 'SMAA');
 	gui.add(Config, 'SSAO');
 	gui.add(Config, 'SSAOBlur');
+	gui.add(quadMaterial.uniforms['uLight.intensity'], 'value');
+	gui.add(quadMaterial.uniforms['ambientIntensity'], 'value');
 
 	window.addEventListener('resize', function() {
 		camera.aspect = window.innerWidth / window.innerHeight;
@@ -331,7 +369,8 @@ function animate() {
 	RP.depthWrite = false;
 	RP.depthTest = false;
 
-	quadMaterial.uniforms.ao.value = Config.SSAOBlur ? blur.framebuffer.textures[0] : ssao.framebuffer.textures[0];
+	quadMaterial.uniforms.uAO.value = Config.SSAOBlur ? blur.framebuffer.textures[0] : ssao.framebuffer.textures[0];
+	quadMaterial.uniforms.normalMatrix.value = mat4.normalMatrix(camera.matrixWorld);
 	quadMaterial.use();
 	quad.draw(quadMaterial);
 

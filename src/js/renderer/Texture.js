@@ -14,6 +14,7 @@ export default class Texture {
 		this.internalFormat = params.internalFormat || 'RGBA';
 		this.type = params.type || 'UNSIGNED_BYTE';
 		this.data = params.data || null;
+		this.flipY = params.flipY || true;
 
 		this.WebGLTexture = this.gl.createTexture();
 		this.gl.bindTexture(this.gl.TEXTURE_2D, this.WebGLTexture);
