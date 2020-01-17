@@ -3,7 +3,7 @@ export default class TextureCube {
 		this.gl = renderer.gl;
 
 		this.urls = params.urls;
-		this.minFilter = params.minFilter || 'LINEAR';
+		this.minFilter = params.minFilter || 'LINEAR_MIPMAP_LINEAR';
 		this.magFilter = params.magFilter || 'LINEAR';
 		this.format = params.format || 'RGBA';
 		this.internalFormat = params.internalFormat || 'RGBA';
@@ -35,7 +35,7 @@ export default class TextureCube {
 
 			++this.loadedNumber;
 			if(this.loadedNumber === 6) {
-				//this.gl.generateMipmap(this.gl.TEXTURE_CUBE_MAP);
+				this.gl.generateMipmap(this.gl.TEXTURE_CUBE_MAP);
 				this.loaded = true;
 			}
 		}.bind(this);

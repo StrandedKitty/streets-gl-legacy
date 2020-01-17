@@ -11,6 +11,7 @@ uniform sampler2D uNormal;
 uniform sampler2D uColor;
 uniform sampler2D uDepth;
 uniform sampler2D uPosition;
+uniform sampler2D uMetallicRoughness;
 uniform sampler2D uAO;
 uniform float ambientIntensity;
 uniform samplerCube sky;
@@ -134,14 +135,16 @@ vec3 applyDirectionalLight(Light light, MaterialInfo materialInfo, vec3 normal, 
 vec3 getIBLContribution(MaterialInfo materialInfo, vec3 n, vec3 v) {
     float NdotV = clamp(dot(n, v), 0.0, 1.0);
 
+    float mipCount = 11.;
+    float lod = clamp(materialInfo.perceptualRoughness * mipCount, 0.0, mipCount);
     vec3 reflection = normalize(reflect(-v, n));
 
     vec2 brdfSamplePoint = clamp(vec2(NdotV, materialInfo.perceptualRoughness), vec2(0.0, 0.0), vec2(1.0, 1.0));
     vec2 brdf = texture(tBRDF, brdfSamplePoint).rg;
 
-    vec4 diffuseSample = texture(sky, n);
+    vec4 diffuseSample = textureLod(sky, n, 0.);
 
-    vec4 specularSample = texture(sky, reflection);
+    vec4 specularSample = textureLod(sky, reflection, lod);
 
     vec3 diffuseLight = SRGBtoLINEAR(diffuseSample).rgb;
     vec3 specularLight = SRGBtoLINEAR(specularSample).rgb;
@@ -160,10 +163,12 @@ void main() {
     vec4 baseColor = vec4(0.0, 0.0, 0.0, 1.0);
     vec3 diffuseColor = vec3(0.0);
     vec3 specularColor = vec3(0.0);
-    vec3 f0 = vec3(0.02);
+    vec3 f0 = vec3(0.04);
 
-    perceptualRoughness = 0.99;
-    metallic = 0.01;
+    vec4 mrSample = texture(uMetallicRoughness, vUv);
+    metallic = mrSample.r;
+    perceptualRoughness = mrSample.g;
+    //f0 = vec3(mrSample.b);
     baseColor = SRGBtoLINEAR(texture(uColor, vUv));
     diffuseColor = baseColor.rgb * (vec3(1.0) - f0) * (1.0 - metallic);
     specularColor = mix(f0, baseColor.rgb, metallic);

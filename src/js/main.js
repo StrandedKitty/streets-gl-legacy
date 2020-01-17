@@ -146,6 +146,11 @@ function init() {
 			internalFormat: 'RGBA32F',
 			format: 'RGBA',
 			type: 'FLOAT'
+		}, {
+			name: 'metallicRoughness',
+			internalFormat: 'RGBA8',
+			format: 'RGBA',
+			type: 'UNSIGNED_BYTE'
 		}
 	]);
 
@@ -200,6 +205,7 @@ function init() {
 			uColor: {type: 'texture', value: gBuffer.textures.color},
 			uNormal: {type: 'texture', value: gBuffer.textures.normal},
 			uPosition: {type: 'texture', value: gBuffer.textures.position},
+			uMetallicRoughness: {type: 'texture', value: gBuffer.textures.metallicRoughness},
 			uAO: {type: 'texture', value: null},
 			sky: {type: 'textureCube', value: sky},
 			tBRDF: {type: 'texture', value: RP.createTexture({url: '/textures/brdf.png', minFilter: 'LINEAR', wrap: 'clamp'})},
