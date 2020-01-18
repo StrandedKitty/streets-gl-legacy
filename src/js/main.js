@@ -18,6 +18,7 @@ import shaders from "./Shaders";
 import SMAA from "./materials/SMAA";
 import SSAO from "./materials/SSAO";
 import Blur from "./materials/Blur";
+import Skybox from "./Skybox";
 
 let scene,
 	camera,
@@ -32,12 +33,13 @@ let objects = {
 };
 let meshes = {};
 
-let mesh, material, wrapper, buildings, buildingMaterial;
+let mesh, material, wrapper, buildings, buildingMaterial, tileMeshes;
 let quad, quadMaterial;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
 let gBuffer, smaa, ssao, blur;
+let skybox;
 
 init();
 animate();
@@ -74,6 +76,8 @@ function init() {
 	scene.add(wrapper);
 	buildings = new Object3D();
 	wrapper.add(buildings);
+	tileMeshes = new Object3D();
+	wrapper.add(tileMeshes);
 
 	camera = new PerspectiveCamera({
 		fov: 70,
@@ -224,6 +228,9 @@ function init() {
 		}
 	});
 
+	skybox = new Skybox(RP, sky);
+	wrapper.add(skybox.mesh);
+
 	workerManager = new MapWorkerManager(navigator.hardwareConcurrency, './js/worker.js');
 
 	gui.add(Config, 'SMAA');
@@ -279,13 +286,17 @@ function animate() {
 	gl.clearColor(0, 0, 0, 0);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
-	material.use();
+	RP.depthWrite = false;
+
+	skybox.render(camera);
 
 	RP.depthWrite = true;
 
-	for(let i = 0; i < wrapper.children.length; i++) {
-		let object = wrapper.children[i];
+	material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
+	material.use();
+
+	for(let i = 0; i < tileMeshes.children.length; i++) {
+		let object = tileMeshes.children[i];
 
 		if(object instanceof Mesh) {
 			object.updateMatrix();
@@ -498,7 +509,7 @@ function animate() {
 			tiles.set(name, tile);
 
 			let ground = tile.getGroundMesh(RP);
-			wrapper.add(ground);
+			tileMeshes.add(ground);
 
 			tile.load(worker);
 		}

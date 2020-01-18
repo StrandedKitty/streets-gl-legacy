@@ -36,6 +36,10 @@ class Shaders {
 			fragment: require('../glsl/blur.frag').default,
 			vertex: require('../glsl/quad.vert').default
 		};
+		this.raw.skybox = {
+			fragment: require('../glsl/skybox.frag').default,
+			vertex: require('../glsl/skybox.vert').default
+		};
 
 		this.includes.tonemapping = require('../glsl/includes/tonemapping.glsl').default;
 

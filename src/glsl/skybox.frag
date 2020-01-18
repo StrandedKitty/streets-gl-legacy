@@ -7,14 +7,15 @@ layout(location = 3) out vec4 outMetallicRoughness;
 in vec3 vColor;
 in vec3 vNormal;
 in vec3 vPosition;
-in vec2 vUv;
+in vec3 vWorldPosition;
 
-uniform sampler2D tSample;
+uniform samplerCube tCube;
 
 void main() {
-    outColor = vec4(vColor, 1.) * texture(tSample, vUv);
-    outNormal = vNormal * 0.5 + 0.5;
+    vec3 normal = normalize(vNormal);
+    outColor = texture(tCube, normal);
+    outColor.a = 0.; // unlit
+    outNormal = normalize(normal);
     outPosition = vPosition;
-    float r = 2. * (texture(tSample, vUv).x - 0.5);
-    outMetallicRoughness = vec4(0.01, r * 0.9, (1. - r) * 0.3, 0);
+    outMetallicRoughness = vec4(0, 0, 0, 0);
 }

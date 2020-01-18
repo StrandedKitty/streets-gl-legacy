@@ -168,10 +168,15 @@ void main() {
     vec4 mrSample = texture(uMetallicRoughness, vUv);
     metallic = mrSample.r;
     perceptualRoughness = mrSample.g;
-    //f0 = vec3(mrSample.b);
+    f0 += vec3(mrSample.b);
     baseColor = SRGBtoLINEAR(texture(uColor, vUv));
     diffuseColor = baseColor.rgb * (vec3(1.0) - f0) * (1.0 - metallic);
     specularColor = mix(f0, baseColor.rgb, metallic);
+
+    if(baseColor.a == 0.) { // skip unlit objects
+        FragColor = vec4(baseColor.xyz, 1.);
+        return;
+    }
 
     float alphaRoughness = perceptualRoughness * perceptualRoughness;
 
