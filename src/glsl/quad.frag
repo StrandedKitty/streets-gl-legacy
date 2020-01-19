@@ -4,6 +4,7 @@ out vec4 FragColor;
 
 #define TONEMAP_ACES 1
 #define PI 3.141592653589793
+#define ConstE 2.71828182846
 
 in vec2 vUv;
 
@@ -217,6 +218,14 @@ void main() {
     float occlusionStrength = 1.0;
     ao = texture(uAO, vUv).r;
     color = mix(color, color * ao, occlusionStrength);
+
+    // FOG
+
+    float density = 1. / 20000.;
+    float distance = length(position);
+    float fog = 1. / pow(ConstE, pow(distance * density, 2.));
+
+    color = mix(vec3(.77, .86, .91), color, fog);
 
     // OUT
 
