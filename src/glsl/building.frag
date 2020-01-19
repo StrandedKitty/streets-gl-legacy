@@ -16,5 +16,5 @@ void main() {
     outNormal = vNormal * 0.5 + 0.5;
     outPosition = vPosition;
     float r = 2. * (texture(tSample, vUv).x - 0.5);
-    outMetallicRoughness = vec4(0.01, r * 0.9, (1. - r) * 0.3, 0);
+    outMetallicRoughness = vec4(0.01, r * 0.9, (1. - r) * 0.1, 0);
 }

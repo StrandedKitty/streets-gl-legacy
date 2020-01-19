@@ -5,6 +5,7 @@ export default class Object3D {
 	constructor(params) {
 		this.children = [];
 		this.parent = null;
+		this.data = {};
 		this.matrix = mat4.identity();
 		this.matrixWorld = mat4.identity();
 		this.position = {

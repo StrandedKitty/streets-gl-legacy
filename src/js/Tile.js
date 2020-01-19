@@ -79,10 +79,20 @@ export default class Tile {
 		this.groundMesh.setAttributeData('uv', uv);
 		this.groundMesh.updateAttribute('uv');
 
-		this.groundMesh.id = ~~(Math.random() * 1000);
+		this.groundMesh.data.tile = this;
 
 		this.groundMesh.setPosition(position.x + tileSize / 2, 0, position.z + tileSize / 2);
 		this.groundMesh.updateMatrix();
+
+		this.groundMesh.setBoundingBox({
+			x: -tileSize / 2,
+			y: 0,
+			z: -tileSize / 2
+		}, {
+			x: tileSize / 2,
+			y: 1000,
+			z: tileSize / 2
+		});
 
 		return this.groundMesh;
 	}

@@ -272,6 +272,7 @@ function animate() {
 
 	camera.updateMatrixWorld();
 	camera.updateMatrixWorldInverse();
+	camera.updateFrustum();
 
 	let gl = RP.gl;
 
@@ -302,14 +303,18 @@ function animate() {
 			object.updateMatrix();
 			object.updateMatrixWorld();
 
-			let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, object.matrixWorld);
-			let normalMatrix = mat4.normalMatrix(modelViewMatrix);
-			material.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
-			material.uniforms.normalMatrix = {type: 'Matrix3fv', value: normalMatrix};
-			material.updateUniform('modelViewMatrix');
-			material.updateUniform('normalMatrix');
+			const inFrustum = object.inCameraFrustum(camera);
 
-			object.draw(material);
+			if(inFrustum) {
+				let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, object.matrixWorld);
+				let normalMatrix = mat4.normalMatrix(modelViewMatrix);
+				material.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
+				material.uniforms.normalMatrix = {type: 'Matrix3fv', value: normalMatrix};
+				material.updateUniform('modelViewMatrix');
+				material.updateUniform('normalMatrix');
+
+				object.draw(material);
+			}
 		}
 	}
 
@@ -323,14 +328,18 @@ function animate() {
 		object.updateMatrix();
 		object.updateMatrixWorld();
 
-		let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, object.matrixWorld);
-		let normalMatrix = mat4.normalMatrix(modelViewMatrix);
-		buildingMaterial.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
-		buildingMaterial.uniforms.normalMatrix = {type: 'Matrix3fv', value: normalMatrix};
-		buildingMaterial.updateUniform('modelViewMatrix');
-		buildingMaterial.updateUniform('normalMatrix');
+		const inFrustum = object.inCameraFrustum(camera);
 
-		object.draw(buildingMaterial);
+		if(inFrustum) {
+			let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, object.matrixWorld);
+			let normalMatrix = mat4.normalMatrix(modelViewMatrix);
+			buildingMaterial.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
+			buildingMaterial.uniforms.normalMatrix = {type: 'Matrix3fv', value: normalMatrix};
+			buildingMaterial.updateUniform('modelViewMatrix');
+			buildingMaterial.updateUniform('normalMatrix');
+
+			object.draw(buildingMaterial);
+		}
 	}
 
 	RP.depthWrite = false;
@@ -440,6 +449,7 @@ function animate() {
 				const display = new Uint8Array(vertices.length / 3);
 				const colors = new Uint8Array(data.colors);
 				const instances = data.instances;
+				const bbox = {min: data.bboxMin, max: data.bboxMax};
 
 				let mesh = RP.createMesh({
 					vertices: vertices
@@ -481,6 +491,11 @@ function animate() {
 				mesh.setPosition(pivot.x, 0, pivot.z);
 
 				buildings.add(mesh);
+
+				mesh.setBoundingBox(
+					{x: bbox.min[0], y: bbox.min[1], z: bbox.min[2]},
+					{x: bbox.max[0], y: bbox.max[1], z: bbox.max[2]}
+				);
 
 				this.mesh = mesh;
 

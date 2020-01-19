@@ -1,6 +1,8 @@
 import Object3D from "./Object3D";
 import Attribute from "./Attribute";
 import VAO from "./VAO";
+import AABB from "../AABB";
+import vec3 from "../math/vec3";
 
 export default class Mesh extends Object3D {
 	constructor(renderer, params) {
@@ -65,5 +67,33 @@ export default class Mesh extends Object3D {
 			this.vaos[materialName].bind();
 			attribute.setData(attribute.data);
 		}
+	}
+
+	setBoundingBox(min, max) {
+		this.bbox = new AABB(min, max);
+	}
+
+	inCameraFrustum(camera) {
+		if(this.bbox) {
+			const planes = camera.frustumPlanes;
+
+			for(let i = 0; i < 6; ++i) {
+				const plane = planes[i];
+
+				let viewSpaceAABB = this.bbox.toSpace(this.matrixWorld);
+
+				const point = new vec3(
+					plane.x > 0 ? viewSpaceAABB.max.x : viewSpaceAABB.min.x,
+					plane.y > 0 ? viewSpaceAABB.max.y : viewSpaceAABB.min.y,
+					plane.z > 0 ? viewSpaceAABB.max.z : viewSpaceAABB.min.z
+				);
+
+				if(plane.distanceToPoint(point) < 0) {
+					return false;
+				}
+			}
+
+			return true;
+		} else throw new Error('Mesh has no bbox');
 	}
 }

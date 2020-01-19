@@ -77,7 +77,9 @@ function processData(data, pivot) {
 		uvs: [],
 		instances: {
 			trees: []
-		}
+		},
+		bboxMin: [0, 0, 0],
+		bboxMax: [0, 0, 0]
 	};
 
 	let raw = {
@@ -173,6 +175,23 @@ function processData(data, pivot) {
 		}
 
 		meshData.instances.trees = [...meshData.instances.trees, ...way.instances.trees];
+	}
+
+	if(meshData.vertices.length > 0) {
+		const v = meshData.vertices;
+
+		meshData.bboxMin = [v[0], v[1], v[2]];
+		meshData.bboxMax = [v[0], v[1], v[2]];
+
+		for(let i = 1; i < v.length / 3; i++) {
+			meshData.bboxMin[0] = Math.min(meshData.bboxMin[0], v[i * 3]);
+			meshData.bboxMin[1] = Math.min(meshData.bboxMin[1], v[i * 3 + 1]);
+			meshData.bboxMin[2] = Math.min(meshData.bboxMin[2], v[i * 3 + 2]);
+
+			meshData.bboxMax[0] = Math.max(meshData.bboxMax[0], v[i * 3]);
+			meshData.bboxMax[1] = Math.max(meshData.bboxMax[1], v[i * 3 + 1]);
+			meshData.bboxMax[2] = Math.max(meshData.bboxMax[2], v[i * 3 + 2]);
+		}
 	}
 
 	self.postMessage(meshData);

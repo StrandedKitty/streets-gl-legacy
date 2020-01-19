@@ -1,5 +1,6 @@
 import {toRad, meters2tile, tile2meters, calculateLine} from './Utils';
 import vec3 from "./math/vec3";
+import Plane from './Plane';
 
 export default class Frustum {
 	constructor(fov, aspect, near, far) {
@@ -184,5 +185,23 @@ export default class Frustum {
 		tilesList.sort((a, b) => (a.distance > b.distance) ? 1 : -1);
 
 		return tilesList;
+	}
+
+	static getPlanes(matrix) {
+		const planes = new Array(6);
+
+		const me0 = matrix[0], me1 = matrix[1], me2 = matrix[2], me3 = matrix[3];
+		const me4 = matrix[4], me5 = matrix[5], me6 = matrix[6], me7 = matrix[7];
+		const me8 = matrix[8], me9 = matrix[9], me10 = matrix[10], me11 = matrix[11];
+		const me12 = matrix[12], me13 = matrix[13], me14 = matrix[14], me15 = matrix[15];
+
+		planes[0] = new Plane(me3 - me0, me7 - me4, me11 - me8, me15 - me12).normalize();
+		planes[1] = new Plane(me3 + me0, me7 + me4, me11 + me8, me15 + me12).normalize();
+		planes[2] = new Plane(me3 + me1, me7 + me5, me11 + me9, me15 + me13).normalize();
+		planes[3] = new Plane(me3 - me1, me7 - me5, me11 - me9, me15 - me13).normalize();
+		planes[4] = new Plane(me3 - me2, me7 - me6, me11 - me10, me15 - me14).normalize();
+		planes[5] = new Plane(me3 + me2, me7 + me6, me11 + me10, me15 + me14).normalize();
+
+		return planes;
 	}
 }

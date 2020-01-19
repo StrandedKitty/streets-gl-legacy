@@ -1,5 +1,6 @@
 import Object3D from "./Object3D";
 import mat4 from "../math/mat4";
+import Frustum from "../Frustum";
 
 export default class PerspectiveCamera extends Object3D {
 	constructor(params) {
@@ -12,6 +13,8 @@ export default class PerspectiveCamera extends Object3D {
 
 		this.projectionMatrix = mat4.perspective(this.fov, this.aspect, this.near, this.far);
 		this.matrixWorldInverse = mat4.identity();
+
+		this.frustumPlanes = null;
 	}
 
 	updateMatrixWorldInverse() {
@@ -20,5 +23,9 @@ export default class PerspectiveCamera extends Object3D {
 
 	updateProjectionMatrix() {
 		this.projectionMatrix = mat4.perspective(this.fov, this.aspect, this.near, this.far);
+	}
+
+	updateFrustum() {
+		this.frustumPlanes = Frustum.getPlanes(mat4.multiply(this.projectionMatrix, this.matrixWorldInverse));
 	}
 }
