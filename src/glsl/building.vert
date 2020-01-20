@@ -4,11 +4,13 @@ in vec3 position;
 in vec3 color;
 in vec3 normal;
 in vec2 uv;
+in float textureId;
 in float display;
 out vec3 vColor;
 out vec3 vNormal;
 out vec3 vPosition;
 out vec2 vUv;
+out float vTextureId;
 
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
@@ -16,6 +18,7 @@ uniform mat3 normalMatrix;
 
 void main() {
     vColor = color;
+    vTextureId = textureId;
     vUv = uv;
     vec3 transformedNormal = normal;
     transformedNormal = vec3(normalMatrix * transformedNormal);

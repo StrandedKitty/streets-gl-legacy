@@ -115,7 +115,8 @@ function init() {
 		vertexShader: shaders.building.vertex,
 		fragmentShader: shaders.building.fragment,
 		uniforms: {
-			tSample: {type: 'texture', value: RP.createTexture({url: './textures/window.png', anisotropy: Config.textureAnisotropy})}
+			'tDiffuse[0]': {type: 'texture', value: RP.createTexture({url: './textures/window.png', anisotropy: Config.textureAnisotropy})},
+			'tDiffuse[1]': {type: 'texture', value: RP.createTexture({url: './textures/glass.png', anisotropy: Config.textureAnisotropy})}
 		}
 	});
 
@@ -448,6 +449,7 @@ function animate() {
 				const offsets = data.offsets;
 				const display = new Uint8Array(vertices.length / 3);
 				const colors = new Uint8Array(data.colors);
+				const textures = new Float32Array(data.textures);
 				const instances = data.instances;
 				const bbox = {min: data.bboxMin, max: data.bboxMax};
 
@@ -478,6 +480,14 @@ function animate() {
 					normalized: false
 				});
 				mesh.setAttributeData('uv', uvs);
+
+				mesh.addAttribute({
+					name: 'textureId',
+					size: 1,
+					type: 'FLOAT',
+					normalized: false
+				});
+				mesh.setAttributeData('textureId', textures);
 
 				mesh.addAttribute({
 					name: 'display',

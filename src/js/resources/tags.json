@@ -32,5 +32,11 @@
 	},
 	"building:min_level": {
 		"default": {"minLevel": "@int"}
+	},
+	"building:material": {
+		"default": {"facadeMaterial": "@this"}
+	},
+	"roof:material": {
+		"default": {"roofMaterial": "@this"}
 	}
 }

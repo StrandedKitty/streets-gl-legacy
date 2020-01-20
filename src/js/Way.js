@@ -15,7 +15,8 @@ export default class Way {
 			vertices: [],
 			normals: [],
 			colors: [],
-			uvs: []
+			uvs: [],
+			textures: []
 		};
 		this.instances = {
 			trees: []
@@ -74,11 +75,13 @@ export default class Way {
 			this.mesh.normals.push(0, 1, 0);
 			this.mesh.colors.push(...color);
 			this.mesh.uvs.push(0, 0);
+			this.mesh.textures.push(0);
 		}
 	}
 
 	triangulateWalls() {
 		let facadeColor = this.properties.facadeColor || [231, 216, 185];
+		let materialId = this.getMaterialId(this.properties.facadeMaterial);
 		let height, minHeight, levels;
 
 		if(this.properties.height) {
@@ -137,6 +140,7 @@ export default class Way {
 			for(let j = 0; j < 6; j++) {
 				this.mesh.normals.push(normal.x, normal.y, normal.z);
 				this.mesh.colors.push(...facadeColor);
+				this.mesh.textures.push(materialId);
 			}
 		}
 	}
@@ -243,5 +247,16 @@ export default class Way {
 		let ab = vec3.sub(vA, vB);
 		cb = vec3.cross(cb, ab);
 		return vec3.normalize(cb);
+	}
+
+	getMaterialId(material) {
+		switch (material) {
+			default:
+				return 0;
+			case 'glass':
+				return 1;
+			case 'mirror':
+				return 1;
+		}
 	}
 }

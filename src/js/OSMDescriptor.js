@@ -33,6 +33,10 @@ export default class OSMDescriptor {
 						res[i] = parseInt(value);
 					}
 
+					if(res[i] === '@this') {
+						res[i] = value;
+					}
+
 					if(res[i]) this.properties[i] = res[i];
 				}
 			}
