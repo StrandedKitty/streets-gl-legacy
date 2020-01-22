@@ -30,4 +30,8 @@ export default class Attribute {
 		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
 		this.data = typedArray;
 	}
+
+	delete() {
+		this.gl.deleteBuffer(this.buffer);
+	}
 }

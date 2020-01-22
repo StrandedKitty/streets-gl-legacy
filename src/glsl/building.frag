@@ -14,8 +14,10 @@ uniform sampler2D tDiffuse[2];
 
 vec4 getValueFromSamplerArray(float i, vec2 uv) {
     if (i < 0.5) {
-        return texture(tDiffuse[0], uv);
+        return vec4(1);
     } else if (i < 1.5) {
+        return texture(tDiffuse[0], uv);
+    } else if (i < 2.5) {
         return texture(tDiffuse[1], uv);
     }
 }
@@ -27,5 +29,5 @@ void main() {
     outNormal = vNormal * 0.5 + 0.5;
     outPosition = vPosition;
     float r = diffuse.x;
-    outMetallicRoughness = vec4(0.01, r * 0.5, (1. - r) * 0.1, 0);
+    outMetallicRoughness = vec4(0.01, r == 0.9 ? 1. : r * 0.8, (1. - r) * 0.1, 0);
 }

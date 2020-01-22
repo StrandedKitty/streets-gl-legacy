@@ -1,27 +1,18 @@
 export default class MapMesh {
-	constructor(id, tile, offset, size) {
-		this.id = id;
-		this.tiles = [tile];
-		this.holder = tile;
-		this.offset = offset;
-		this.size = size;
+	constructor(params) {
+		this.id = params.id;
+		this.tiles = [params.tile];
+		this.holder = params.tile;
 	}
 
-	addParent(tile, newOffset, newSize) {
-		this.holder.hideObject(this.offset, this.size);
-		this.holder = tile;
-		this.offset = newOffset;
-		this.size = newSize;
-		this.holder.showObject(this.offset, this.size);
+	setNewParent(params) {
+		if(this.holder.objects[this.id].visible) this.holder.hideObject(this.id);
 
-		for(let i = 0; i < this.tiles.length; i++) {
-			if(this.tiles[i].id === tile.id) {
-				this.tiles.splice(i, 1);
-				break;
-			}
-		}
+		this.holder = params.tile;
 
-		this.tiles.push(tile);
+		if(!this.holder.objects[this.id].visible) this.holder.showObject(this.id);
+
+		this.tiles.push(this.holder);
 	}
 
 	removeParent(tile) {
@@ -29,12 +20,14 @@ export default class MapMesh {
 			if(tile.id === this.tiles[i].id) {
 				this.tiles.splice(i, 1);
 
-				if(tile.id === this.holder.id) {
+				if(tile.id === this.holder.id && this.tiles.length > 0) {
 					this.holder = this.tiles[this.tiles.length - 1];
-					this.holder.showObject(this.offset, this.size);
+					if(!this.holder.objects[this.id].visible) this.holder.showObject(this.id);
 				}
 
-				break;
+				if(this.tiles.length === 0) this.holder = null;
+
+				return;
 			}
 		}
 	}

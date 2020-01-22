@@ -15,9 +15,11 @@ out float vTextureId;
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat3 normalMatrix;
+uniform float time;
 
 void main() {
     vColor = color;
+    if(display > 0.5) vColor = vec3(1, 0, 0);
     vTextureId = textureId;
     vUv = uv;
     vec3 transformedNormal = normal;
@@ -25,7 +27,8 @@ void main() {
     vNormal = transformedNormal;
 
     vec3 transformedPosition = position;
-    if(display == 1.) transformedPosition = vec3(0);
+    if(display > 0.5) transformedPosition = vec3(0);
+    transformedPosition.y *= clamp(time, 0., 1.);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(transformedPosition, 1.0);
     vPosition = vec3(modelViewMatrix * vec4(transformedPosition, 1.0));

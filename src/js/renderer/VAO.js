@@ -12,4 +12,8 @@ export default class VAO {
 	unbind() {
 		this.gl.bindVertexArray(null);
 	}
+
+	delete() {
+		this.gl.deleteVertexArray(this.vertexArrayObject);
+	}
 }

@@ -139,6 +139,7 @@ vec3 getIBLContribution(MaterialInfo materialInfo, vec3 n, vec3 v) {
     float mipCount = 11.;
     float lod = clamp(materialInfo.perceptualRoughness * mipCount, 0.0, mipCount);
     vec3 reflection = normalize(reflect(-v, n));
+    reflection.y = abs(reflection.y);
 
     vec2 brdfSamplePoint = clamp(vec2(NdotV, materialInfo.perceptualRoughness), vec2(0.0, 0.0), vec2(1.0, 1.0));
     vec2 brdf = texture(tBRDF, brdfSamplePoint).rg;
@@ -221,7 +222,7 @@ void main() {
 
     // FOG
 
-    float density = 1. / 20000.;
+    float density = 1. / 15000.;
     float distance = length(position);
     float fog = 1. / pow(ConstE, pow(distance * density, 2.));
 

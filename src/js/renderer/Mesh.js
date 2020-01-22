@@ -65,7 +65,7 @@ export default class Mesh extends Object3D {
 		for(let materialName in this.materials) {
 			let attribute = this.materials[materialName].attributes[attributeName];
 			this.vaos[materialName].bind();
-			attribute.setData(attribute.data);
+			attribute.setData(this.attributes[attributeName].buffer);
 		}
 	}
 
@@ -95,5 +95,21 @@ export default class Mesh extends Object3D {
 
 			return true;
 		} else throw new Error('Mesh has no bbox');
+	}
+
+	delete() {
+		this.parent.remove(this);
+
+		for(let i = 0; i < this.vaos.length; i++) {
+			this.vaos[i].delete();
+			this.vaos[i] = null;
+		}
+
+		for(let materialName in this.materials) {
+			for (const attributeName in this.attributes) {
+				this.materials[materialName].attributes[attributeName].delete();
+				this.materials[materialName].attributes[attributeName] = null;
+			}
+		}
 	}
 }

@@ -181,11 +181,12 @@ function processData(data, pivot) {
 
 	if(meshData.vertices.length > 0) {
 		const v = meshData.vertices;
+		const tileSize = 40075016.7 / (1 << 16);
 
-		meshData.bboxMin = [v[0], v[1], v[2]];
-		meshData.bboxMax = [v[0], v[1], v[2]];
+		meshData.bboxMin = [0, 0, 0];
+		meshData.bboxMax = [tileSize, 1000, tileSize];
 
-		for(let i = 1; i < v.length / 3; i++) {
+		for(let i = 0; i < v.length / 3; i++) {
 			meshData.bboxMin[0] = Math.min(meshData.bboxMin[0], v[i * 3]);
 			meshData.bboxMin[1] = Math.min(meshData.bboxMin[1], v[i * 3 + 1]);
 			meshData.bboxMin[2] = Math.min(meshData.bboxMin[2], v[i * 3 + 2]);

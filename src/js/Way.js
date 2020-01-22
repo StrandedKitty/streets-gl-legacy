@@ -56,7 +56,7 @@ export default class Way {
 		let height, color;
 
 		if(isFlat) {
-			height = 0;
+			height = 1;
 			color = [63, 167, 37];
 		} else {
 			if(this.properties.height) {
@@ -252,11 +252,11 @@ export default class Way {
 	getMaterialId(material) {
 		switch (material) {
 			default:
-				return 0;
+				return 1;
 			case 'glass':
-				return 1;
+				return 2;
 			case 'mirror':
-				return 1;
+				return 2;
 		}
 	}
 }

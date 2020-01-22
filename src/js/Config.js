@@ -1,6 +1,7 @@
 let config = {
-	drawDistance: 3000,
+	drawDistance: 5000,
 	textureAnisotropy: undefined,
+	maxTiles: 50,
 	SSAA: 2,
 	SMAA: true,
 	SSAO: true,

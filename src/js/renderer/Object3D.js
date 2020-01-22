@@ -8,6 +8,7 @@ export default class Object3D {
 		this.data = {};
 		this.matrix = mat4.identity();
 		this.matrixWorld = mat4.identity();
+		this.id = ~~(Math.random() * 1e9);
 		this.position = {
 			x: 0,
 			y: 0,
@@ -50,6 +51,15 @@ export default class Object3D {
 		this.children.push(object);
 		object.parent = this;
 		object.updateMatrixWorld();
+	}
+
+	remove(object) {
+		for(let i = 0; i < this.children.length; i++) {
+			if(this.children[i].id === object.id)  {
+				this.children.splice(i, 1);
+				break;
+			}
+		}
 	}
 
 	lookAt(target, isWorldPosition) {

@@ -116,7 +116,8 @@ function init() {
 		fragmentShader: shaders.building.fragment,
 		uniforms: {
 			'tDiffuse[0]': {type: 'texture', value: RP.createTexture({url: './textures/window.png', anisotropy: Config.textureAnisotropy})},
-			'tDiffuse[1]': {type: 'texture', value: RP.createTexture({url: './textures/glass.png', anisotropy: Config.textureAnisotropy})}
+			'tDiffuse[1]': {type: 'texture', value: RP.createTexture({url: './textures/glass.png', anisotropy: Config.textureAnisotropy})},
+			'time': {type: '1f', value: 0}
 		}
 	});
 
@@ -323,8 +324,13 @@ function animate() {
 	buildingMaterial.use();
 	RP.depthWrite = true;
 
+	//gl.enable(gl.BLEND);
+	//gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
 	for(let i = 0; i < buildings.children.length; i++) {
 		let object = buildings.children[i];
+
+		object.data.tile.time += delta;
 
 		object.updateMatrix();
 		object.updateMatrixWorld();
@@ -336,8 +342,10 @@ function animate() {
 			let normalMatrix = mat4.normalMatrix(modelViewMatrix);
 			buildingMaterial.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
 			buildingMaterial.uniforms.normalMatrix = {type: 'Matrix3fv', value: normalMatrix};
+			buildingMaterial.uniforms.time.value = object.data.tile.time;
 			buildingMaterial.updateUniform('modelViewMatrix');
 			buildingMaterial.updateUniform('normalMatrix');
+			buildingMaterial.updateUniform('time');
 
 			object.draw(buildingMaterial);
 		}
@@ -447,7 +455,6 @@ function animate() {
 				const uvs = new Float32Array(data.uvs);
 				const ids = data.ids;
 				const offsets = data.offsets;
-				const display = new Uint8Array(vertices.length / 3);
 				const colors = new Uint8Array(data.colors);
 				const textures = new Float32Array(data.textures);
 				const instances = data.instances;
@@ -495,10 +502,12 @@ function animate() {
 					type: 'UNSIGNED_BYTE',
 					normalized: true
 				});
-				mesh.setAttributeData('display', display);
+				mesh.setAttributeData('display', this.displayBuffer);
 
 				const pivot = tile2meters(this.x, this.y + 1);
 				mesh.setPosition(pivot.x, 0, pivot.z);
+
+				mesh.data.tile = this;
 
 				buildings.add(mesh);
 
@@ -510,24 +519,39 @@ function animate() {
 				this.mesh = mesh;
 
 				for(let i = 0; i < ids.length; i++) {
-					let id = ids[i];
+					const id = ids[i];
 
 					if(objects.meshes.get(id)) {
-						let mesh = objects.meshes.get(id);
+						const object = objects.meshes.get(id);
 
-						let offset = offsets[i];
-						let nextOffset = offsets[i + 1] || (vertices.length / 3);
-						let size = nextOffset - offset;
-						mesh.addParent(this, offset, size);
+						object.setNewParent({
+							tile: this
+						});
 					} else {
-						let offset = offsets[i];
-						let nextOffset = offsets[i + 1] || (vertices.length / 3);
-						let size = nextOffset - offset;
-						let object = new MapMesh(id, this, offset, size);
+						const object = new MapMesh({
+							id: id,
+							tile: this
+						});
 
 						objects.meshes.set(id, object);
 					}
+				}
+			}, function () {
+				if(!tile.mesh.inCameraFrustum(camera)) {
+					tiles.delete(this.id);
 
+					for(const id in this.objects) {
+						let object = objects.meshes.get(parseInt(id));
+
+						if(object) {
+							object.removeParent(this);
+							if(object.holder === null) objects.meshes.delete(parseInt(id));
+						}
+					}
+
+					return true;
+				} else {
+					return false;
 				}
 			});
 
@@ -537,6 +561,17 @@ function animate() {
 			tileMeshes.add(ground);
 
 			tile.load(worker);
+
+			const deleteCount = tiles.size - Config.maxTiles;
+
+			const arr = Array.from(tiles.keys());
+			for(let i = 0; i < deleteCount; i++) {
+				const id = arr[i];
+				const tile = tiles.get(id);
+				if(tile.loaded) {
+					tile.delete();
+				}
+			}
 		}
 	}
 }

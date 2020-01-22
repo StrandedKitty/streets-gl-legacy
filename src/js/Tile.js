@@ -3,16 +3,20 @@ import Config from "./Config";
 import Shapes from "./renderer/Shapes";
 
 export default class Tile {
-	constructor(x, y, callback) {
+	constructor(x, y, callback, onDelete) {
 		this.x = x;
 		this.y = y;
 		this.id = tileEncode(this.x, this.y);
 		this.callback = callback;
+		this.onDelete = onDelete;
 		this.loaded = false;
 		this.worker = null;
 		this.mesh = null;
 		this.displayBuffer = null;
-		this.objects = [];
+		this.objects = null;
+		this.displayedCount = null;
+		this.deleted = false;
+		this.time = 0;
 	}
 
 	load(worker) {
@@ -26,30 +30,54 @@ export default class Tile {
 		} else if(data.code === 'info') {
 			console.info('Worker info:', data.info);
 		} else {
-			this.loaded = true;
 			this.worker = null;
-			this.objects = data.ids;
+			this.objects = this.createObjectsTable(data);
+			this.displayedCount = data.ids.length;
 			this.displayBuffer = new Uint8Array(data.vertices.length / 3);
 			this.callback(data);
+			this.loaded = true;
 		}
 	}
 
-	hideObject(offset, size) {
+	hideObject(id) {
+		id = id.toString();
+
+		const size = this.objects[id].size;
+		const offset = this.objects[id].offset;
+
 		for(let i = offset; i < size + offset; i++) {
 			this.displayBuffer[i] = 255;
 		}
 
 		this.mesh.setAttributeData('display', this.displayBuffer);
 		this.mesh.updateAttribute('display');
+
+		if(!this.objects[id].visible) console.error('Mesh part ' + id + ' is already hidden');
+		else {
+			this.objects[id].visible = false;
+			--this.displayedCount;
+			if(this.displayedCount === 0) this.delete();
+		}
 	}
 
-	showObject(offset, size) {
+	showObject(id) {
+		id = id.toString();
+
+		const size = this.objects[id].size;
+		const offset = this.objects[id].offset;
+
 		for(let i = offset; i < size + offset; i++) {
 			this.displayBuffer[i] = 0;
 		}
 
 		this.mesh.setAttributeData('display', this.displayBuffer);
 		this.mesh.updateAttribute('display');
+
+		if(this.objects[id].visible) console.error('Mesh part ' + id + ' is already displayed');
+		else {
+			this.objects[id].visible = true;
+			++this.displayedCount;
+		}
 	}
 
 	getGroundMesh(renderer) {
@@ -95,5 +123,45 @@ export default class Tile {
 		});
 
 		return this.groundMesh;
+	}
+
+	createObjectsTable(data) {
+		const obj = {};
+
+		this.verts = data.vertices.length / 3;
+
+		for(let i = 0; i < data.ids.length; i++) {
+			const offset = data.offsets[i];
+			const nextOffset = data.offsets[i + 1] || (data.vertices.length / 3);
+			const size = nextOffset - offset;
+
+			obj[data.ids[i]] = {
+				visible: true,
+				offset,
+				size
+			};
+		}
+
+		return obj;
+	}
+
+	delete() {
+		this.deleted = this.onDelete();
+
+		if(this.deleted) {
+			this.groundMesh.delete();
+			this.groundMesh = null;
+
+			this.mesh.delete();
+			this.mesh = null;
+
+			for(let i = 0; i < this.verts; i++) {
+				this.displayBuffer[i] = 255;
+			}
+
+			for(let id in this.objects) {
+				this.objects.visible = false;
+			}
+		}
 	}
 }
