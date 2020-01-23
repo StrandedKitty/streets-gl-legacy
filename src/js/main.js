@@ -95,7 +95,9 @@ function init() {
 		vertexShader: shaders.ground.vertex,
 		fragmentShader: shaders.ground.fragment,
 		uniforms: {
-			sampleTexture: {type: 'texture', value: RP.createTexture({url: '/textures/grass.jpg', anisotropy: Config.textureAnisotropy})}
+			sampleTexture: {type: 'texture', value: RP.createTexture({url: '/textures/grass.jpg', anisotropy: Config.textureAnisotropy})},
+			modelViewMatrix: {type: 'Matrix4fv', value: null},
+			normalMatrix: {type: 'Matrix3fv', value: null}
 		}
 	});
 
@@ -115,6 +117,8 @@ function init() {
 		vertexShader: shaders.building.vertex,
 		fragmentShader: shaders.building.fragment,
 		uniforms: {
+			modelViewMatrix: {type: 'Matrix4fv', value: null},
+			normalMatrix: {type: 'Matrix3fv', value: null},
 			'tDiffuse[0]': {type: 'texture', value: RP.createTexture({url: './textures/window.png', anisotropy: Config.textureAnisotropy})},
 			'tDiffuse[1]': {type: 'texture', value: RP.createTexture({url: './textures/glass.png', anisotropy: Config.textureAnisotropy})},
 			'time': {type: '1f', value: 0}
@@ -310,8 +314,8 @@ function animate() {
 			if(inFrustum) {
 				let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, object.matrixWorld);
 				let normalMatrix = mat4.normalMatrix(modelViewMatrix);
-				material.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
-				material.uniforms.normalMatrix = {type: 'Matrix3fv', value: normalMatrix};
+				material.uniforms.modelViewMatrix.value = modelViewMatrix;
+				material.uniforms.normalMatrix.value = normalMatrix;
 				material.updateUniform('modelViewMatrix');
 				material.updateUniform('normalMatrix');
 
@@ -340,8 +344,8 @@ function animate() {
 		if(inFrustum) {
 			let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, object.matrixWorld);
 			let normalMatrix = mat4.normalMatrix(modelViewMatrix);
-			buildingMaterial.uniforms.modelViewMatrix = {type: 'Matrix4fv', value: modelViewMatrix};
-			buildingMaterial.uniforms.normalMatrix = {type: 'Matrix3fv', value: normalMatrix};
+			buildingMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+			buildingMaterial.uniforms.normalMatrix.value = normalMatrix;
 			buildingMaterial.uniforms.time.value = object.data.tile.time;
 			buildingMaterial.updateUniform('modelViewMatrix');
 			buildingMaterial.updateUniform('normalMatrix');

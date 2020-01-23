@@ -28,7 +28,7 @@ export default class Material {
 				this.uniformsLocations[name] = location;
 			}
 
-			if(location !== null) {
+			if(location !== null && uniform.value !== null) {
 				if (uniform.type[0] === 'M') {
 					this.gl['uniform' + uniform.type](location, false, uniform.value);
 				} else if (uniform.type === 'texture') {
