@@ -26,7 +26,8 @@ export default class Tile {
 
 	onload(data) {
 		if(data.code === 'error') {
-			console.error('Worker error:', data.error);
+			console.error('Worker error:', data.error, ', retrying...');
+			this.load(this.worker);
 		} else if(data.code === 'info') {
 			console.info('Worker info:', data.info);
 		} else {
@@ -34,6 +35,7 @@ export default class Tile {
 			this.objects = this.createObjectsTable(data);
 			this.displayedCount = data.ids.length;
 			this.displayBuffer = new Uint8Array(data.vertices.length / 3);
+			this.fadeBuffer = new Uint8Array(data.vertices.length / 3);
 			this.callback(data);
 			this.loaded = true;
 		}
@@ -78,6 +80,20 @@ export default class Tile {
 			this.objects[id].visible = true;
 			++this.displayedCount;
 		}
+	}
+
+	animate(objectId) {
+		const id = objectId.toString();
+
+		const size = this.objects[id].size;
+		const offset = this.objects[id].offset;
+
+		for(let i = offset; i < size + offset; i++) {
+			this.fadeBuffer[i] = 255;
+		}
+
+		this.mesh.setAttributeData('fade', this.fadeBuffer);
+		this.mesh.updateAttribute('fade');
 	}
 
 	getGroundMesh(renderer) {

@@ -331,6 +331,8 @@ function animate() {
 	//gl.enable(gl.BLEND);
 	//gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+	let noAnimationStreak = 0;
+
 	for(let i = 0; i < buildings.children.length; i++) {
 		let object = buildings.children[i];
 
@@ -346,10 +348,20 @@ function animate() {
 			let normalMatrix = mat4.normalMatrix(modelViewMatrix);
 			buildingMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
 			buildingMaterial.uniforms.normalMatrix.value = normalMatrix;
-			buildingMaterial.uniforms.time.value = object.data.tile.time;
 			buildingMaterial.updateUniform('modelViewMatrix');
 			buildingMaterial.updateUniform('normalMatrix');
-			buildingMaterial.updateUniform('time');
+
+			if(object.data.tile.time - delta < 1) {
+				buildingMaterial.uniforms.time.value = object.data.tile.time;
+				buildingMaterial.updateUniform('time');
+			} else {
+				if(noAnimationStreak === 0) {
+					buildingMaterial.uniforms.time.value = 1;
+					buildingMaterial.updateUniform('time');
+				}
+
+				++noAnimationStreak;
+			}
 
 			object.draw(buildingMaterial);
 		}
@@ -508,6 +520,14 @@ function animate() {
 				});
 				mesh.setAttributeData('display', this.displayBuffer);
 
+				mesh.addAttribute({
+					name: 'fade',
+					size: 1,
+					type: 'UNSIGNED_BYTE',
+					normalized: true
+				});
+				mesh.setAttributeData('fade', this.fadeBuffer);
+
 				const pivot = tile2meters(this.x, this.y + 1);
 				mesh.setPosition(pivot.x, 0, pivot.z);
 
@@ -538,6 +558,8 @@ function animate() {
 						});
 
 						objects.meshes.set(id, object);
+
+						tile.animate(id);
 					}
 				}
 			}, function () {
