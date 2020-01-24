@@ -138,7 +138,6 @@ function init() {
 
 	let position = degrees2meters(49.8969, 36.2894);
 	mesh.setPosition(position.x, 0, position.z);
-	mesh.updateMatrix();
 
 	gBuffer = new GBuffer(RP, window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA, [
 		{
@@ -270,13 +269,10 @@ function animate() {
 
 	wrapper.position.x = -camera.position.x;
 	wrapper.position.z = -camera.position.z;
-	wrapper.updateMatrix();
-	wrapper.updateMatrixWorld();
 
-	buildings.updateMatrix();
-	buildings.updateMatrixWorld();
+	scene.updateMatrixRecursively();
+	scene.updateMatrixWorldRecursively();
 
-	camera.updateMatrixWorld();
 	camera.updateMatrixWorldInverse();
 	camera.updateFrustum();
 
@@ -306,9 +302,6 @@ function animate() {
 		let object = tileMeshes.children[i];
 
 		if(object instanceof Mesh) {
-			object.updateMatrix();
-			object.updateMatrixWorld();
-
 			const inFrustum = object.inCameraFrustum(camera);
 
 			if(inFrustum) {
@@ -337,9 +330,6 @@ function animate() {
 		let object = buildings.children[i];
 
 		object.data.tile.time += delta;
-
-		object.updateMatrix();
-		object.updateMatrixWorld();
 
 		const inFrustum = object.inCameraFrustum(camera);
 

@@ -9,6 +9,7 @@ export default class Object3D {
 		this.matrix = mat4.identity();
 		this.matrixWorld = mat4.identity();
 		this.id = ~~(Math.random() * 1e9);
+		this.matrixOverwrite = true;
 		this.position = {
 			x: 0,
 			y: 0,
@@ -45,6 +46,26 @@ export default class Object3D {
 		}
 
 		return this.matrixWorld;
+	}
+
+	updateMatrixWorldRecursively() {
+		if(this.parent) {
+			this.matrixWorld = mat4.multiply(this.parent.matrixWorld, this.matrix);
+		} else {
+			this.matrixWorld = mat4.copy(this.matrix);
+		}
+
+		for(let i = 0; i < this.children.length; ++i) {
+			this.children[i].updateMatrixWorldRecursively();
+		}
+	}
+
+	updateMatrixRecursively() {
+		if(this.matrixOverwrite) this.updateMatrix();
+
+		for(let i = 0; i < this.children.length; ++i) {
+			this.children[i].updateMatrixRecursively();
+		}
 	}
 
 	add(object) {

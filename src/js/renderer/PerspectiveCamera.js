@@ -13,7 +13,7 @@ export default class PerspectiveCamera extends Object3D {
 
 		this.projectionMatrix = mat4.perspective(this.fov, this.aspect, this.near, this.far);
 		this.matrixWorldInverse = mat4.identity();
-
+		this.matrixOverwrite = false;
 		this.frustumPlanes = null;
 	}
 
