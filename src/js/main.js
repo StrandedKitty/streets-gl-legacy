@@ -64,8 +64,8 @@ function init() {
 	renderer.sortObjects = true;*/
 
 	RP = new Renderer(canvas);
-	RP.setSize(window.innerWidth, window.innerHeight);
 	RP.setPixelRatio(Config.SSAA);
+	RP.setSize(window.innerWidth, window.innerHeight);
 	RP.culling = true;
 
 	Config.set('textureAnisotropy', RP.capabilities.maxAnisotropy);
@@ -249,8 +249,8 @@ function init() {
 		view.frustum.aspect = camera.aspect;
 		camera.updateProjectionMatrix();
 
-		RP.setSize(window.innerWidth, window.innerHeight);
 		RP.setPixelRatio(Config.SSAA);
+		RP.setSize(window.innerWidth, window.innerHeight);
 		gBuffer.setSize(window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
 		smaa.setSize(window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
 		ssao.setSize(window.innerWidth * Config.SSAOResolution, window.innerHeight * Config.SSAOResolution);
@@ -298,8 +298,12 @@ function animate() {
 	material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
 	material.use();
 
+	let noAnimationStreak = 0;
+
 	for(let i = 0; i < tileMeshes.children.length; i++) {
 		let object = tileMeshes.children[i];
+
+		object.data.time += delta;
 
 		if(object instanceof Mesh) {
 			const inFrustum = object.inCameraFrustum(camera);
@@ -311,6 +315,19 @@ function animate() {
 				material.uniforms.normalMatrix.value = normalMatrix;
 				material.updateUniform('modelViewMatrix');
 				material.updateUniform('normalMatrix');
+
+				if(object.data.time - delta < 1) {
+					material.uniforms.time = {type: '1f', value: object.data.time};
+					material.updateUniform('time');
+					noAnimationStreak = 0;
+				} else {
+					if(noAnimationStreak === 0) {
+						material.uniforms.time = {type: '1f', value: 1};
+						material.updateUniform('time');
+					}
+
+					++noAnimationStreak;
+				}
 
 				object.draw(material);
 			}
@@ -324,7 +341,7 @@ function animate() {
 	//gl.enable(gl.BLEND);
 	//gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-	let noAnimationStreak = 0;
+	noAnimationStreak = 0;
 
 	for(let i = 0; i < buildings.children.length; i++) {
 		let object = buildings.children[i];
@@ -344,6 +361,7 @@ function animate() {
 			if(object.data.tile.time - delta < 1) {
 				buildingMaterial.uniforms.time.value = object.data.tile.time;
 				buildingMaterial.updateUniform('time');
+				noAnimationStreak = 0;
 			} else {
 				if(noAnimationStreak === 0) {
 					buildingMaterial.uniforms.time.value = 1;

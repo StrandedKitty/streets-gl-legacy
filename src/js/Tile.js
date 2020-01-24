@@ -138,6 +138,8 @@ export default class Tile {
 			z: tileSize / 2
 		});
 
+		this.groundMesh.data.time = 0;
+
 		return this.groundMesh;
 	}
 

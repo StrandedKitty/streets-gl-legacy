@@ -20,6 +20,8 @@ vec4 getValueFromSamplerArray(float i, vec2 uv) {
     } else if (i < 2.5) {
         return texture(tDiffuse[1], uv);
     }
+
+    return vec4(1);
 }
 
 void main() {
