@@ -144,17 +144,22 @@ function processData(data, pivot) {
 		}
 	}
 
-	for (const [id, way] of ways.entries()) {
+	for (const way of ways.values()) {
 		if (way.properties.buildingPart) {
 			let verticesA = [];
 			for (let i = 0; i < way.vertices.length; i++) verticesA.push([way.vertices[i].x, way.vertices[i].z]);
 
-			for (const [id2, way2] of ways.entries()) {
-				if (!way2.properties.buildingPart) {
-					let verticesB = [];
-					for (let i = 0; i < way2.vertices.length; i++) verticesB.push([way2.vertices[i].x, way2.vertices[i].z]);
+			for (const way2 of ways.values()) {
+				if (!way2.properties.buildingPart && way2.properties.type === 'building') {
+					let intersection = way.AABB.intersectsAABB(way2.AABB);
 
-					if (intersect(verticesA, verticesB)) way2.visible = false;
+					if(intersection) {
+						let verticesB = [];
+
+						for (let i = 0; i < way2.vertices.length; i++) verticesB.push([way2.vertices[i].x, way2.vertices[i].z]);
+
+						if (intersect(verticesA, verticesB)) way2.visible = false;
+					}
 				}
 			}
 		}

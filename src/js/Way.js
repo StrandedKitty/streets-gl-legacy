@@ -3,6 +3,7 @@ import OSMDescriptor from "./OSMDescriptor";
 import {toRad, mercatorScaleFactor, toDeg} from "./Utils";
 import vec3 from "./math/vec3";
 import vec2 from "./math/vec2";
+import WayAABB from "./WayAABB";
 
 export default class Way {
 	constructor(id, nodes, vertices, tags, pivot) {
@@ -12,6 +13,7 @@ export default class Way {
 		this.tags = tags || {};
 		this.pivot = pivot;
 		this.visible = true;
+		this.AABB = new WayAABB();
 		this.mesh = {
 			vertices: [],
 			normals: [],
@@ -23,13 +25,17 @@ export default class Way {
 			trees: []
 		};
 
-		this.heightFactor = mercatorScaleFactor(toRad(this.pivot.lat));
+		this.scaleFactor = mercatorScaleFactor(toRad(this.pivot.lat));
 
 		this.descriptor = new OSMDescriptor(this.tags);
 		this.properties = this.descriptor.properties;
 
 		this.closed = this.isClosed();
 		if(this.closed) this.fixDirection();
+
+		if(this.closed && this.properties.type === 'building') {
+			this.generateAABB();
+		}
 	}
 
 	render() {
@@ -71,7 +77,7 @@ export default class Way {
 			} else {
 				height = 10;
 			}
-			height *= this.heightFactor;
+			height *= this.scaleFactor;
 			color = this.properties.roofColor || [79, 89, 88];
 		}
 
@@ -110,8 +116,8 @@ export default class Way {
 		levels = this.properties.levels || Math.floor((height - minHeight) / 3.5);
 		if(this.properties.minLevel) levels -= this.properties.minLevel;
 
-		height *= this.heightFactor;
-		minHeight *= this.heightFactor;
+		height *= this.scaleFactor;
+		minHeight *= this.scaleFactor;
 
 		for(let i = 0; i < this.vertices.length; i++) {
 			let vertex = this.vertices[i];
@@ -197,6 +203,14 @@ export default class Way {
 		return length;
 	}
 
+	generateAABB() {
+		for(let i = 0; i < this.vertices.length - 1; i++) {
+			let vertex = this.vertices[i];
+
+			this.AABB.includePoint({x: vertex.x, y: vertex.z});
+		}
+	}
+
 	distributeNodes(interval) {
 		let number = Math.floor(this.length / interval);
 		let points = [];
@@ -248,7 +262,7 @@ export default class Way {
 	}
 
 	createPath() {
-		const width = 6;
+		const width = this.properties.roadWidth;
 		const height = 1;
 		const color = [50, 50, 50];
 

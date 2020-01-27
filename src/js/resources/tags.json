@@ -40,6 +40,17 @@
 		"default": {"roofMaterial": "@this"}
 	},
 	"highway": {
-		"default": {"type": "road"}
+		"default": {"type": "road", "roadWidth": 10},
+		"residential": {"type": "road", "roadWidth": 9},
+		"motorway": {"type": "road", "roadWidth": 12},
+		"pedestrian": {"type": "road", "roadWidth": 6},
+
+		"primary": {"type": "road", "roadWidth": 15},
+		"secondary": {"type": "road", "roadWidth": 15},
+		"tertiary": {"type": "road", "roadWidth": 15},
+
+		"footway": {"type": "road", "roadWidth": 3},
+		"cycleway": {"type": "road", "roadWidth": 3},
+		"path": {"type": "road", "roadWidth": 3}
 	}
 }
