@@ -18,7 +18,7 @@ in vec2 vPixcoord;
 
 out vec4 FragColor;
 
-vec2 round(vec2 x) {
+vec2 round2(vec2 x) {
     return sign(x) * floor(abs(x) + 0.5);
 }
 
@@ -96,7 +96,7 @@ float SMAASearchYDown(sampler2D edgesTex, sampler2D searchTex, vec2 texcoord, fl
 }
 
 vec2 SMAAArea(sampler2D areaTex, vec2 dist, float e1, float e2, float offset) {
-    vec2 texcoord = float(SMAA_AREATEX_MAX_DISTANCE) * round(4.0 * vec2(e1, e2)) + dist;
+    vec2 texcoord = float(SMAA_AREATEX_MAX_DISTANCE) * round2(4.0 * vec2(e1, e2)) + dist;
 
     texcoord = SMAA_AREATEX_PIXEL_SIZE * texcoord + (0.5 * SMAA_AREATEX_PIXEL_SIZE);
 
