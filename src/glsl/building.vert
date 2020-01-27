@@ -12,6 +12,7 @@ out vec3 vNormal;
 out vec3 vPosition;
 out vec2 vUv;
 out float vTextureId;
+out vec3 vCenter;
 
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
@@ -23,6 +24,10 @@ float CubicOut(float k) {
 }
 
 void main() {
+    vCenter = vec3(0);
+    int centerIndex = gl_VertexID - 3 * int(float(gl_VertexID) / 3.);
+    vCenter[centerIndex] = 1.;
+
     vColor = color;
     if(display > 0.5) vColor = vec3(1, 0, 0);
     vTextureId = textureId;

@@ -47,7 +47,7 @@ export default class Mesh extends Object3D {
 			vao.bind();
 		}
 
-		this.gl.drawArrays(this.gl.TRIANGLES, 0, this.vertices.length / 3);
+		this.gl.drawArrays(this.gl[material.drawMode], 0, this.vertices.length / 3);
 	}
 
 	addAttribute(params) {

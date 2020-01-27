@@ -58,4 +58,8 @@ export default class vec2 {
 	static copy(v) {
 		return new this(v.x, v.y);
 	}
+
+	static toArray(v) {
+		return [v.x, v.y];
+	}
 }

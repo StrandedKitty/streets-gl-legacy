@@ -11,6 +11,7 @@ export default class Material {
 		this.uniformsLocations = {};
 		this.defines = params.defines || {};
 		this.name = params.name;
+		this.drawMode = params.drawMode || 'TRIANGLES';
 		this.program = new Program(renderer, this.shaders);
 	}
 

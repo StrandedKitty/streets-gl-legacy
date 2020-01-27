@@ -9,8 +9,21 @@ in vec3 vNormal;
 in vec3 vPosition;
 in vec2 vUv;
 in float vTextureId;
+in vec3 vCenter;
+
+#define WIREFRAME_MODE 0
 
 uniform sampler2D tDiffuse[2];
+
+#if WIREFRAME_MODE
+    float edgeFactor() {
+        float widthFactor = 1.;
+        vec3 d = fwidth(vCenter.xyz);
+        vec3 a3 = smoothstep(vec3(0), d * widthFactor, vCenter.xyz);
+
+        return min(min(a3.x, a3.y), a3.z);
+    }
+#endif
 
 vec4 getValueFromSamplerArray(float i, vec2 uv) {
     if (i < 0.5) {
@@ -25,6 +38,10 @@ vec4 getValueFromSamplerArray(float i, vec2 uv) {
 }
 
 void main() {
+    #if WIREFRAME_MODE
+        if (edgeFactor() > 0.99) discard;
+    #endif
+
     vec4 diffuse = getValueFromSamplerArray(vTextureId, vUv);
 
     outColor = vec4(vColor, 1.) * diffuse;

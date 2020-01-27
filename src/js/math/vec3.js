@@ -80,4 +80,8 @@ export default class vec3 {
 	static copy(v) {
 		return new this(v.x, v.y, v.z);
 	}
+
+	static toArray(v) {
+		return [v.x, v.y, v.z];
+	}
 }

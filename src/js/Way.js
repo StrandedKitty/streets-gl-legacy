@@ -1,7 +1,8 @@
 import earcut from './earcut';
 import OSMDescriptor from "./OSMDescriptor";
-import {toRad, mercatorScaleFactor} from "./Utils";
+import {toRad, mercatorScaleFactor, toDeg} from "./Utils";
 import vec3 from "./math/vec3";
+import vec2 from "./math/vec2";
 
 export default class Way {
 	constructor(id, nodes, vertices, tags, pivot) {
@@ -46,6 +47,10 @@ export default class Way {
 
 			if(this.properties.type === 'farmland') {
 				this.triangulateFootprint(true);
+			}
+
+			if(this.properties.type === 'road') {
+				this.createPath();
 			}
 		}
 	}
@@ -240,6 +245,112 @@ export default class Way {
 		}
 
 		return points;
+	}
+
+	createPath() {
+		const width = 6;
+		const height = 1;
+		const color = [50, 50, 50];
+
+		const physicalVertices = this.closed ? this.vertices.length - 1 : this.vertices.length;
+
+		const points = [];
+
+		for(let i = 0; i < physicalVertices; i++) {
+			let a, b, c;
+
+			a = new vec2(this.vertices[i].x, this.vertices[i].z);
+
+			if(this.vertices[i + 1]) b = new vec2(this.vertices[i + 1].x, this.vertices[i + 1].z);
+			if(this.vertices[i - 1]) c = new vec2(this.vertices[i - 1].x, this.vertices[i - 1].z);
+
+			if(c === undefined) {
+				const dir = vec2.normalize(vec2.sub(b, a));
+
+				let p = new vec2(dir.y, -dir.x);
+				p = vec2.multiplyScalar(p, width / 2);
+
+				points.push(
+					vec2.sub(a, p),
+					vec2.add(a, p)
+				);
+
+				continue;
+			} else if(b === undefined) {
+				const dir = vec2.normalize(vec2.sub(a, c));
+
+				let p = new vec2(dir.y, -dir.x);
+				p = vec2.multiplyScalar(p, width / 2);
+
+				points.push(
+					vec2.sub(a, p),
+					vec2.add(a, p)
+				);
+
+				continue;
+			}
+
+			let dirB = vec2.normalize(vec2.sub(b, a));
+			let dirC = vec2.normalize(vec2.sub(c, a));
+
+			let pointB = vec2.add(a, dirB);
+			let pointC = vec2.add(a, dirC);
+
+			let dir = vec2.normalize(vec2.sub(pointB, pointC));
+			let p = new vec2(dir.y, -dir.x);
+
+			let angle = Math.acos(vec2.dot(dirB, dirC));
+			let widthFactor = 1 / Math.sin(angle / 2);
+
+			p = vec2.multiplyScalar(p, width / 2 * widthFactor);
+
+			points.push(
+				vec2.sub(a, p),
+				vec2.add(a, p)
+			);
+		}
+
+		const segments = this.closed ? physicalVertices : physicalVertices - 1;
+
+		for(let i = 0; i < segments; i++) {
+			const vertices = new Array(4);
+			vertices[0] = points[i * 2];
+			vertices[1] = points[i * 2 + 1];
+
+			if(points[i * 2 + 2]) {
+				vertices[2] = points[i * 2 + 2];
+				vertices[3] = points[i * 2 + 3];
+			} else {
+				vertices[2] = points[0];
+				vertices[3] = points[1];
+			}
+
+			// geometry
+
+			this.mesh.vertices.push(
+				vertices[0].x, height, vertices[0].y,
+				vertices[2].x, height, vertices[2].y,
+				vertices[1].x, height, vertices[1].y,
+
+				vertices[1].x, height, vertices[1].y,
+				vertices[2].x, height, vertices[2].y,
+				vertices[3].x, height, vertices[3].y
+			);
+
+			this.mesh.uvs.push(
+				0, 0,
+				0, 0,
+				0, 0,
+
+				0, 0,
+				0, 0,
+				0, 0
+			);
+
+			this.mesh.normals.push(0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0);
+			this.mesh.colors.push(...color, ...color, ...color, ...color, ...color, ...color);
+			this.mesh.textures.push(0, 0, 0, 0, 0, 0);
+		}
 	}
 
 	calculateNormal(vA, vB, vC) {
