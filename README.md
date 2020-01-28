@@ -2,6 +2,16 @@
 
 ![Streets GL](https://i.imgur.com/P4uvoT4.png)
 
+## Implemented features
+
+### Graphical
+
+- Deferred shading
+- Physically-based rendering
+- SSAO (the one sometimes referred to as normal-oriented hemisphere SSAO)
+- SMAA
+- SSAA
+
 ## Contributing
 
 1. Fork this repository
