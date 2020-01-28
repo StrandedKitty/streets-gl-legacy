@@ -184,12 +184,13 @@ function processData(data, pivot) {
 		meshData.instances.trees = [...meshData.instances.trees, ...way.instances.trees];
 	}
 
+	const tileSize = 40075016.7 / (1 << 16);
+
+	meshData.bboxMin = [0, 0, 0];
+	meshData.bboxMax = [tileSize, 500, tileSize];
+
 	if(meshData.vertices.length > 0) {
 		const v = meshData.vertices;
-		const tileSize = 40075016.7 / (1 << 16);
-
-		meshData.bboxMin = [0, 0, 0];
-		meshData.bboxMax = [tileSize, 1000, tileSize];
 
 		for(let i = 0; i < v.length / 3; i++) {
 			meshData.bboxMin[0] = Math.min(meshData.bboxMin[0], v[i * 3]);
