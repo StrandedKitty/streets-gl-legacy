@@ -19,8 +19,8 @@ export default class Renderer {
 			console.error("WebGL 2 not available");
 		}
 
-		this.capabilities = new WebGLCapabilities(this.gl);
 		this.extensions = new Extensions(this.gl);
+		this.capabilities = new WebGLCapabilities(this);
 
 		this.gl.enable(this.gl.DEPTH_TEST);
 		this.gl.depthFunc(this.gl.LEQUAL);

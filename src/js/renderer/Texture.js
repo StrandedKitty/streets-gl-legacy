@@ -24,7 +24,9 @@ export default class Texture {
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl[this.minFilter]);
 			this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl[this.magFilter]);
 			this.gl.generateMipmap(this.gl.TEXTURE_2D);
-			this.gl.texParameterf(this.gl.TEXTURE_2D, this.ext.texture_filter_anisotropic.TEXTURE_MAX_ANISOTROPY_EXT, this.anisotropy);
+
+			if(this.anisotropy > 1) this.gl.texParameterf(this.gl.TEXTURE_2D, this.ext.texture_filter_anisotropic.TEXTURE_MAX_ANISOTROPY_EXT, this.anisotropy);
+
 			this.updateWrapping();
 			this.load();
 		} else {

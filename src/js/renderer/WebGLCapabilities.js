@@ -1,11 +1,17 @@
 export default class WebGLCapabilities {
-	constructor(gl) {
-		this.gl = gl;
+	constructor(renderer) {
+		this.gl = renderer.gl;
+		this.renderer = renderer;
 	}
 
 	get maxAnisotropy() {
-		const ext = this.gl.getExtension('EXT_texture_filter_anisotropic');
-		return this.gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+		const ext = this.renderer.extensions.texture_filter_anisotropic;
+
+		if(ext !== null) {
+			return this.gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+		} else {
+			return 1;
+		}
 	}
 }
 
