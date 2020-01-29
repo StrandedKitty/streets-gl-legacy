@@ -106,5 +106,15 @@ export default class Renderer {
 	set depthWrite(state) {
 		this.gl.depthMask(state);
 	}
+
+	get rendererInfo() {
+		const ext = this.extensions.debug_renderer_info;
+
+		if(ext !== null) {
+			return [this.gl.getParameter(ext.UNMASKED_VENDOR_WEBGL), this.gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)];
+		}
+
+		return [null, null];
+	}
 }
 

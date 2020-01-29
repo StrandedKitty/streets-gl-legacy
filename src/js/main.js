@@ -55,11 +55,13 @@ function init() {
 	RP.culling = true;
 
 	Config.set('textureAnisotropy', RP.capabilities.maxAnisotropy);
+	console.log(RP.rendererInfo);
 
 	scene = new SceneGraph();
 
 	wrapper = new Object3D();
 	scene.add(wrapper);
+
 	buildings = new Object3D();
 	wrapper.add(buildings);
 	tileMeshes = new Object3D();
