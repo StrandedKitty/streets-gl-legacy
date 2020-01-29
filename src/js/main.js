@@ -19,6 +19,8 @@ import SMAA from "./materials/SMAA";
 import SSAO from "./materials/SSAO";
 import Blur from "./materials/Blur";
 import Skybox from "./Skybox";
+import BuildingMaterial from "./materials/BuildingMaterial";
+import GroundMaterial from "./materials/GroundMaterial";
 
 let scene,
 	camera,
@@ -33,36 +35,20 @@ let objects = {
 };
 let meshes = {};
 
-let mesh, material, wrapper, buildings, buildingMaterial, tileMeshes;
+let mesh, groundMaterial, groundMaterialDepth, wrapper, buildings, buildingMaterial, buildingDepthMaterial, tileMeshes;
 let quad, quadMaterial;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
 let gBuffer, smaa, ssao, blur;
 let skybox;
+let dir;
+let lightDirection = new vec3(-1, -1, -1);
 
 init();
 animate();
 
 function init() {
-	/*scene = new THREE.Scene();
-	scene.background = new THREE.Color('#a4d2f5');
-	camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 15000);
-	scene.add(camera);
-
-	let canvas = document.getElementById('canvas');
-	let context = canvas.getContext('webgl2');
-	renderer = new THREE.WebGLRenderer({antialias: true, canvas: canvas, context: context});
-	renderer.gammaInput = false;
-	renderer.gammaOutput = false;
-	renderer.debug.checkShaderErrors = true;
-	renderer.setPixelRatio(window.devicePixelRatio);
-	renderer.setSize(window.innerWidth, window.innerHeight);
-	renderer.shadowMap.enabled = true;
-	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-	renderer.precision = 'highp';
-	renderer.sortObjects = true;*/
-
 	RP = new Renderer(canvas);
 	RP.setPixelRatio(Config.SSAA);
 	RP.setSize(window.innerWidth, window.innerHeight);
@@ -87,19 +73,20 @@ function init() {
 	});
 	wrapper.add(camera);
 
+	dir = RP.createDirectionalLight({
+		intensity: 1,
+		size: 1000,
+		resolution: 2048,
+		near: 1,
+		far: 1200
+	});
+	wrapper.add(dir);
+
 	view.frustum = new Frustum(camera.fov, camera.aspect, 1, Config.drawDistance);
 	controls = new Controls(camera);
 
-	material = RP.createMaterial({
-		name: 'ground',
-		vertexShader: shaders.ground.vertex,
-		fragmentShader: shaders.ground.fragment,
-		uniforms: {
-			sampleTexture: {type: 'texture', value: RP.createTexture({url: '/textures/grass.jpg', anisotropy: Config.textureAnisotropy})},
-			modelViewMatrix: {type: 'Matrix4fv', value: null},
-			normalMatrix: {type: 'Matrix3fv', value: null}
-		}
-	});
+	groundMaterial = new GroundMaterial(RP).material;
+	groundMaterialDepth = new GroundMaterial(RP).depthMaterial;
 
 	const sky = RP.createTextureCube({
 		urls: [
@@ -112,18 +99,8 @@ function init() {
 		]
 	});
 
-	buildingMaterial = RP.createMaterial({
-		name: 'buildingMaterial',
-		vertexShader: shaders.building.vertex,
-		fragmentShader: shaders.building.fragment,
-		uniforms: {
-			modelViewMatrix: {type: 'Matrix4fv', value: null},
-			normalMatrix: {type: 'Matrix3fv', value: null},
-			'tDiffuse[0]': {type: 'texture', value: RP.createTexture({url: './textures/window.png', anisotropy: Config.textureAnisotropy})},
-			'tDiffuse[1]': {type: 'texture', value: RP.createTexture({url: './textures/glass.png', anisotropy: Config.textureAnisotropy})},
-			'time': {type: '1f', value: 0}
-		}
-	});
+	buildingMaterial = new BuildingMaterial(RP).material;
+	buildingDepthMaterial = new BuildingMaterial(RP).depthMaterial;
 
 	mesh = RP.createMesh({
 		vertices: new Float32Array([
@@ -228,8 +205,11 @@ function init() {
 			'uLight.type': {type: '1i', value: light.type},
 			'uLight.padding': {type: '2fv', value: light.padding},
 			normalMatrix: {type: 'Matrix3fv', value: null},
-			'ambientIntensity': {type: '1f', value: 0.2},
-			'uExposure': {type: '1f', value: 1.}
+			cameraMatrixWorld: {type: 'Matrix4fv', value: null},
+			ambientIntensity: {type: '1f', value: 0.2},
+			uExposure: {type: '1f', value: 1.},
+			shadowMap: {type: 'texture', value: dir.texture},
+			shadowMatrixWorldInverse: {type: 'Matrix4fv', value: dir.camera.matrixWorldInverse}
 		}
 	});
 
@@ -265,6 +245,8 @@ function animate() {
 	delta = (now - time) / 1e3;
 	time = now;
 
+	let gl = RP.gl;
+
 	controls.update(delta);
 
 	wrapper.position.x = -camera.position.x;
@@ -276,14 +258,89 @@ function animate() {
 	camera.updateMatrixWorldInverse();
 	camera.updateFrustum();
 
-	let gl = RP.gl;
+	// Directional light
+
+	dir.setPosition(camera.position.x + 250, 500, camera.position.z + 250);
+
+	const target = vec3.add(dir.position, lightDirection);
+	dir.lookAt(target, false);
+
+	dir.updateMatrixWorld();
+
+	dir.camera.updateMatrixWorld();
+	dir.camera.updateMatrixWorldInverse();
+	dir.camera.updateFrustum();
+
+	// Rendering camera
+
+	let rCamera = dir.camera;
+
+	// Shadow mapping
+
+	RP.bindFramebuffer(dir.framebuffer);
 
 	RP.depthTest = true;
+	RP.depthWrite = true;
+
+	gl.clearColor(100000, 1, 1, 1);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+	{
+		groundMaterialDepth.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
+		groundMaterialDepth.use();
+
+		for(let i = 0; i < tileMeshes.children.length; i++) {
+			let object = tileMeshes.children[i];
+
+			object.data.time += delta;
+
+			if(object instanceof Mesh) {
+				const inFrustum = object.inCameraFrustum(rCamera);
+
+				if(inFrustum) {
+					let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+					groundMaterialDepth.uniforms.modelViewMatrix.value = modelViewMatrix;
+					groundMaterialDepth.updateUniform('modelViewMatrix');
+
+					object.draw(groundMaterialDepth);
+				}
+			}
+		}
+	}
+
+	{
+		buildingDepthMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
+		buildingDepthMaterial.use();
+
+		for(let i = 0; i < buildings.children.length; i++) {
+			let object = buildings.children[i];
+
+			object.data.tile.time += delta;
+
+			const inFrustum = object.inCameraFrustum(rCamera);
+
+			if(inFrustum) {
+				let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+				buildingDepthMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+				buildingDepthMaterial.updateUniform('modelViewMatrix');
+
+				buildingDepthMaterial.uniforms.time.value = object.data.tile.time;
+				buildingDepthMaterial.updateUniform('time');
+
+				object.draw(buildingMaterial);
+			}
+		}
+	}
+
+	// Rendering camera
+
+	rCamera = camera;
 
 	// Draw to g-buffer
 
 	RP.bindFramebuffer(gBuffer.framebuffer);
 
+	RP.depthTest = true;
 	RP.depthWrite = true;
 
 	gl.clearColor(0, 0, 0, 0);
@@ -291,88 +348,87 @@ function animate() {
 
 	RP.depthWrite = false;
 
-	skybox.render(camera);
+	skybox.render(rCamera);
 
 	RP.depthWrite = true;
 
-	material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
-	material.use();
+	{
+		groundMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
+		groundMaterial.use();
 
-	let noAnimationStreak = 0;
+		let noAnimationStreak = 0;
 
-	for(let i = 0; i < tileMeshes.children.length; i++) {
-		let object = tileMeshes.children[i];
+		for(let i = 0; i < tileMeshes.children.length; i++) {
+			let object = tileMeshes.children[i];
 
-		object.data.time += delta;
+			//object.data.time += delta;
 
-		if(object instanceof Mesh) {
-			const inFrustum = object.inCameraFrustum(camera);
+			if(object instanceof Mesh) {
+				const inFrustum = object.inCameraFrustum(rCamera);
+
+				if(inFrustum) {
+					let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+					let normalMatrix = mat4.normalMatrix(modelViewMatrix);
+					groundMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+					groundMaterial.uniforms.normalMatrix.value = normalMatrix;
+					groundMaterial.updateUniform('modelViewMatrix');
+					groundMaterial.updateUniform('normalMatrix');
+
+					if(object.data.time - delta < 1) {
+						groundMaterial.uniforms.time = {type: '1f', value: object.data.time};
+						groundMaterial.updateUniform('time');
+						noAnimationStreak = 0;
+					} else {
+						if(noAnimationStreak === 0) {
+							groundMaterial.uniforms.time = {type: '1f', value: 1};
+							groundMaterial.updateUniform('time');
+						}
+
+						++noAnimationStreak;
+					}
+
+					object.draw(groundMaterial);
+				}
+			}
+		}
+	}
+
+	{
+		buildingMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+		buildingMaterial.use();
+
+		let noAnimationStreak = 0;
+
+		for(let i = 0; i < buildings.children.length; i++) {
+			let object = buildings.children[i];
+
+			//object.data.tile.time += delta;
+
+			const inFrustum = object.inCameraFrustum(rCamera);
 
 			if(inFrustum) {
-				let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, object.matrixWorld);
+				let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
 				let normalMatrix = mat4.normalMatrix(modelViewMatrix);
-				material.uniforms.modelViewMatrix.value = modelViewMatrix;
-				material.uniforms.normalMatrix.value = normalMatrix;
-				material.updateUniform('modelViewMatrix');
-				material.updateUniform('normalMatrix');
+				buildingMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+				buildingMaterial.uniforms.normalMatrix.value = normalMatrix;
+				buildingMaterial.updateUniform('modelViewMatrix');
+				buildingMaterial.updateUniform('normalMatrix');
 
-				if(object.data.time - delta < 1) {
-					material.uniforms.time = {type: '1f', value: object.data.time};
-					material.updateUniform('time');
+				if(object.data.tile.time - delta < 1) {
+					buildingMaterial.uniforms.time.value = object.data.tile.time;
+					buildingMaterial.updateUniform('time');
 					noAnimationStreak = 0;
 				} else {
 					if(noAnimationStreak === 0) {
-						material.uniforms.time = {type: '1f', value: 1};
-						material.updateUniform('time');
+						buildingMaterial.uniforms.time.value = 1;
+						buildingMaterial.updateUniform('time');
 					}
 
 					++noAnimationStreak;
 				}
 
-				object.draw(material);
+				object.draw(buildingMaterial);
 			}
-		}
-	}
-
-	buildingMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
-	buildingMaterial.use();
-	RP.depthWrite = true;
-
-	//gl.enable(gl.BLEND);
-	//gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-	//gl.disable(gl.CULL_FACE);
-
-	noAnimationStreak = 0;
-
-	for(let i = 0; i < buildings.children.length; i++) {
-		let object = buildings.children[i];
-
-		object.data.tile.time += delta;
-
-		const inFrustum = object.inCameraFrustum(camera);
-
-		if(inFrustum) {
-			let modelViewMatrix = mat4.multiply(camera.matrixWorldInverse, object.matrixWorld);
-			let normalMatrix = mat4.normalMatrix(modelViewMatrix);
-			buildingMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
-			buildingMaterial.uniforms.normalMatrix.value = normalMatrix;
-			buildingMaterial.updateUniform('modelViewMatrix');
-			buildingMaterial.updateUniform('normalMatrix');
-
-			if(object.data.tile.time - delta < 1) {
-				buildingMaterial.uniforms.time.value = object.data.tile.time;
-				buildingMaterial.updateUniform('time');
-				noAnimationStreak = 0;
-			} else {
-				if(noAnimationStreak === 0) {
-					buildingMaterial.uniforms.time.value = 1;
-					buildingMaterial.updateUniform('time');
-				}
-
-				++noAnimationStreak;
-			}
-
-			object.draw(buildingMaterial);
 		}
 	}
 
@@ -389,7 +445,7 @@ function animate() {
 
 		ssao.material.uniforms.tPosition.value = gBuffer.textures.position;
 		ssao.material.uniforms.tNormal.value = gBuffer.textures.normal;
-		ssao.material.uniforms.cameraProjectionMatrix.value = camera.projectionMatrix;
+		ssao.material.uniforms.cameraProjectionMatrix.value = rCamera.projectionMatrix;
 		ssao.material.use();
 		quad.draw(ssao.material);
 
@@ -430,7 +486,9 @@ function animate() {
 	RP.depthTest = false;
 
 	quadMaterial.uniforms.uAO.value = Config.SSAOBlur ? blur.framebuffer.textures[0] : ssao.framebuffer.textures[0];
-	quadMaterial.uniforms.normalMatrix.value = mat4.normalMatrix(camera.matrixWorld);
+	quadMaterial.uniforms.normalMatrix.value = mat4.normalMatrix(rCamera.matrixWorld);
+	quadMaterial.uniforms.cameraMatrixWorld.value = rCamera.matrixWorld;
+	quadMaterial.uniforms.shadowMatrixWorldInverse.value = dir.camera.matrixWorldInverse;
 	quadMaterial.use();
 	quad.draw(quadMaterial);
 

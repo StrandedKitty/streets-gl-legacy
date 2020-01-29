@@ -40,8 +40,17 @@ class Shaders {
 			fragment: require('../glsl/skybox.frag').default,
 			vertex: require('../glsl/skybox.vert').default
 		};
+		this.raw.buildingDepth = {
+			fragment: require('../glsl/buildingDepth.frag').default,
+			vertex: require('../glsl/building.vert').default
+		};
+		this.raw.groundDepth = {
+			fragment: require('../glsl/groundDepth.frag').default,
+			vertex: require('../glsl/groundDepth.vert').default
+		};
 
 		this.includes.tonemapping = require('../glsl/includes/tonemapping.glsl').default;
+		this.includes.shadowmapping = require('../glsl/includes/shadowmapping.glsl').default;
 
 		this.addIncludes();
 	}

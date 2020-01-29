@@ -31,5 +31,5 @@ void main() {
     outColor = texture(sampleTexture, vUv * 8.);
     outNormal = vNormal * 0.5 + 0.5;
     outPosition = vPosition;
-    outMetallicRoughness = vec4(0, 0.9, 0, 0);
+    outMetallicRoughness = vec4(0, 0.9, 0, 1.);
 }

@@ -1,21 +1,31 @@
+import shaders from '../Shaders';
 import Config from "../Config";
 
 export default class BuildingMaterial {
-	constructor() {
-		let loader = new THREE.TextureLoader();
-		let texture = loader.load('https://www.textures.com/system/gallery/photos/Nature/Grass/70925/Grass0203_1_download600.jpg');
-		texture.anisotropy = Config.textureAnisotropy;
-		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+	constructor(renderer) {
+		this.material = renderer.createMaterial({
+			name: 'buildingMaterial',
+			vertexShader: shaders.building.vertex,
+			fragmentShader: shaders.building.fragment,
+			uniforms: {
+				projectionMatrix: {type: 'Matrix4fv', value: null},
+				modelViewMatrix: {type: 'Matrix4fv', value: null},
+				normalMatrix: {type: 'Matrix3fv', value: null},
+				'tDiffuse[0]': {type: 'texture', value: renderer.createTexture({url: './textures/window.png', anisotropy: Config.textureAnisotropy})},
+				'tDiffuse[1]': {type: 'texture', value: renderer.createTexture({url: './textures/glass.png', anisotropy: Config.textureAnisotropy})},
+				'time': {type: '1f', value: 0}
+			}
+		});
 
-		let uniforms = THREE.UniformsUtils.clone(THREE.ShaderLib.basic.uniforms);
-		uniforms.diffuse = {value: new THREE.Color('#000000')};
-		uniforms.diffuseTexture = {value: texture};
-
-		this.material = new THREE.ShaderMaterial({
-			uniforms: uniforms,
-			defines: {},
-			vertexShader: require('../../glsl/building.vert').default,
-			fragmentShader: require('../../glsl/building.frag').default
+		this.depthMaterial = renderer.createMaterial({
+			name: 'buildingMaterialDepth',
+			vertexShader: shaders.buildingDepth.vertex,
+			fragmentShader: shaders.buildingDepth.fragment,
+			uniforms: {
+				projectionMatrix: {type: 'Matrix4fv', value: null},
+				modelViewMatrix: {type: 'Matrix4fv', value: null},
+				'time': {type: '1f', value: 0}
+			}
 		});
 	}
 }

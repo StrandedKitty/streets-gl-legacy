@@ -48,5 +48,5 @@ void main() {
     outNormal = vNormal * 0.5 + 0.5;
     outPosition = vPosition;
     float r = diffuse.x;
-    outMetallicRoughness = vec4(0.01, r == 0.9 ? 1. : r * 0.8, (1. - r) * 0.1, 0);
+    outMetallicRoughness = vec4(0.01, r == 0.9 ? 1. : r * 0.8, (1. - r) * 0.1, 1.);
 }

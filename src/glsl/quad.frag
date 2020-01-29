@@ -2,9 +2,13 @@
 precision highp float;
 out vec4 FragColor;
 
-#define TONEMAP_ACES 1
 #define PI 3.141592653589793
-#define ConstE 2.71828182846
+#define PI2 6.28318530718
+#define Eu 2.71828182846
+
+#define TONEMAP_ACES 1
+#define SHADOW_MAPPING 2
+#define SHADOWMAP_SIZE 1000.
 
 in vec2 vUv;
 
@@ -17,7 +21,12 @@ uniform sampler2D uAO;
 uniform float ambientIntensity;
 uniform samplerCube sky;
 uniform sampler2D tBRDF;
+
 uniform mat3 normalMatrix;
+uniform mat4 cameraMatrixWorld;
+
+uniform sampler2D shadowMap;
+uniform mat4 shadowMatrixWorldInverse;
 
 struct Light {
     vec3 direction;
@@ -154,8 +163,10 @@ vec3 getIBLContribution(MaterialInfo materialInfo, vec3 n, vec3 v) {
     vec3 diffuse = diffuseLight * materialInfo.diffuseColor;
     vec3 specular = specularLight * (materialInfo.specularColor * brdf.x + brdf.y);
 
-    return diffuse + specular;
+    return diffuse * 0. + specular;
 }
+
+#include <shadowmapping>
 
 void main() {
     // MATERIAL
@@ -206,10 +217,24 @@ void main() {
 
     vec3 worldView = normalize(normalMatrix * view);
     vec3 worldNormal = normalize(normalMatrix * normal);
+    vec3 worldPosition = vec3(cameraMatrixWorld * vec4(position, 1.));
 
     Light light = uLight;
 
-    color += applyDirectionalLight(light, materialInfo, worldNormal, worldView);
+    float shadowBias = -3.;
+    vec4 shadowPosition = shadowMatrixWorldInverse * vec4(worldPosition, 1.);
+    float shadowFactor = 1.;
+
+    #if SHADOW_MAPPING == 1
+        shadowFactor = getShadow(shadowMap, shadowBias, shadowPosition);
+    #elif SHADOW_MAPPING == 2
+        shadowFactor = getShadowSoft(shadowMap, vec2(2048), shadowBias, 1., shadowPosition);
+    #elif SHADOW_MAPPING == 3
+        shadowFactor = getShadowPCSS(shadowMap, shadowBias, shadowPosition);
+    #endif
+
+    color += applyDirectionalLight(light, materialInfo, worldNormal, worldView) * shadowFactor;
+
     color += materialInfo.diffuseColor * ambientIntensity;
     color += getIBLContribution(materialInfo, worldNormal, worldView);
 
@@ -224,7 +249,7 @@ void main() {
 
     float density = 1. / 15000.;
     float distance = length(position);
-    float fog = 1. / pow(ConstE, pow(distance * density, 2.));
+    float fog = 1. / pow(Eu, pow(distance * density, 2.));
 
     color = mix(vec3(.77, .86, .91), color, fog);
 

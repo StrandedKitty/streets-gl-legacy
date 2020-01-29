@@ -7,6 +7,7 @@ import Framebuffer from "./Framebuffer";
 import Renderbuffer from "./Renderbuffer";
 import FramebufferMultisample from "./FramebufferMultisample";
 import TextureCube from "./TextureCube";
+import DirectionalLight from "./DirectionalLight";
 
 export default class Renderer {
 	constructor(canvas) {
@@ -52,6 +53,10 @@ export default class Renderer {
 
 	createRenderbuffer(params) {
 		return new Renderbuffer(this, params);
+	}
+
+	createDirectionalLight(params) {
+		return new DirectionalLight(this, params);
 	}
 
 	setSize(width, height) {
