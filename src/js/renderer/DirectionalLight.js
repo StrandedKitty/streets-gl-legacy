@@ -7,7 +7,6 @@ export default class Mesh extends Object3D {
 
 		this.renderer = renderer;
 
-		this.intensity = params.intensity || 1;
 		this.color = params.color || [255, 255, 255];
 		this.resolution = params.resolution || 1024;
 
@@ -17,7 +16,7 @@ export default class Mesh extends Object3D {
 		this.bottom = -this.size;
 		this.top = this.size;
 		this.near = params.near || 0.1;
-		this.far = params.far || 2000;
+		this.far = params.far || 1000;
 
 		this.camera = new OrthographicCamera({
 			left: this.left,
@@ -46,6 +45,8 @@ export default class Mesh extends Object3D {
 		});
 
 		this.texture = this.framebuffer.textures[0];
+
+		this.matrixOverwrite = false;
 	}
 
 	setSize(resolution) {

@@ -25,7 +25,7 @@ export default class Material {
 
 			if(location === undefined || location === null) {
 				location = this.gl.getUniformLocation(this.program.WebGLProgram, name);
-				if(location === null) console.error('Location for uniform ' + name + ' is ' + location);
+				//if(location === null) console.error('Location for uniform ' + name + ' is ' + location);
 				this.uniformsLocations[name] = location;
 			}
 

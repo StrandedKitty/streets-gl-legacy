@@ -21,6 +21,7 @@ import Blur from "./materials/Blur";
 import Skybox from "./Skybox";
 import BuildingMaterial from "./materials/BuildingMaterial";
 import GroundMaterial from "./materials/GroundMaterial";
+import CSM from "./CSM";
 
 const SunCalc = require('suncalc');
 
@@ -44,8 +45,9 @@ const gui = new dat.GUI();
 let time = 0, delta = 0;
 let gBuffer, smaa, ssao, blur;
 let skybox;
-let dir, light;
+let light;
 let lightDirection = new vec3(-1, -1, -1);
+let csm;
 
 init();
 animate();
@@ -70,23 +72,25 @@ function init() {
 	wrapper.add(tileMeshes);
 
 	camera = new PerspectiveCamera({
-		fov: 70,
+		fov: 40,
 		near: 1,
 		far: 10000,
 		aspect: window.innerWidth / window.innerHeight
 	});
 	wrapper.add(camera);
 
-	dir = RP.createDirectionalLight({
-		intensity: 1,
-		size: 1000,
-		resolution: 2048,
-		near: 1,
-		far: 1200
+	csm = new CSM({
+		renderer: RP,
+		camera: camera,
+		parent: wrapper,
+		cascades: 3,
+		size: 4096,
+		far: 4000
 	});
-	wrapper.add(dir);
 
 	view.frustum = new Frustum(camera.fov, camera.aspect, 1, Config.drawDistance);
+	view.frustum.updateViewSpaceVertices();
+
 	controls = new Controls(camera);
 
 	groundMaterial = new GroundMaterial(RP).material;
@@ -179,7 +183,7 @@ function init() {
 		direction: new Float32Array([-1, -1, -1]),
 		range: -1,
 		color: new Float32Array([1, 1, 1]),
-		intensity: 2,
+		intensity: 4,
 		position: new Float32Array([0, 0, 0]),
 		innerConeCos: 1,
 		outerConeCos: 0.7071067811865476,
@@ -211,9 +215,7 @@ function init() {
 			normalMatrix: {type: 'Matrix3fv', value: null},
 			cameraMatrixWorld: {type: 'Matrix4fv', value: null},
 			ambientIntensity: {type: '1f', value: 0.2},
-			uExposure: {type: '1f', value: 1.},
-			shadowMap: {type: 'texture', value: dir.texture},
-			shadowMatrixWorldInverse: {type: 'Matrix4fv', value: dir.camera.matrixWorldInverse}
+			uExposure: {type: '1f', value: 1.}
 		}
 	});
 
@@ -225,13 +227,17 @@ function init() {
 	gui.add(Config, 'SMAA');
 	gui.add(Config, 'SSAO');
 	gui.add(Config, 'SSAOBlur');
-	gui.add(quadMaterial.uniforms['uLight.intensity'], 'value');
+	gui.add(light, 'intensity');
 	gui.add(quadMaterial.uniforms['ambientIntensity'], 'value');
 
 	window.addEventListener('resize', function() {
 		camera.aspect = window.innerWidth / window.innerHeight;
-		view.frustum.aspect = camera.aspect;
 		camera.updateProjectionMatrix();
+
+		view.frustum.aspect = camera.aspect;
+		view.frustum.updateViewSpaceVertices();
+
+		csm.resize();
 
 		RP.setPixelRatio(Config.SSAA);
 		RP.setSize(window.innerWidth, window.innerHeight);
@@ -267,82 +273,77 @@ function animate() {
 	const cameraLatLon = controls.latLon();
 	const sunPosition = SunCalc.getPosition(Date.now(), cameraLatLon.lat, cameraLatLon.lon);
 	const sunDirection = sphericalToCartesian(sunPosition.azimuth + Math.PI, sunPosition.altitude);
+	const sunIntensity = sunDirection.y < 0 ? 1 : 0;
 
-	dir.setPosition(camera.position.x + 250, 500, camera.position.z + 250);
-
-	const target = vec3.add(dir.position, sunDirection);
-	dir.lookAt(target);
-
-	dir.updateMatrixWorld();
-
-	dir.camera.updateMatrixWorld();
-	dir.camera.updateMatrixWorldInverse();
-	dir.camera.updateFrustum();
-
-	// Rendering camera
-
-	let rCamera = dir.camera;
+	csm.direction = sunDirection;
+	csm.update(camera.matrix);
 
 	// Shadow mapping
 
-	RP.bindFramebuffer(dir.framebuffer);
+	for(let i = 0; i < csm.lights.length; i++) {
+		let rCamera = csm.lights[i].camera;
 
-	RP.depthTest = true;
-	RP.depthWrite = true;
+		rCamera.updateFrustum();
 
-	gl.clearColor(100000, 1, 1, 1);
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		RP.bindFramebuffer(csm.lights[i].framebuffer);
 
-	{
-		groundMaterialDepth.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
-		groundMaterialDepth.use();
+		RP.depthTest = true;
+		RP.depthWrite = true;
 
-		for(let i = 0; i < tileMeshes.children.length; i++) {
-			let object = tileMeshes.children[i];
+		gl.clearColor(100000, 1, 1, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-			object.data.time += delta;
+		{
+			groundMaterialDepth.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
+			groundMaterialDepth.use();
 
-			if(object instanceof Mesh) {
+			for(let i = 0; i < tileMeshes.children.length; i++) {
+				let object = tileMeshes.children[i];
+
+				object.data.time += delta;
+
+				if(object instanceof Mesh) {
+					const inFrustum = object.inCameraFrustum(rCamera);
+
+					if(inFrustum) {
+						let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+						groundMaterialDepth.uniforms.modelViewMatrix.value = modelViewMatrix;
+						groundMaterialDepth.updateUniform('modelViewMatrix');
+
+						object.draw(groundMaterialDepth);
+					}
+				}
+			}
+		}
+
+		{
+			buildingDepthMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
+			buildingDepthMaterial.use();
+
+			for(let i = 0; i < buildings.children.length; i++) {
+				let object = buildings.children[i];
+
+				object.data.tile.time += delta;
+
 				const inFrustum = object.inCameraFrustum(rCamera);
 
 				if(inFrustum) {
 					let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-					groundMaterialDepth.uniforms.modelViewMatrix.value = modelViewMatrix;
-					groundMaterialDepth.updateUniform('modelViewMatrix');
+					buildingDepthMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+					buildingDepthMaterial.updateUniform('modelViewMatrix');
 
-					object.draw(groundMaterialDepth);
+					buildingDepthMaterial.uniforms.time.value = object.data.tile.time;
+					buildingDepthMaterial.updateUniform('time');
+
+					object.draw(buildingMaterial);
 				}
 			}
 		}
 	}
 
-	{
-		buildingDepthMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
-		buildingDepthMaterial.use();
-
-		for(let i = 0; i < buildings.children.length; i++) {
-			let object = buildings.children[i];
-
-			object.data.tile.time += delta;
-
-			const inFrustum = object.inCameraFrustum(rCamera);
-
-			if(inFrustum) {
-				let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-				buildingDepthMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
-				buildingDepthMaterial.updateUniform('modelViewMatrix');
-
-				buildingDepthMaterial.uniforms.time.value = object.data.tile.time;
-				buildingDepthMaterial.updateUniform('time');
-
-				object.draw(buildingMaterial);
-			}
-		}
-	}
-
 	// Rendering camera
 
-	rCamera = camera;
+	let rCamera = camera;
 
 	// Draw to g-buffer
 
@@ -493,11 +494,12 @@ function animate() {
 	RP.depthWrite = false;
 	RP.depthTest = false;
 
+	csm.updateUniforms(quadMaterial);
 	quadMaterial.uniforms['uLight.direction'].value = new Float32Array(vec3.toArray(sunDirection));
+	quadMaterial.uniforms['uLight.intensity'].value = light.intensity * sunIntensity;
 	quadMaterial.uniforms.uAO.value = Config.SSAOBlur ? blur.framebuffer.textures[0] : ssao.framebuffer.textures[0];
 	quadMaterial.uniforms.normalMatrix.value = mat4.normalMatrix(rCamera.matrixWorld);
 	quadMaterial.uniforms.cameraMatrixWorld.value = rCamera.matrixWorld;
-	quadMaterial.uniforms.shadowMatrixWorldInverse.value = dir.camera.matrixWorldInverse;
 	quadMaterial.use();
 	quad.draw(quadMaterial);
 
@@ -527,7 +529,6 @@ function animate() {
 
 	//
 
-	view.frustum.getViewSpaceVertices();
 	let wsFrustum = view.frustum.toSpace(camera.matrix);
 	let frustumTiles = wsFrustum.getTiles(camera.position, 16);
 

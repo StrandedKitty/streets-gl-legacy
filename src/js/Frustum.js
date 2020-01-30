@@ -15,7 +15,7 @@ export default class Frustum {
 		};
 	}
 
-	getViewSpaceVertices() {
+	updateViewSpaceVertices() {
 		this.nearPlaneY = this.near * Math.tan(toRad(this.fov / 2));
 		this.nearPlaneX = this.aspect * this.nearPlaneY;
 
@@ -58,6 +58,34 @@ export default class Frustum {
 			point = this.vertices.far[i];
 			point = vec3.applyMatrix(point, cameraMatrix);
 			result.vertices.far.push(point);
+		}
+
+		return result;
+	}
+
+	split(breaks) {
+		const result = [];
+
+		for(let i = 0; i < breaks.length; i++) {
+			const cascade = new Frustum();
+
+			if(i === 0) {
+				cascade.vertices.near = this.vertices.near;
+			} else {
+				for(let j = 0; j < 4; j++) {
+					cascade.vertices.near.push(vec3.lerp(this.vertices.near[j], this.vertices.far[j], breaks[i - 1]));
+				}
+			}
+
+			if(i === breaks - 1) {
+				cascade.vertices.far = this.vertices.far;
+			} else {
+				for(let j = 0; j < 4; j++) {
+					cascade.vertices.far.push(vec3.lerp(this.vertices.near[j], this.vertices.far[j], breaks[i]))
+				}
+			}
+
+			result.push(cascade);
 		}
 
 		return result;

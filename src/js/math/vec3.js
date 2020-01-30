@@ -77,6 +77,14 @@ export default class vec3 {
 		return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
 	}
 
+	static lerp(v1, v2, amount) {
+		let dst = new this;
+		dst.x = (1 - amount) * v1.x + amount * v2.x;
+		dst.y = (1 - amount) * v1.y + amount * v2.y;
+		dst.z = (1 - amount) * v1.z + amount * v2.z;
+		return dst;
+	}
+
 	static copy(v) {
 		return new this(v.x, v.y, v.z);
 	}

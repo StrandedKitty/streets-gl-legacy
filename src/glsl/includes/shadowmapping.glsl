@@ -21,9 +21,9 @@ float textureShadowLerp(sampler2D depths, vec2 size, vec2 uv, float compare) {
     return c;
 }
 
-float getShadow(sampler2D shadowMap, float shadowBias, vec4 shadowPosition) {
+float getShadow(sampler2D shadowMap, float shadowBias, vec4 shadowPosition, float shadowFrustumSize) {
     float shadow = 1.0;
-    vec2 shadowUV = (shadowPosition.xy / SHADOWMAP_SIZE + 1.) / 2.;
+    vec2 shadowUV = (shadowPosition.xy / shadowFrustumSize + 1.) / 2.;
 
     bvec4 inFrustumVec = bvec4(shadowUV.x >= 0.0, shadowUV.x <= 1.0, shadowUV.y >= 0.0, shadowUV.y <= 1.0);
     bool inFrustum = all(inFrustumVec);
@@ -37,10 +37,9 @@ float getShadow(sampler2D shadowMap, float shadowBias, vec4 shadowPosition) {
     return shadow;
 }
 
-float getShadowSoft(sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, float shadowRadius, vec4 shadowPosition) {
+float getShadowSoft(sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, float shadowRadius, vec4 shadowPosition, float shadowFrustumSize) {
     float shadow = 1.0;
-    vec2 shadowUV = (shadowPosition.xy / SHADOWMAP_SIZE + 1.) / 2.;
-
+    vec2 shadowUV = (shadowPosition.xy / shadowFrustumSize + 1.) / 2.;
     bvec4 inFrustumVec = bvec4(shadowUV.x >= 0.0, shadowUV.x <= 1.0, shadowUV.y >= 0.0, shadowUV.y <= 1.0);
     bool inFrustum = all(inFrustumVec);
 
