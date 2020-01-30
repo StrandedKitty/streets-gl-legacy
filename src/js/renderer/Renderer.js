@@ -16,7 +16,8 @@ export default class Renderer {
 
 		this.gl = canvas.getContext("webgl2", { antialias: false });
 		if (!this.gl) {
-			console.error("WebGL 2 not available");
+			console.error('WebGL 2 is not available.');
+			alert('WebGL 2 is not available.');
 		}
 
 		this.extensions = new Extensions(this.gl);

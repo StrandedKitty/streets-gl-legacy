@@ -1,4 +1,4 @@
-import {degrees2meters, tile2meters, tileEncode, toRad} from './Utils';
+import {degrees2meters, sphericalToCartesian, tile2meters, tileEncode, toDeg, toRad} from './Utils';
 import Config from './Config';
 import Frustum from './Frustum';
 import Controls from './Controls';
@@ -22,6 +22,8 @@ import Skybox from "./Skybox";
 import BuildingMaterial from "./materials/BuildingMaterial";
 import GroundMaterial from "./materials/GroundMaterial";
 
+const SunCalc = require('suncalc');
+
 let scene,
 	camera,
 	RP,
@@ -42,7 +44,7 @@ const gui = new dat.GUI();
 let time = 0, delta = 0;
 let gBuffer, smaa, ssao, blur;
 let skybox;
-let dir;
+let dir, light;
 let lightDirection = new vec3(-1, -1, -1);
 
 init();
@@ -173,7 +175,7 @@ function init() {
 		1, 1
 	]));
 
-	const light = {
+	light = {
 		direction: new Float32Array([-1, -1, -1]),
 		range: -1,
 		color: new Float32Array([1, 1, 1]),
@@ -262,10 +264,14 @@ function animate() {
 
 	// Directional light
 
+	const cameraLatLon = controls.latLon();
+	const sunPosition = SunCalc.getPosition(Date.now(), cameraLatLon.lat, cameraLatLon.lon);
+	const sunDirection = sphericalToCartesian(sunPosition.azimuth + Math.PI, sunPosition.altitude);
+
 	dir.setPosition(camera.position.x + 250, 500, camera.position.z + 250);
 
-	const target = vec3.add(dir.position, lightDirection);
-	dir.lookAt(target, false);
+	const target = vec3.add(dir.position, sunDirection);
+	dir.lookAt(target);
 
 	dir.updateMatrixWorld();
 
@@ -487,6 +493,7 @@ function animate() {
 	RP.depthWrite = false;
 	RP.depthTest = false;
 
+	quadMaterial.uniforms['uLight.direction'].value = new Float32Array(vec3.toArray(sunDirection));
 	quadMaterial.uniforms.uAO.value = Config.SSAOBlur ? blur.framebuffer.textures[0] : ssao.framebuffer.textures[0];
 	quadMaterial.uniforms.normalMatrix.value = mat4.normalMatrix(rCamera.matrixWorld);
 	quadMaterial.uniforms.cameraMatrixWorld.value = rCamera.matrixWorld;

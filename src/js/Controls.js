@@ -1,4 +1,4 @@
-import {clamp, degrees2meters, lerp, toRad} from './Utils';
+import {clamp, degrees2meters, lerp, meters2degress, toRad} from './Utils';
 import mat4 from "./math/mat4";
 import vec3 from "./math/vec3";
 import vec2 from "./math/vec2";
@@ -31,6 +31,10 @@ export default class Controls {
 		this.direction = {x: -1, y: -1, z: -1};
 
 		this.addEventListeners();
+	}
+
+	latLon() {
+		return meters2degress(this.target.x, this.target.z);
 	}
 
 	addEventListeners() {

@@ -113,3 +113,11 @@ export function tileDecode(id) {
 	const x = id % 65536;
 	return {x, y};
 }
+
+export function sphericalToCartesian(azimuth, altitude) {
+	return {
+		x: -Math.cos(altitude) * Math.cos(azimuth),
+		y: -Math.sin(altitude),
+		z: -Math.cos(altitude) * Math.sin(azimuth)
+	}
+}
