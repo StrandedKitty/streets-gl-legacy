@@ -8,6 +8,7 @@
 
 - Deferred shading
 - Physically-based rendering
+- Cascaded Shadow Maps
 - SSAO (the one sometimes referred to as normal-oriented hemisphere SSAO)
 - SMAA
 - SSAA
