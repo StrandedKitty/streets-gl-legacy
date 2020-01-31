@@ -8,6 +8,7 @@ import Renderbuffer from "./Renderbuffer";
 import FramebufferMultisample from "./FramebufferMultisample";
 import TextureCube from "./TextureCube";
 import DirectionalLight from "./DirectionalLight";
+import Texture2DArray from "./Texture2DArray";
 
 export default class Renderer {
 	constructor(canvas) {
@@ -38,6 +39,10 @@ export default class Renderer {
 
 	createTexture(params) {
 		return new Texture(this, params);
+	}
+
+	createTexture2DArray(params) {
+		return new Texture2DArray(this, params);
 	}
 
 	createTextureCube(params) {

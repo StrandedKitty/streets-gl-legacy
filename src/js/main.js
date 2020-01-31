@@ -107,8 +107,10 @@ function init() {
 		]
 	});
 
-	buildingMaterial = new BuildingMaterial(RP).material;
-	buildingDepthMaterial = new BuildingMaterial(RP).depthMaterial;
+	const buildingMaterialInstance = new BuildingMaterial(RP);
+
+	buildingMaterial = buildingMaterialInstance.material;
+	buildingDepthMaterial = buildingMaterialInstance.depthMaterial;
 
 	mesh = RP.createMesh({
 		vertices: new Float32Array([

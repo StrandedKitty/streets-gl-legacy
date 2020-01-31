@@ -1,5 +1,6 @@
 #version 300 es
 precision highp float;
+precision highp sampler2DArray;
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec3 outNormal;
 layout(location = 2) out vec3 outPosition;
@@ -14,6 +15,10 @@ in vec3 vCenter;
 #define WIREFRAME_MODE 0
 
 uniform sampler2D tDiffuse[2];
+uniform sampler2DArray tColor;
+uniform sampler2DArray tMetallness;
+uniform sampler2DArray tRoughness;
+uniform sampler2DArray tSpecular;
 
 #if WIREFRAME_MODE
     float edgeFactor() {
@@ -25,28 +30,27 @@ uniform sampler2D tDiffuse[2];
     }
 #endif
 
-vec4 getValueFromSamplerArray(float i, vec2 uv) {
-    if (i < 0.5) {
-        return vec4(1);
-    } else if (i < 1.5) {
-        return texture(tDiffuse[0], uv);
-    } else if (i < 2.5) {
-        return texture(tDiffuse[1], uv);
-    }
-
-    return vec4(1);
-}
-
 void main() {
     #if WIREFRAME_MODE
         if (edgeFactor() > 0.99) discard;
     #endif
 
-    vec4 diffuse = getValueFromSamplerArray(vTextureId, vUv);
+    bool textured = int(vTextureId + 0.5) > 0;
+
+    vec4 diffuse = texture(tColor, vec3(vUv, int(vTextureId - 0.5)));
+    float metalness = texture(tMetallness, vec3(vUv, int(vTextureId - 0.5))).r;
+    float roughness = texture(tRoughness, vec3(vUv, int(vTextureId - 0.5))).r;
+    float specular = texture(tSpecular, vec3(vUv, int(vTextureId - 0.5))).r;
+
+    if(!textured) {
+        diffuse = vec4(1);
+        metalness = 0.;
+        roughness = 1.;
+        specular = 0.01;
+    }
 
     outColor = vec4(vColor, 1.) * diffuse;
     outNormal = vNormal * 0.5 + 0.5;
     outPosition = vPosition;
-    float r = diffuse.x;
-    outMetallicRoughness = vec4(0.01, r == 0.9 ? 1. : r * 0.8, r == 1. ? 0. : (1. - r) * 0.1, 1.);
+    outMetallicRoughness = vec4(metalness, roughness, specular, 1.);
 }

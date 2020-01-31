@@ -68,5 +68,4 @@ void main() {
 	occlusion = 1.0 - (occlusion / float(kernelSize));
 
 	FragColor = vec4(vec3(occlusion), 1.0);
-	FragColor.a = 1.;
 }

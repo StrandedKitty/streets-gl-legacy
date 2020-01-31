@@ -43,7 +43,6 @@ export default class Way {
 			if(this.closed && this.properties.type === 'building') {
 				this.triangulateFootprint(false);
 				this.generateWallSegments(25, 4);
-				console.log(this.wallSegmentUvs)
 				this.triangulateWalls();
 			}
 
@@ -93,8 +92,10 @@ export default class Way {
 	}
 
 	triangulateWalls() {
-		let facadeColor = this.properties.facadeColor || [231, 216, 185];
-		let materialId = this.getMaterialId(this.properties.facadeMaterial);
+		const material = this.getMaterialData(this.properties.facadeMaterial);
+		let facadeColor = material.colored ? this.properties.facadeColor || [231, 216, 185] : [255, 255, 255];
+
+
 		let height, minHeight, levels;
 
 		if(this.properties.height) {
@@ -156,7 +157,7 @@ export default class Way {
 			for(let j = 0; j < 6; j++) {
 				this.mesh.normals.push(normal.x, normal.y, normal.z);
 				this.mesh.colors.push(...facadeColor);
-				this.mesh.textures.push(materialId);
+				this.mesh.textures.push(material.id);
 			}
 		}
 	}
@@ -335,7 +336,7 @@ export default class Way {
 
 	createPath() {
 		const width = this.properties.roadWidth;
-		const height = 1;
+		const height = 0.5;
 		const color = [50, 50, 50];
 
 		const physicalVertices = this.closed ? this.vertices.length - 1 : this.vertices.length;
@@ -446,14 +447,18 @@ export default class Way {
 		return vec3.normalize(cb);
 	}
 
-	getMaterialId(material) {
+	getMaterialData(material) {
 		switch (material) {
 			default:
-				return 1;
+				return {id: 1, colored: true};
 			case 'glass':
-				return 2;
+				return {id: 2, colored: true};
 			case 'mirror':
-				return 2;
+				return {id: 3, colored: true};
+			case 'brick':
+				return {id: 4, colored: false};
+			case 'wood':
+				return {id: 5, colored: true};
 		}
 	}
 }
