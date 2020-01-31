@@ -299,10 +299,10 @@ function animate() {
 			groundMaterialDepth.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
 			groundMaterialDepth.use();
 
-			for(let i = 0; i < tileMeshes.children.length; i++) {
-				let object = tileMeshes.children[i];
+			for(let j = 0; j < tileMeshes.children.length; j++) {
+				let object = tileMeshes.children[j];
 
-				object.data.time += delta;
+				if(i === 0) object.data.time += delta;
 
 				if(object instanceof Mesh) {
 					const inFrustum = object.inCameraFrustum(rCamera);
@@ -322,10 +322,10 @@ function animate() {
 			buildingDepthMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
 			buildingDepthMaterial.use();
 
-			for(let i = 0; i < buildings.children.length; i++) {
-				let object = buildings.children[i];
+			for(let j = 0; j < buildings.children.length; j++) {
+				let object = buildings.children[j];
 
-				object.data.tile.time += delta;
+				if(i === 0) object.data.tile.time += delta;
 
 				const inFrustum = object.inCameraFrustum(rCamera);
 

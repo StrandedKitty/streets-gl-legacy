@@ -134,9 +134,6 @@ export default class Way {
 			this.mesh.vertices.push(nextVertex.x, height, nextVertex.z);
 			this.mesh.vertices.push(vertex.x, height, vertex.z);
 
-			let segmentWidth = Math.sqrt((nextVertex.x - vertex.x) ** 2 + (nextVertex.z - vertex.z) ** 2);
-			let repeats = Math.floor(segmentWidth / 4);
-
 			let segmentUvStart = this.wallSegmentUvs[i][0];
 			let segmentUvEnd = this.wallSegmentUvs[i][1];
 
