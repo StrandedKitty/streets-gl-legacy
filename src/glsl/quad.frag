@@ -186,7 +186,7 @@ void main() {
     vec4 baseColor = vec4(0.0, 0.0, 0.0, 1.0);
     vec3 diffuseColor = vec3(0.0);
     vec3 specularColor = vec3(0.0);
-    vec3 f0 = vec3(0.04);
+    vec3 f0 = vec3(0.01);
 
     vec4 mrSample = texture(uMetallicRoughness, vUv);
     metallic = mrSample.r;

@@ -42,6 +42,8 @@ export default class Way {
 		if(this.visible) {
 			if(this.closed && this.properties.type === 'building') {
 				this.triangulateFootprint(false);
+				this.generateWallSegments(25, 4);
+				console.log(this.wallSegmentUvs)
 				this.triangulateWalls();
 			}
 
@@ -119,9 +121,9 @@ export default class Way {
 		height *= this.scaleFactor;
 		minHeight *= this.scaleFactor;
 
-		for(let i = 0; i < this.vertices.length; i++) {
+		for(let i = 0; i < this.vertices.length - 1; i++) {
 			let vertex = this.vertices[i];
-			let nextVertex = this.vertices[i + 1] || this.vertices[0];
+			let nextVertex = this.vertices[i + 1];
 
 			this.mesh.vertices.push(nextVertex.x, minHeight, nextVertex.z);
 			this.mesh.vertices.push(vertex.x, height, vertex.z);
@@ -131,16 +133,19 @@ export default class Way {
 			this.mesh.vertices.push(nextVertex.x, height, nextVertex.z);
 			this.mesh.vertices.push(vertex.x, height, vertex.z);
 
-			const segmentWidth = Math.sqrt((nextVertex.x - vertex.x) ** 2 + (nextVertex.z - vertex.z) ** 2);
-			const repeats = Math.floor(segmentWidth / 4);
+			let segmentWidth = Math.sqrt((nextVertex.x - vertex.x) ** 2 + (nextVertex.z - vertex.z) ** 2);
+			let repeats = Math.floor(segmentWidth / 4);
 
-			this.mesh.uvs.push(repeats, levels);
-			this.mesh.uvs.push(0, 0);
-			this.mesh.uvs.push(0, levels);
+			let segmentUvStart = this.wallSegmentUvs[i][0];
+			let segmentUvEnd = this.wallSegmentUvs[i][1];
 
-			this.mesh.uvs.push(repeats, levels);
-			this.mesh.uvs.push(repeats, 0);
-			this.mesh.uvs.push(0, 0);
+			this.mesh.uvs.push(segmentUvEnd, levels);
+			this.mesh.uvs.push(segmentUvStart, 0);
+			this.mesh.uvs.push(segmentUvStart, levels);
+
+			this.mesh.uvs.push(segmentUvEnd, levels);
+			this.mesh.uvs.push(segmentUvEnd, 0);
+			this.mesh.uvs.push(segmentUvStart, 0);
 
 			const normal = this.calculateNormal(
 				new vec3(nextVertex.x, minHeight, nextVertex.z),
@@ -154,6 +159,73 @@ export default class Way {
 				this.mesh.textures.push(materialId);
 			}
 		}
+	}
+
+	generateWallSegments(angle, windowWidth) {
+		angle = Math.cos(toRad(angle));
+		let uvs = [];
+		let segments = [];
+		let segmentsLengths = [];
+		let currentSegment = -1;
+
+		for(let i = 0; i < this.vertices.length - 1; i++) {
+			let vertex = new vec2(this.vertices[i].x, this.vertices[i].z);
+			let nextVertex = new vec2(this.vertices[i + 1].x, this.vertices[i + 1].z);
+
+			let segmentVector = vec2.sub(nextVertex, vertex);
+			let length = Math.sqrt(segmentVector.x ** 2 + segmentVector.y ** 2);
+
+			if(i > 0) {
+				segmentVector = vec2.normalize(segmentVector);
+
+				let prevVertex = new vec2(this.vertices[i - 1].x, this.vertices[i - 1].z);
+				let prevSegmentVector = vec2.normalize(vec2.sub(vertex, prevVertex));
+
+				let dot = vec2.dot(segmentVector, prevSegmentVector);
+
+				if(dot > angle) {
+					++segments[currentSegment][1];
+				} else {
+					segments.push([i, i + 1]);
+					segmentsLengths.push(0);
+					++currentSegment;
+				}
+			} else {
+				segments.push([0, 1]);
+				segmentsLengths.push(0);
+				++currentSegment;
+			}
+
+			segmentsLengths[currentSegment] += length;
+		}
+
+		let segmentFactors = [];
+
+		for(let i = 0; i < segmentsLengths.length; i++) {
+			segmentFactors[i] = Math.floor(segmentsLengths[i] / windowWidth);
+		}
+
+		currentSegment = 0;
+		let currentSegmentPosition = 0;
+
+		for(let i = 0; i < this.vertices.length - 1; i++) {
+			let vertex = new vec2(this.vertices[i].x, this.vertices[i].z);
+			let nextVertex = new vec2(this.vertices[i + 1].x, this.vertices[i + 1].z);
+
+			let segmentVector = vec2.sub(nextVertex, vertex);
+			let length = Math.sqrt(segmentVector.x ** 2 + segmentVector.y ** 2);
+
+			let uvPosition = currentSegmentPosition + length / segmentsLengths[currentSegment];
+			let segmentFactor = segmentFactors[currentSegment];
+
+			uvs.push([currentSegmentPosition * segmentFactor, uvPosition * segmentFactor]);
+
+			currentSegmentPosition = uvPosition;
+
+			if(segments[currentSegment][1] === i + 1) currentSegment++;
+		}
+
+		this.wallSegmentUvs = uvs;
 	}
 
 	flatten() {
