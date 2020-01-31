@@ -5,7 +5,7 @@ let config = {
 	SSAA: 2,
 	SMAA: true,
 	SSAO: true,
-	SSAOResolution: 1,
+	SSAOResolution: 0.5,
 	SSAOBlur: true
 };
 

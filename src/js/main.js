@@ -151,7 +151,7 @@ function init() {
 	]);
 
 	smaa = new SMAA(RP, window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
-	ssao = new SSAO(RP, window.innerWidth * Config.SSAO, window.innerHeight * Config.SSAO);
+	ssao = new SSAO(RP, window.innerWidth * Config.SSAOResolution, window.innerHeight * Config.SSAOResolution);
 	blur = new Blur(RP, window.innerWidth, window.innerHeight);
 
 	quad = RP.createMesh({

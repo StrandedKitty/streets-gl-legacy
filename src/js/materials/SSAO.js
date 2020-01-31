@@ -26,8 +26,6 @@ export default class SSAO {
 			vertexShader: shaders.sao.vertex,
 			fragmentShader: shaders.sao.fragment,
 			uniforms: {
-				//cameraNear: {type: '1f', value: 1},
-				//cameraFar: {type: '1f', value: 10000},
 				resolution: {type: '2fv', value: [this.width, this.height]},
 				tPosition: {type: 'texture', value: null},
 				tNormal: {type: 'texture', value: null},
