@@ -5,6 +5,7 @@ export default class Attribute {
 		this.size = params.size || 3;
 		this.type = params.type || 'FLOAT';
 		this.normalized = params.normalized || false;
+		this.instanced = params.instanced || false;
 		this.data = null;
 		this.location = null;
 
@@ -20,6 +21,7 @@ export default class Attribute {
 
 		if(this.location !== -1) {
 			this.gl.vertexAttribPointer(this.location, this.size, this.gl[this.type], this.normalized, 0, 0);
+			if(this.instanced) this.gl.vertexAttribDivisor(this.location, 1);
 			this.gl.enableVertexAttribArray(this.location);
 
 			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);

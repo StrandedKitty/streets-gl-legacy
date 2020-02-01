@@ -9,6 +9,7 @@ import FramebufferMultisample from "./FramebufferMultisample";
 import TextureCube from "./TextureCube";
 import DirectionalLight from "./DirectionalLight";
 import Texture2DArray from "./Texture2DArray";
+import MeshInstanced from "./MeshInstanced";
 
 export default class Renderer {
 	constructor(canvas) {
@@ -35,6 +36,10 @@ export default class Renderer {
 
 	createMesh(params) {
 		return new Mesh(this, params);
+	}
+
+	createMeshInstanced(params) {
+		return new MeshInstanced(this, params);
 	}
 
 	createTexture(params) {

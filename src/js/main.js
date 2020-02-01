@@ -22,6 +22,7 @@ import Skybox from "./Skybox";
 import BuildingMaterial from "./materials/BuildingMaterial";
 import GroundMaterial from "./materials/GroundMaterial";
 import CSM from "./CSM";
+import InstanceMaterial from "./materials/InstanceMaterial";
 
 const SunCalc = require('suncalc');
 
@@ -38,7 +39,7 @@ let objects = {
 };
 let meshes = {};
 
-let mesh, groundMaterial, groundMaterialDepth, wrapper, buildings, buildingMaterial, buildingDepthMaterial, tileMeshes;
+let mesh, groundMaterial, groundMaterialDepth, wrapper, buildings, buildingMaterial, buildingDepthMaterial, tileMeshes, instanceMeshes, instanceMaterial;
 let quad, quadMaterial;
 
 const gui = new dat.GUI();
@@ -70,6 +71,8 @@ function init() {
 	wrapper.add(buildings);
 	tileMeshes = new Object3D();
 	wrapper.add(tileMeshes);
+	instanceMeshes = new Object3D();
+	wrapper.add(instanceMeshes);
 
 	camera = new PerspectiveCamera({
 		fov: 40,
@@ -96,6 +99,8 @@ function init() {
 	groundMaterial = new GroundMaterial(RP).material;
 	groundMaterialDepth = new GroundMaterial(RP).depthMaterial;
 
+	instanceMaterial = new InstanceMaterial(RP).material;
+
 	const sky = RP.createTextureCube({
 		urls: [
 			'/textures/sky/px.png',
@@ -108,7 +113,6 @@ function init() {
 	});
 
 	const buildingMaterialInstance = new BuildingMaterial(RP);
-
 	buildingMaterial = buildingMaterialInstance.material;
 	buildingDepthMaterial = buildingMaterialInstance.depthMaterial;
 
@@ -443,6 +447,24 @@ function animate() {
 		}
 	}
 
+	{
+		instanceMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+		instanceMaterial.use();
+
+		for(let i = 0; i < instanceMeshes.children.length; i++) {
+			let object = instanceMeshes.children[i];
+
+			let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+			let normalMatrix = mat4.normalMatrix(modelViewMatrix);
+			instanceMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+			instanceMaterial.uniforms.normalMatrix.value = normalMatrix;
+			instanceMaterial.updateUniform('modelViewMatrix');
+			instanceMaterial.updateUniform('normalMatrix');
+
+			object.draw(instanceMaterial);
+		}
+	}
+
 	RP.depthWrite = false;
 	RP.depthTest = false;
 
@@ -554,6 +576,69 @@ function animate() {
 				const textures = new Float32Array(data.textures);
 				const instances = data.instances;
 				const bbox = {min: data.bboxMin, max: data.bboxMax};
+				const pivot = tile2meters(this.x, this.y + 1);
+
+				let treesPositions = new Float32Array(instances.trees.length / 2 * 3);
+				for(let i = 0; i < instances.trees.length / 2; i++) {
+					treesPositions[i * 3] = instances.trees[i * 2];
+					treesPositions[i * 3 + 1] = 0;
+					treesPositions[i * 3 + 2] = instances.trees[i * 2 + 1];
+				}
+
+				let treesMesh = RP.createMeshInstanced({
+					vertices: new Float32Array([
+						-1.0, -1.0, -1.0,
+						-1.0, -1.0, 1.0,
+						-1.0, 1.0, 1.0,
+						1.0, 1.0, -1.0,
+						-1.0, -1.0, -1.0,
+						-1.0, 1.0, -1.0,
+						1.0, -1.0, 1.0,
+						-1.0, -1.0, -1.0,
+						1.0, -1.0, -1.0,
+						1.0, 1.0, -1.0,
+						1.0, -1.0, -1.0,
+						-1.0, -1.0, -1.0,
+						-1.0, -1.0, -1.0,
+						-1.0, 1.0, 1.0,
+						-1.0, 1.0, -1.0,
+						1.0, -1.0, 1.0,
+						-1.0, -1.0, 1.0,
+						-1.0, -1.0, -1.0,
+						-1.0, 1.0, 1.0,
+						-1.0, -1.0, 1.0,
+						1.0, -1.0, 1.0,
+						1.0, 1.0, 1.0,
+						1.0, -1.0, -1.0,
+						1.0, 1.0, -1.0,
+						1.0, -1.0, -1.0,
+						1.0, 1.0, 1.0,
+						1.0, -1.0, 1.0,
+						1.0, 1.0, 1.0,
+						1.0, 1.0, -1.0,
+						-1.0, 1.0, -1.0,
+						1.0, 1.0, 1.0,
+						-1.0, 1.0, -1.0,
+						-1.0, 1.0, 1.0,
+						1.0, 1.0, 1.0,
+						-1.0, 1.0, 1.0,
+						1.0, -1.0, 1.0
+					]),
+					instances: instances.trees.length / 2
+				});
+
+				treesMesh.addAttribute({
+					name: 'iPosition',
+					size: 3,
+					type: 'FLOAT',
+					normalized: false,
+					instanced: true
+				});
+				treesMesh.setAttributeData('iPosition', treesPositions);
+
+				treesMesh.setPosition(pivot.x, 0, pivot.z);
+				instanceMeshes.add(treesMesh);
+				this.instances.trees = treesMesh;
 
 				let mesh = RP.createMesh({
 					vertices: vertices
@@ -607,7 +692,6 @@ function animate() {
 				});
 				mesh.setAttributeData('fade', this.fadeBuffer);
 
-				const pivot = tile2meters(this.x, this.y + 1);
 				mesh.setPosition(pivot.x, 0, pivot.z);
 
 				mesh.data.tile = this;

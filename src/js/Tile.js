@@ -17,6 +17,9 @@ export default class Tile {
 		this.displayedCount = null;
 		this.deleted = false;
 		this.time = 0;
+		this.instances = {
+			trees: null
+		}
 	}
 
 	load(worker) {
@@ -169,6 +172,9 @@ export default class Tile {
 		if(this.deleted) {
 			this.groundMesh.delete();
 			this.groundMesh = null;
+
+			this.instances.trees.delete();
+			this.instances.trees = null;
 
 			this.mesh.delete();
 			this.mesh = null;

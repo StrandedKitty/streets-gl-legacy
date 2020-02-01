@@ -48,6 +48,10 @@ class Shaders {
 			fragment: require('../glsl/groundDepth.frag').default,
 			vertex: require('../glsl/groundDepth.vert').default
 		};
+		this.raw.instance = {
+			fragment: require('../glsl/instance.frag').default,
+			vertex: require('../glsl/instance.vert').default
+		};
 
 		this.includes.tonemapping = require('../glsl/includes/tonemapping.glsl').default;
 		this.includes.shadowmapping = require('../glsl/includes/shadowmapping.glsl').default;
