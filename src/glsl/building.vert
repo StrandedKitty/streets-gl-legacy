@@ -10,6 +10,7 @@ in float fade;
 out vec3 vColor;
 out vec3 vNormal;
 out vec3 vPosition;
+out vec3 vLocalPosition;
 out vec2 vUv;
 out float vTextureId;
 out vec3 vCenter;
@@ -39,6 +40,7 @@ void main() {
     vec3 transformedPosition = position;
     if(display > 0.5) transformedPosition = vec3(0);
     if(fade > 0.5) transformedPosition.y *= CubicOut(clamp(time, 0., 1.));
+    vLocalPosition = transformedPosition;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(transformedPosition, 1.0);
     vPosition = vec3(modelViewMatrix * vec4(transformedPosition, 1.0));

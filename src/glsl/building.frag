@@ -8,13 +8,15 @@ layout(location = 3) out vec4 outMetallicRoughness;
 in vec3 vColor;
 in vec3 vNormal;
 in vec3 vPosition;
+in vec3 vLocalPosition;
 in vec2 vUv;
 in float vTextureId;
 in vec3 vCenter;
 
 #define WIREFRAME_MODE 0
+#define TILE_SIZE 611.496226
 
-uniform sampler2D tDiffuse[2];
+uniform sampler2D tNoise;
 uniform sampler2DArray tColor;
 uniform sampler2DArray tMetallness;
 uniform sampler2DArray tRoughness;
@@ -43,7 +45,8 @@ void main() {
     float specular = texture(tSpecular, vec3(vUv, int(vTextureId - 0.5))).r;
 
     if(!textured) {
-        diffuse = vec4(1);
+        diffuse = vec4(1) - texture(tNoise, vLocalPosition.xz / TILE_SIZE * 32.) * 0.3 + texture(tNoise, vLocalPosition.xz / TILE_SIZE * 2.) * 0.3;
+        diffuse.a = 1.;
         metalness = 0.;
         roughness = 1.;
         specular = 0.01;

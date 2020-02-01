@@ -28,6 +28,7 @@ export default class BuildingMaterial {
 				tMetalness: {type: 'texture2DArray', value: this.textureArrays.metalness},
 				tRoughness: {type: 'texture2DArray', value: this.textureArrays.roughness},
 				tSpecular: {type: 'texture2DArray', value: this.textureArrays.specular},
+				tNoise: {type: 'texture', value: this.renderer.createTexture({url: '/textures/noise.png', anisotropy: Config.textureAnisotropy})},
 				time: {type: '1f', value: 0}
 			}
 		});
