@@ -1,9 +1,7 @@
 #version 300 es
 precision highp float;
-layout(location = 0) out vec4 outColor;
-layout(location = 1) out vec3 outNormal;
-layout(location = 2) out vec3 outPosition;
-layout(location = 3) out vec4 outMetallicRoughness;
+out vec4 outColor;
+
 in vec3 vNormal;
 in vec3 vPosition;
 in vec2 vUv;
@@ -30,17 +28,7 @@ vec4 readDiffuseLod(const vec2 uv, const float lod) {
 }
 
 void main() {
-    vec4 diffuse = readDiffuse(vUv);
-    vec4 diffuseLod0 = readDiffuseLod(vUv, 0.);
-    if(diffuseLod0.a < 0.5) discard;
-    if(diffuse.a < 1.) diffuse = diffuseLod0;
+    if(readDiffuseLod(vUv, 0.).a < 0.5) discard;
 
-    float metalness = 0.01;
-    float roughness = 0.9;
-    float specular = 0.01;
-
-    outColor = vec4(diffuse.rgb, 1.);
-    outNormal = vNormal * 0.5 + 0.5;
-    outPosition = vPosition;
-    outMetallicRoughness = vec4(metalness, roughness, specular, 1.);
+    outColor = vec4(vec3(-vPosition.z), 1.);
 }

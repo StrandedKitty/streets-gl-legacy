@@ -26,6 +26,7 @@ export default class Way {
 		};
 
 		this.scaleFactor = mercatorScaleFactor(toRad(this.pivot.lat));
+		this.tileSize = 40075016.7 / (1 << 16);
 
 		this.descriptor = new OSMDescriptor(this.tags);
 		this.properties = this.descriptor.properties;
@@ -48,7 +49,12 @@ export default class Way {
 
 			if(this.properties.type === 'tree_row') {
 				this.length = this.calculateLength();
-				let points = this.distributeNodes(10);
+
+				let points = this.distributeNodes({
+					interval: 10,
+					skipOutside: true
+				});
+
 				this.instances.trees.push(...points);
 			}
 
@@ -281,8 +287,8 @@ export default class Way {
 		}
 	}
 
-	distributeNodes(interval) {
-		let number = Math.floor(this.length / interval);
+	distributeNodes(params) {
+		let number = Math.floor(this.length / params.interval);
 		let points = [];
 
 		if(number > 1) {
@@ -324,7 +330,13 @@ export default class Way {
 					z: edge[1].z - vector.z * vLength
 				};
 
-				points.push(point.x, point.z);
+				if(params.skipOutside) {
+					if(point.x >= 0 && point.x < this.tileSize && point.z >= 0 && point.z < this.tileSize) {
+						points.push(point.x, point.z);
+					}
+				} else {
+					points.push(point.x, point.z);
+				}
 			}
 		}
 

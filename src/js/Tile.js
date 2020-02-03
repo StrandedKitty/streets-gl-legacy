@@ -173,8 +173,10 @@ export default class Tile {
 			this.groundMesh.delete();
 			this.groundMesh = null;
 
-			this.instances.trees.delete();
-			this.instances.trees = null;
+			if(this.instances.trees) {
+				this.instances.trees.delete();
+				this.instances.trees = null;
+			}
 
 			this.mesh.delete();
 			this.mesh = null;

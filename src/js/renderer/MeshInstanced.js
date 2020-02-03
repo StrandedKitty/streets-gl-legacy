@@ -16,6 +16,11 @@ export default class MeshInstanced extends Object3D {
 		this.vaos = {};
 		this.vertices = params.vertices || new Float32Array(0);
 		this.instances = params.instances || 0;
+		this.indices = params.indices || null;
+		this.indexed = this.indices !== null;
+		this.indexBuffer = null;
+
+		if(this.indexed) this.createIndexBuffer();
 
 		this.addAttribute({
 			name: 'position'
@@ -48,7 +53,28 @@ export default class MeshInstanced extends Object3D {
 			vao.bind();
 		}
 
-		this.gl.drawArraysInstanced(this.gl[material.drawMode], 0, this.vertices.length / 3, this.instances);
+		if(this.indexed) {
+			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+
+			this.gl.drawElementsInstanced(this.gl[material.drawMode], this.indices.length, this.gl.UNSIGNED_SHORT, 0, this.instances);
+
+			if(this.indexed) this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
+		} else {
+			this.gl.drawArraysInstanced(this.gl[material.drawMode], 0, this.vertices.length / 3, this.instances);
+		}
+	}
+
+	createIndexBuffer() {
+		this.indexBuffer = this.gl.createBuffer();
+		this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+
+		this.gl.bufferData(
+			this.gl.ELEMENT_ARRAY_BUFFER,
+			this.indices,
+			this.gl.STATIC_DRAW
+		);
+
+		this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
 	}
 
 	addAttribute(params) {

@@ -23,6 +23,7 @@ import BuildingMaterial from "./materials/BuildingMaterial";
 import GroundMaterial from "./materials/GroundMaterial";
 import CSM from "./CSM";
 import InstanceMaterial from "./materials/InstanceMaterial";
+import Models from "./Models";
 
 const SunCalc = require('suncalc');
 
@@ -39,8 +40,10 @@ let objects = {
 };
 let meshes = {};
 
-let mesh, groundMaterial, groundMaterialDepth, wrapper, buildings, buildingMaterial, buildingDepthMaterial, tileMeshes, instanceMeshes, instanceMaterial;
+let mesh, groundMaterial, groundMaterialDepth, wrapper, buildings, buildingMaterial, buildingDepthMaterial, tileMeshes, instanceMeshes;
 let quad, quadMaterial;
+
+let instanceMaterial, instanceMaterialDepth;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
@@ -96,10 +99,13 @@ function init() {
 
 	controls = new Controls(camera);
 
-	groundMaterial = new GroundMaterial(RP).material;
-	groundMaterialDepth = new GroundMaterial(RP).depthMaterial;
+	const groundMaterialInstance = new GroundMaterial(RP);
+	groundMaterial = groundMaterialInstance.material;
+	groundMaterialDepth = groundMaterialInstance.depthMaterial;
 
-	instanceMaterial = new InstanceMaterial(RP).material;
+	const instanceMaterialInstance = new InstanceMaterial(RP);
+	instanceMaterial = instanceMaterialInstance.material;
+	instanceMaterialDepth = instanceMaterialInstance.depthMaterial;
 
 	const sky = RP.createTextureCube({
 		urls: [
@@ -281,7 +287,9 @@ function animate() {
 	const sunDirection = sphericalToCartesian(sunPosition.azimuth + Math.PI, sunPosition.altitude);
 	const sunIntensity = sunDirection.y < 0 ? 1 : 0;
 
-	csm.direction = sunDirection;
+	if(Config.realTimeSun) csm.direction = sunDirection;
+	else csm.direction = lightDirection;
+
 	csm.update(camera.matrix);
 
 	// Shadow mapping
@@ -344,6 +352,32 @@ function animate() {
 					object.draw(buildingMaterial);
 				}
 			}
+		}
+
+		{
+			instanceMaterialDepth.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+			instanceMaterialDepth.use();
+
+			RP.culling = false;
+
+			for(let i = 0; i < instanceMeshes.children.length; i++) {
+				let object = instanceMeshes.children[i];
+
+				const inFrustum = object.inCameraFrustum(rCamera);
+
+				if(inFrustum) {
+					let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+					let normalMatrix = mat4.normalMatrix(modelViewMatrix);
+					instanceMaterialDepth.uniforms.modelViewMatrix.value = modelViewMatrix;
+					instanceMaterialDepth.uniforms.normalMatrix.value = normalMatrix;
+					instanceMaterialDepth.updateUniform('modelViewMatrix');
+					instanceMaterialDepth.updateUniform('normalMatrix');
+
+					object.draw(instanceMaterialDepth);
+				}
+			}
+
+			RP.culling = true;
 		}
 	}
 
@@ -451,18 +485,26 @@ function animate() {
 		instanceMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
 		instanceMaterial.use();
 
+		RP.culling = false;
+
 		for(let i = 0; i < instanceMeshes.children.length; i++) {
 			let object = instanceMeshes.children[i];
 
-			let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-			let normalMatrix = mat4.normalMatrix(modelViewMatrix);
-			instanceMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
-			instanceMaterial.uniforms.normalMatrix.value = normalMatrix;
-			instanceMaterial.updateUniform('modelViewMatrix');
-			instanceMaterial.updateUniform('normalMatrix');
+			const inFrustum = object.inCameraFrustum(rCamera);
 
-			object.draw(instanceMaterial);
+			if(inFrustum) {
+				let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+				let normalMatrix = mat4.normalMatrix(modelViewMatrix);
+				instanceMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+				instanceMaterial.uniforms.normalMatrix.value = normalMatrix;
+				instanceMaterial.updateUniform('modelViewMatrix');
+				instanceMaterial.updateUniform('normalMatrix');
+
+				object.draw(instanceMaterial);
+			}
 		}
+
+		RP.culling = true;
 	}
 
 	RP.depthWrite = false;
@@ -519,7 +561,7 @@ function animate() {
 	RP.depthTest = false;
 
 	csm.updateUniforms(quadMaterial);
-	quadMaterial.uniforms['uLight.direction'].value = new Float32Array(vec3.toArray(sunDirection));
+	quadMaterial.uniforms['uLight.direction'].value = new Float32Array(vec3.toArray(csm.direction));
 	quadMaterial.uniforms['uLight.intensity'].value = light.intensity * sunIntensity;
 	quadMaterial.uniforms.uAO.value = Config.SSAOBlur ? blur.framebuffer.textures[0] : ssao.framebuffer.textures[0];
 	quadMaterial.uniforms.normalMatrix.value = mat4.normalMatrix(rCamera.matrixWorld);
@@ -571,74 +613,69 @@ function animate() {
 				const normals = new Float32Array(data.normals);
 				const uvs = new Float32Array(data.uvs);
 				const ids = data.ids;
-				const offsets = data.offsets;
 				const colors = new Uint8Array(data.colors);
 				const textures = new Float32Array(data.textures);
 				const instances = data.instances;
 				const bbox = {min: data.bboxMin, max: data.bboxMax};
 				const pivot = tile2meters(this.x, this.y + 1);
+				const tileSize = 40075016.7 / (1 << 16);
 
-				let treesPositions = new Float32Array(instances.trees.length / 2 * 3);
-				for(let i = 0; i < instances.trees.length / 2; i++) {
-					treesPositions[i * 3] = instances.trees[i * 2];
-					treesPositions[i * 3 + 1] = 0;
-					treesPositions[i * 3 + 2] = instances.trees[i * 2 + 1];
+				if(instances.trees.length > 0) {
+					let treesPositions = new Float32Array(instances.trees.length / 2 * 3);
+					for(let i = 0; i < instances.trees.length / 2; i++) {
+						treesPositions[i * 3] = instances.trees[i * 2];
+						treesPositions[i * 3 + 1] = 0;
+						treesPositions[i * 3 + 2] = instances.trees[i * 2 + 1];
+					}
+
+					let treesMesh = RP.createMeshInstanced({
+						vertices: Models.Tree.mesh.attributes.POSITION,
+						indices: Models.Tree.mesh.indices,
+						instances: instances.trees.length / 2
+					});
+
+					treesMesh.addAttribute({
+						name: 'normal',
+						size: 3,
+						type: 'FLOAT',
+						normalized: false
+					});
+					treesMesh.setAttributeData('normal', Models.Tree.mesh.attributes.NORMAL);
+
+					treesMesh.addAttribute({
+						name: 'uv',
+						size: 2,
+						type: 'FLOAT',
+						normalized: false
+					});
+					treesMesh.setAttributeData('uv', Models.Tree.mesh.attributes.TEXCOORD_0);
+
+					treesMesh.addAttribute({
+						name: 'mesh',
+						size: 1,
+						type: 'FLOAT',
+						normalized: false
+					});
+					treesMesh.setAttributeData('mesh', new Float32Array(Models.Tree.mesh.attributes.MESH));
+
+					treesMesh.addAttribute({
+						name: 'iPosition',
+						size: 3,
+						type: 'FLOAT',
+						normalized: false,
+						instanced: true
+					});
+					treesMesh.setAttributeData('iPosition', treesPositions);
+
+					treesMesh.setBoundingBox(
+						{x: -20, y: 0, z: -20},
+						{x: tileSize + 20, y: 100, z: tileSize + 20}
+					);
+
+					treesMesh.setPosition(pivot.x, 0, pivot.z);
+					instanceMeshes.add(treesMesh);
+					this.instances.trees = treesMesh;
 				}
-
-				let treesMesh = RP.createMeshInstanced({
-					vertices: new Float32Array([
-						-1.0, -1.0, -1.0,
-						-1.0, -1.0, 1.0,
-						-1.0, 1.0, 1.0,
-						1.0, 1.0, -1.0,
-						-1.0, -1.0, -1.0,
-						-1.0, 1.0, -1.0,
-						1.0, -1.0, 1.0,
-						-1.0, -1.0, -1.0,
-						1.0, -1.0, -1.0,
-						1.0, 1.0, -1.0,
-						1.0, -1.0, -1.0,
-						-1.0, -1.0, -1.0,
-						-1.0, -1.0, -1.0,
-						-1.0, 1.0, 1.0,
-						-1.0, 1.0, -1.0,
-						1.0, -1.0, 1.0,
-						-1.0, -1.0, 1.0,
-						-1.0, -1.0, -1.0,
-						-1.0, 1.0, 1.0,
-						-1.0, -1.0, 1.0,
-						1.0, -1.0, 1.0,
-						1.0, 1.0, 1.0,
-						1.0, -1.0, -1.0,
-						1.0, 1.0, -1.0,
-						1.0, -1.0, -1.0,
-						1.0, 1.0, 1.0,
-						1.0, -1.0, 1.0,
-						1.0, 1.0, 1.0,
-						1.0, 1.0, -1.0,
-						-1.0, 1.0, -1.0,
-						1.0, 1.0, 1.0,
-						-1.0, 1.0, -1.0,
-						-1.0, 1.0, 1.0,
-						1.0, 1.0, 1.0,
-						-1.0, 1.0, 1.0,
-						1.0, -1.0, 1.0
-					]),
-					instances: instances.trees.length / 2
-				});
-
-				treesMesh.addAttribute({
-					name: 'iPosition',
-					size: 3,
-					type: 'FLOAT',
-					normalized: false,
-					instanced: true
-				});
-				treesMesh.setAttributeData('iPosition', treesPositions);
-
-				treesMesh.setPosition(pivot.x, 0, pivot.z);
-				instanceMeshes.add(treesMesh);
-				this.instances.trees = treesMesh;
 
 				let mesh = RP.createMesh({
 					vertices: vertices

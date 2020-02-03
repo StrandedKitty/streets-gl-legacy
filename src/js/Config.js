@@ -6,7 +6,8 @@ let config = {
 	SMAA: true,
 	SSAO: true,
 	SSAOResolution: 0.5,
-	SSAOBlur: true
+	SSAOBlur: true,
+	realTimeSun: false
 };
 
 config.set = function (key, value, force) {

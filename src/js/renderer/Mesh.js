@@ -15,6 +15,11 @@ export default class Mesh extends Object3D {
 		this.materials = {};
 		this.vaos = {};
 		this.vertices = params.vertices || new Float32Array(0);
+		this.indices = params.indices || null;
+		this.indexed = this.indices !== null;
+		this.indexBuffer = null;
+
+		if(this.indexed) this.createIndexBuffer();
 
 		this.addAttribute({
 			name: 'position'
@@ -47,7 +52,24 @@ export default class Mesh extends Object3D {
 			vao.bind();
 		}
 
+		//if(this.indexed) this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+
 		this.gl.drawArrays(this.gl[material.drawMode], 0, this.vertices.length / 3);
+
+		//if(this.indexed) this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
+	}
+
+	createIndexBuffer() {
+		this.indexBuffer = this.gl.createBuffer();
+		this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+
+		this.gl.bufferData(
+			this.gl.ELEMENT_ARRAY_BUFFER,
+			this.indices,
+			this.gl.STATIC_DRAW
+		);
+
+		this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
 	}
 
 	addAttribute(params) {

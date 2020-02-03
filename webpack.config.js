@@ -11,7 +11,8 @@ module.exports = [{
 		new CopyPlugin([
 			{from: '*.html', to: __dirname + '/build', context: './src'},
 			{from: './src/css', to: __dirname + '/build/css'},
-			{from: './src/textures', to: __dirname + '/build/textures'}
+			{from: './src/textures', to: __dirname + '/build/textures'},
+			{from: './src/models', to: __dirname + '/build/models'}
 		])
 	],
 	module: {

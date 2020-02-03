@@ -18,7 +18,7 @@ in vec3 vCenter;
 
 uniform sampler2D tNoise;
 uniform sampler2DArray tColor;
-uniform sampler2DArray tMetallness;
+uniform sampler2DArray tMetalness;
 uniform sampler2DArray tRoughness;
 uniform sampler2DArray tSpecular;
 
@@ -40,7 +40,7 @@ void main() {
     bool textured = int(vTextureId + 0.5) > 0;
 
     vec4 diffuse = texture(tColor, vec3(vUv, int(vTextureId - 0.5)));
-    float metalness = texture(tMetallness, vec3(vUv, int(vTextureId - 0.5))).r;
+    float metalness = texture(tMetalness, vec3(vUv, int(vTextureId - 0.5))).r;
     float roughness = texture(tRoughness, vec3(vUv, int(vTextureId - 0.5))).r;
     float specular = texture(tSpecular, vec3(vUv, int(vTextureId - 0.5))).r;
 
