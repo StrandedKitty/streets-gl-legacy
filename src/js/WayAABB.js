@@ -1,5 +1,5 @@
-export default class AABB {
-	constructor(min, max) {
+export default class WayAABB {
+	constructor() {
 		this.min = {x: 0, y: 0};
 		this.max = {x: 0, y: 0};
 
