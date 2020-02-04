@@ -121,3 +121,7 @@ export function sphericalToCartesian(azimuth, altitude) {
 		z: -Math.cos(altitude) * Math.sin(azimuth)
 	}
 }
+
+export function normalizeAngle(angle) {
+	return (angle %= 2 * Math.PI) >= 0 ? angle : (angle + 2 * Math.PI);
+}

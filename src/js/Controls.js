@@ -1,4 +1,4 @@
-import {clamp, degrees2meters, lerp, meters2degress, toRad} from './Utils';
+import {clamp, degrees2meters, lerp, meters2degress, normalizeAngle, sphericalToCartesian, toDeg, toRad} from './Utils';
 import mat4 from "./math/mat4";
 import vec3 from "./math/vec3";
 import vec2 from "./math/vec2";
@@ -29,6 +29,9 @@ export default class Controls {
 		this.distance = 1200;
 		this.distanceTarget = this.distance;
 		this.direction = {x: -1, y: -1, z: -1};
+
+		this.pitch = toRad(45);
+		this.yaw = toRad(0);
 
 		this.addEventListeners();
 	}
@@ -148,34 +151,30 @@ export default class Controls {
 		}
 
 		if(this.keys.rotation.left) {
-			const axis = {x: 0, y: 1, z: 0};
 			const angle = toRad(1.5);
-			const rotationMatrix = mat4.axisRotation(axis, angle);
-			this.direction = vec3.applyMatrix(this.direction, rotationMatrix);
+			this.yaw += angle;
 		}
 
 		if(this.keys.rotation.right) {
-			const axis = {x: 0, y: 1, z: 0};
 			const angle = toRad(-1.5);
-			const rotationMatrix = mat4.axisRotation(axis, angle);
-			this.direction = vec3.applyMatrix(this.direction, rotationMatrix);
+			this.yaw += angle;
 		}
 
 		if(this.keys.rotation.up) {
-			const axis = {x: this.direction.z, y: 0, z: -this.direction.x};
 			const angle = toRad(1);
-			const rotationMatrix = mat4.axisRotation(axis, angle);
-			this.direction = vec3.applyMatrix(this.direction, rotationMatrix);
+			this.pitch += angle;
 		}
 
 		if(this.keys.rotation.down) {
-			const axis = {x: this.direction.z, y: 0, z: -this.direction.x};
 			const angle = toRad(-1);
-			const rotationMatrix = mat4.axisRotation(axis, angle);
-			this.direction = vec3.applyMatrix(this.direction, rotationMatrix);
+			this.pitch += angle;
 		}
 
-		if(this.direction.y > 0) this.direction.y = 0;
+		this.pitch = clamp(this.pitch, toRad(0.1), toRad(89.9));
+		this.yaw = normalizeAngle(this.yaw);
+
+		const direction = sphericalToCartesian(this.yaw, -this.pitch);
+		this.direction = vec3.multiplyScalar(direction, -1);
 
 		this.direction = vec3.normalize(this.direction);
 
