@@ -285,10 +285,14 @@ function animate() {
 	const cameraLatLon = controls.latLon();
 	const sunPosition = SunCalc.getPosition(Date.now(), cameraLatLon.lat, cameraLatLon.lon);
 	const sunDirection = sphericalToCartesian(sunPosition.azimuth + Math.PI, sunPosition.altitude);
-	const sunIntensity = sunDirection.y < 0 ? 1 : 0;
+	let sunIntensity = 1;
 
-	if(Config.realTimeSun) csm.direction = sunDirection;
-	else csm.direction = lightDirection;
+	if(Config.realTimeSun) {
+		csm.direction = sunDirection;
+		sunIntensity = sunDirection.y < 0 ? 1 : 0
+	} else {
+		csm.direction = lightDirection;
+	}
 
 	csm.update(camera.matrix);
 
@@ -367,11 +371,8 @@ function animate() {
 
 				if(inFrustum) {
 					let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-					let normalMatrix = mat4.normalMatrix(modelViewMatrix);
 					instanceMaterialDepth.uniforms.modelViewMatrix.value = modelViewMatrix;
-					instanceMaterialDepth.uniforms.normalMatrix.value = normalMatrix;
 					instanceMaterialDepth.updateUniform('modelViewMatrix');
-					instanceMaterialDepth.updateUniform('normalMatrix');
 
 					object.draw(instanceMaterialDepth);
 				}

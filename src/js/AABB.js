@@ -57,12 +57,10 @@ export default class AABB {
 	}
 
 	getCenter() {
-		const center = {
+		return {
 			x: (this.max.x + this.min.x) / 2,
 			y: (this.max.y + this.min.y) / 2,
-			z: this.max.z + 1500
+			z: (this.max.z + this.min.z) / 2,
 		};
-
-		return center;
 	}
 }

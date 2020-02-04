@@ -97,6 +97,7 @@ export default class CSM {
 
 			const bboxDims = bbox.getSize();
 			let bboxCenter = bbox.getCenter();
+			bboxCenter.z = bbox.max.z + 2000;
 
 			const squaredBBWidth = Math.max(bboxDims.x, bboxDims.y);
 
