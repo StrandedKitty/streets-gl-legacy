@@ -24,6 +24,7 @@ import GroundMaterial from "./materials/GroundMaterial";
 import CSM from "./CSM";
 import InstanceMaterial from "./materials/InstanceMaterial";
 import Models from "./Models";
+import SSAA from "./SSAA";
 
 const SunCalc = require('suncalc');
 
@@ -47,7 +48,7 @@ let instanceMaterial, instanceMaterialDepth;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
-let gBuffer, smaa, ssao, blur;
+let gBuffer, smaa, ssao, blur, ssaa;
 let skybox;
 let light;
 let lightDirection = new vec3(-1, -1, -1);
@@ -58,7 +59,6 @@ animate();
 
 function init() {
 	RP = new Renderer(canvas);
-	RP.setPixelRatio(Config.SSAA);
 	RP.setSize(window.innerWidth, window.innerHeight);
 	RP.culling = true;
 
@@ -163,6 +163,7 @@ function init() {
 	smaa = new SMAA(RP, window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
 	ssao = new SSAO(RP, window.innerWidth * Config.SSAOResolution, window.innerHeight * Config.SSAOResolution);
 	blur = new Blur(RP, window.innerWidth, window.innerHeight);
+	ssaa = new SSAA(RP, window.innerWidth, window.innerHeight);
 
 	quad = RP.createMesh({
 		vertices: new Float32Array([
@@ -251,12 +252,12 @@ function init() {
 
 		csm.resize();
 
-		RP.setPixelRatio(Config.SSAA);
 		RP.setSize(window.innerWidth, window.innerHeight);
 		gBuffer.setSize(window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
 		smaa.setSize(window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
 		ssao.setSize(window.innerWidth * Config.SSAOResolution, window.innerHeight * Config.SSAOResolution);
 		blur.setSize(window.innerWidth, window.innerHeight);
+		ssaa.setSize(window.innerWidth, window.innerHeight);
 	}, false);
 }
 
@@ -556,7 +557,7 @@ function animate() {
 
 	// Combine g-buffer textures
 
-	RP.bindFramebuffer(Config.SMAA ? gBuffer.framebufferFinal : null);
+	RP.bindFramebuffer(Config.SMAA ? gBuffer.framebufferFinal : ssaa.framebuffer);
 
 	RP.depthWrite = false;
 	RP.depthTest = false;
@@ -587,11 +588,15 @@ function animate() {
 		smaa.materials.weights.use();
 		quad.draw(smaa.materials.weights);
 
-		RP.bindFramebuffer(null);
+		RP.bindFramebuffer(ssaa.framebuffer);
 
 		smaa.materials.blend.uniforms.tColor.value = gBuffer.framebufferFinal.textures[0];
 		smaa.materials.blend.use();
 		quad.draw(smaa.materials.blend);
+
+		ssaa.blitToScreen();
+	} else {
+		ssaa.blitToScreen();
 	}
 
 	//

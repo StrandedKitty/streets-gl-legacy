@@ -232,32 +232,35 @@ void main() {
     Light light = uLight;
 
     float shadowFactor = 1.;
-    int cascadeId = -1;
 
-    for(int i = 0; i < CSM_CASCADES; i++) {
-        if(-position.z > shadowSplits[i] && -position.z <= shadowSplits[i + 1]) cascadeId = i;
-    }
+    #if SHADOW_MAPPING > 0
+        int cascadeId = -1;
 
-    if(cascadeId > -1){
-        mat4 shadowMatrixWorldInverse = cascades[cascadeId].matrixWorldInverse;
-        float shadowResolution = cascades[cascadeId].resolution;
-        float shadowSize = cascades[cascadeId].size;
-        float shadowBias = cascades[cascadeId].bias;
+        for(int i = 0; i < CSM_CASCADES; i++) {
+            if(-position.z > shadowSplits[i] && -position.z <= shadowSplits[i + 1]) cascadeId = i;
+        }
 
-        vec4 shadowPosition = shadowMatrixWorldInverse * vec4(worldPosition, 1.);
+        if(cascadeId > -1){
+            mat4 shadowMatrixWorldInverse = cascades[cascadeId].matrixWorldInverse;
+            float shadowResolution = cascades[cascadeId].resolution;
+            float shadowSize = cascades[cascadeId].size;
+            float shadowBias = cascades[cascadeId].bias;
 
-        #if SHADOW_MAPPING == 1
+            vec4 shadowPosition = shadowMatrixWorldInverse * vec4(worldPosition, 1.);
+
+            #if SHADOW_MAPPING == 1
             if(cascadeId == 0) shadowFactor = getShadow(cascades[0].shadowMap, shadowBias, shadowPosition, shadowSize);
             if(cascadeId == 1) shadowFactor = getShadow(cascades[1].shadowMap, shadowBias, shadowPosition, shadowSize);
             if(cascadeId == 2) shadowFactor = getShadow(cascades[2].shadowMap, shadowBias, shadowPosition, shadowSize);
-        #elif SHADOW_MAPPING == 2
+            #elif SHADOW_MAPPING == 2
             if(cascadeId == 0) shadowFactor = getShadowSoft(cascades[0].shadowMap, vec2(shadowResolution), shadowBias, 1., shadowPosition, shadowSize);
             if(cascadeId == 1) shadowFactor = getShadowSoft(cascades[1].shadowMap, vec2(shadowResolution), shadowBias, 1., shadowPosition, shadowSize);
             if(cascadeId == 2) shadowFactor = getShadowSoft(cascades[2].shadowMap, vec2(shadowResolution), shadowBias, 1., shadowPosition, shadowSize);
-        #elif SHADOW_MAPPING == 3
+            #elif SHADOW_MAPPING == 3
             shadowFactor = getShadowPCSS(cascades[0].shadowMap, shadowBias, shadowPosition);
-        #endif
-    }
+            #endif
+        }
+    #endif
 
     color += applyDirectionalLight(light, materialInfo, worldNormal, worldView) * shadowFactor;
     color += materialInfo.diffuseColor * ambientIntensity;

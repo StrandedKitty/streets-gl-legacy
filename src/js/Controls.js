@@ -34,6 +34,19 @@ export default class Controls {
 		this.pitch = toRad(45);
 		this.yaw = toRad(0);
 
+		const hash = URLData.getHash();
+
+		if(hash.data) {
+			const position = degrees2meters(hash.data[0], hash.data[1]);
+			this.target.x = position.x;
+			this.target.z = position.z;
+
+			this.yaw = hash.data[2];
+			this.pitch = hash.data[3];
+			this.distance = hash.data[4];
+			this.distanceTarget = hash.data[4];
+		}
+
 		this.tick = 0;
 
 		this.addEventListeners();
@@ -189,7 +202,7 @@ export default class Controls {
 
 		const hash = URLData.getHash();
 
-		if(hash.changedByUser) {
+		if(hash.changedByUser && hash.data) {
 			const position = degrees2meters(hash.data[0], hash.data[1]);
 			this.target.x = position.x;
 			this.target.z = position.z;

@@ -51,8 +51,7 @@ export default class GBuffer {
 					wrap: 'clamp',
 					format: 'RGBA',
 					internalFormat: 'RGBA8',
-					type: 'UNSIGNED_BYTE',
-					anisotropy: 1
+					type: 'UNSIGNED_BYTE'
 				})
 			]
 		});
