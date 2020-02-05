@@ -2,6 +2,7 @@ import {clamp, degrees2meters, lerp, meters2degress, normalizeAngle, sphericalTo
 import mat4 from "./math/mat4";
 import vec3 from "./math/vec3";
 import vec2 from "./math/vec2";
+import URLData from "./URLData";
 
 export default class Controls {
 	constructor(camera) {
@@ -32,6 +33,8 @@ export default class Controls {
 
 		this.pitch = toRad(45);
 		this.yaw = toRad(0);
+
+		this.tick = 0;
 
 		this.addEventListeners();
 	}
@@ -183,5 +186,32 @@ export default class Controls {
 
 		this.camera.setPosition(cameraPosition.x, cameraPosition.y, cameraPosition.z);
 		this.camera.lookAt(this.target, false);
+
+		const hash = URLData.getHash();
+
+		if(hash.changedByUser) {
+			const position = degrees2meters(hash.data[0], hash.data[1]);
+			this.target.x = position.x;
+			this.target.z = position.z;
+
+			this.yaw = hash.data[2];
+			this.pitch = hash.data[3];
+			this.distance = hash.data[4];
+			this.distanceTarget = hash.data[4];
+		}
+
+		if(this.tick % 20 === 0) {
+			const latLon = meters2degress(this.target.x, this.target.z);
+
+			URLData.setHash([
+				latLon.lat.toFixed(7),
+				latLon.lon.toFixed(7),
+				toDeg(this.yaw).toFixed(2),
+				toDeg(this.pitch).toFixed(2),
+				this.distance.toFixed(2)
+			]);
+		}
+
+		this.tick++;
 	}
 }

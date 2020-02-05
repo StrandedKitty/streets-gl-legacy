@@ -51,7 +51,7 @@ export default class Way {
 				this.length = this.calculateLength();
 
 				let points = this.distributeNodes({
-					interval: 10,
+					interval: 8,
 					skipOutside: true
 				});
 
@@ -82,7 +82,7 @@ export default class Way {
 			} else if(this.properties.levels) {
 				height = this.properties.levels * 3.5;
 			} else {
-				height = 10;
+				height = 4;
 			}
 			height *= this.scaleFactor;
 			color = this.properties.roofColor || [79, 89, 88];
@@ -109,7 +109,7 @@ export default class Way {
 		} else if(this.properties.levels) {
 			height = this.properties.levels * 3.5;
 		} else {
-			height = 10;
+			height = 4;
 		}
 
 		if(this.properties.minHeight) {
@@ -345,7 +345,7 @@ export default class Way {
 
 	createPath() {
 		const width = this.properties.roadWidth;
-		const height = 0.5;
+		const height = 1;
 		const color = [50, 50, 50];
 
 		const physicalVertices = this.closed ? this.vertices.length - 1 : this.vertices.length;
