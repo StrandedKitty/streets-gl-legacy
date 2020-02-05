@@ -2,7 +2,7 @@ let config = {
 	drawDistance: 5000,
 	textureAnisotropy: undefined,
 	maxTiles: 50,
-	SSAA: 2,
+	SSAA: 1,
 	SMAA: true,
 	SSAO: true,
 	SSAOResolution: 0.5,

@@ -12,6 +12,8 @@ out vec4 FragColor;
 
 #define CSM_CASCADES 3
 
+#define VOLUMETRIC_LIGHTING 1
+
 in vec2 vUv;
 
 uniform sampler2D uNormal;
@@ -23,9 +25,11 @@ uniform sampler2D uAO;
 uniform float ambientIntensity;
 uniform samplerCube sky;
 uniform sampler2D tBRDF;
+uniform float asymmetryFactor;
 
 uniform mat3 normalMatrix;
 uniform mat4 cameraMatrixWorld;
+uniform mat4 cameraMatrixWorldInverse;
 
 struct Cascade {
     sampler2D shadowMap;
@@ -178,6 +182,21 @@ vec3 getIBLContribution(MaterialInfo materialInfo, vec3 n, vec3 v) {
 
 #include <shadowmapping>
 
+float computeScattering(float lightDotView) {
+    float G_SCATTERING = asymmetryFactor;
+
+    float result = 1. - G_SCATTERING * G_SCATTERING;
+    result /= (4. * PI * pow(1. + G_SCATTERING * G_SCATTERING - (2. * G_SCATTERING) * lightDotView, 1.5));
+    return result;
+}
+
+const mat4 ditherPattern = mat4(
+    0.0, 0.5, 0.125, 0.625,
+    0.75, 0.22, 0.875f, 0.375,
+    0.1875, 0.6875, 0.0625, 0.5625,
+    0.9375, 0.4375, 0.8125, 0.3125
+);
+
 void main() {
     // MATERIAL
 
@@ -228,6 +247,7 @@ void main() {
     vec3 worldView = normalize(normalMatrix * view);
     vec3 worldNormal = normalize(normalMatrix * normal);
     vec3 worldPosition = vec3(cameraMatrixWorld * vec4(position, 1.));
+    vec3 cameraWorldPosition = vec3(cameraMatrixWorld * vec4(0, 0, 0, 1.));
 
     Light light = uLight;
 
@@ -273,6 +293,7 @@ void main() {
     ao = texture(uAO, vUv).r;
     color = mix(color, color * ao, occlusionStrength);
 
+
     // FOG
 
     float density = 1. / 15000.;
@@ -281,7 +302,58 @@ void main() {
 
     color = mix(vec3(.77, .86, .91), color, fog);
 
+    // GOD RAYS
+
+    float accumFog = 0.;
+
+    #if VOLUMETRIC_LIGHTING == 1
+        int NB_STEPS = 20;
+
+        vec3 startPosition = cameraWorldPosition;
+
+        vec3 rayVector = worldPosition.xyz - startPosition;
+        float rayLength = length(rayVector);
+        vec3 rayDirection = rayVector / rayLength;
+
+        float stepLength = rayLength / float(NB_STEPS);
+        vec3 step = rayDirection * stepLength;
+
+        startPosition += step * ditherPattern[int(gl_FragCoord.x) % 4][int(gl_FragCoord.y) % 4];
+        vec3 currentPosition = startPosition;
+
+        for (int i = 0; i < NB_STEPS; i++) {
+            vec4 cameraSpacePosition = cameraMatrixWorldInverse * vec4(currentPosition, 1.);
+
+            cascadeId = 0;
+
+            for(int i = 0; i < CSM_CASCADES; i++) {
+                if(-cameraSpacePosition.z > shadowSplits[i] && -cameraSpacePosition.z <= shadowSplits[i + 1]) cascadeId = i;
+            }
+
+            float shadowMapValue;
+
+            if(cascadeId == 0) {
+                vec4 shadowPosition = cascades[0].matrixWorldInverse * vec4(currentPosition, 1.);
+                shadowMapValue = getShadow(cascades[0].shadowMap, 0., shadowPosition, cascades[0].size);
+            } else if(cascadeId == 1) {
+                vec4 shadowPosition = cascades[1].matrixWorldInverse * vec4(currentPosition, 1.);
+                shadowMapValue = getShadow(cascades[1].shadowMap, 0., shadowPosition, cascades[1].size);
+            } else if(cascadeId == 2) {
+                vec4 shadowPosition = cascades[2].matrixWorldInverse * vec4(currentPosition, 1.);
+                shadowMapValue = getShadow(cascades[2].shadowMap, 0., shadowPosition, cascades[2].size);
+            }
+
+            if (shadowMapValue > 0.) {
+                accumFog += computeScattering(dot(rayDirection, -light.direction));
+            }
+
+            currentPosition += step;
+        }
+
+        accumFog /= float(NB_STEPS);
+    #endif
+
     // OUT
 
-    FragColor = vec4(toneMap(color), baseColor.a);
+    FragColor = vec4(toneMap(color + accumFog * vec3(.77, .86, .91)), baseColor.a);
 }

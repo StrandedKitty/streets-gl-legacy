@@ -86,11 +86,13 @@ export default class CSM {
 		}
 	}
 
-	update(cameraMatrixWorld) {
+	update(cameraMatrix) {
 		for(let i = 0; i < this.frustums.length; i++) {
-			const worldSpaceFrustum = this.frustums[i].toSpace(cameraMatrixWorld);
+			const worldSpaceFrustum = this.frustums[i].toSpace(cameraMatrix);
 
 			const light = this.lights[i];
+			light.camera.updateMatrixWorld();
+			light.camera.updateMatrixWorldInverse();
 			const lightSpaceFrustum = worldSpaceFrustum.toSpace(light.camera.matrixWorldInverse);
 
 			const bbox = new AABB().fromFrustum(lightSpaceFrustum);

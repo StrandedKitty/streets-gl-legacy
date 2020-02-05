@@ -227,8 +227,10 @@ function init() {
 			'uLight.padding': {type: '2fv', value: light.padding},
 			normalMatrix: {type: 'Matrix3fv', value: null},
 			cameraMatrixWorld: {type: 'Matrix4fv', value: null},
+			cameraMatrixWorldInverse: {type: 'Matrix4fv', value: null},
 			ambientIntensity: {type: '1f', value: 0.2},
-			uExposure: {type: '1f', value: 1.}
+			uExposure: {type: '1f', value: 1.},
+			asymmetryFactor: {type: '1f', value: 0.2},
 		}
 	});
 
@@ -242,6 +244,7 @@ function init() {
 	gui.add(Config, 'SSAOBlur');
 	gui.add(light, 'intensity');
 	gui.add(quadMaterial.uniforms['ambientIntensity'], 'value');
+	gui.add(quadMaterial.uniforms['asymmetryFactor'], 'value');
 
 	window.addEventListener('resize', function() {
 		camera.aspect = window.innerWidth / window.innerHeight;
@@ -568,6 +571,7 @@ function animate() {
 	quadMaterial.uniforms.uAO.value = Config.SSAOBlur ? blur.framebuffer.textures[0] : ssao.framebuffer.textures[0];
 	quadMaterial.uniforms.normalMatrix.value = mat4.normalMatrix(rCamera.matrixWorld);
 	quadMaterial.uniforms.cameraMatrixWorld.value = rCamera.matrixWorld;
+	quadMaterial.uniforms.cameraMatrixWorldInverse.value = rCamera.matrixWorldInverse;
 	quadMaterial.use();
 	quad.draw(quadMaterial);
 
