@@ -304,9 +304,8 @@ void main() {
 
     // GOD RAYS
 
-    float accumFog = 0.;
-
     #if VOLUMETRIC_LIGHTING == 1
+        float accumFog = 0.;
         int NB_STEPS = 20;
 
         vec3 startPosition = cameraWorldPosition;
@@ -351,9 +350,11 @@ void main() {
         }
 
         accumFog /= float(NB_STEPS);
+
+        color = mix(color, vec3(.77, .86, .91), accumFog);
     #endif
 
     // OUT
 
-    FragColor = vec4(toneMap(color + accumFog * vec3(.77, .86, .91)), baseColor.a);
+    FragColor = vec4(toneMap(color), baseColor.a);
 }
