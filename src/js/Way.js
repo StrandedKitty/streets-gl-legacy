@@ -37,12 +37,57 @@ export default class Way {
 		if(this.closed && this.properties.type === 'building') {
 			this.generateAABB();
 		}
+
+		this.geometry = {
+			height: null,
+			minHeight: null,
+			roofColor: null,
+			facadeColor: null,
+			levels: null,
+			material: null
+		};
+
+		this.fillGeometry();
+	}
+
+	fillGeometry() {
+		if(this.properties.height) {
+			this.geometry.height = this.properties.height;
+		} else if(this.properties.levels) {
+			this.geometry.height = this.properties.levels * 3.5;
+		} else {
+			this.geometry.height = 4;
+		}
+		this.geometry.height *= this.scaleFactor;
+
+		if(this.properties.minHeight) {
+			this.geometry.minHeight = this.properties.minHeight;
+		} else if(this.properties.minLevel) {
+			this.geometry.minHeight = this.properties.minLevel * 3.5;
+		} else {
+			this.geometry.minHeight = 0;
+		}
+		this.geometry.minHeight *= this.scaleFactor;
+
+		if(this.geometry.minHeight > this.geometry.height) this.geometry.minHeight = 0;
+
+		this.geometry.roofColor = this.properties.roofColor || [79, 89, 88];
+
+		this.geometry.material = this.getMaterialData(this.properties.facadeMaterial);
+		this.geometry.facadeColor = this.geometry.material.colored ? (this.properties.facadeColor || [231, 216, 185]) : [255, 255, 255];
+
+		this.geometry.levels = this.properties.levels || Math.floor((this.geometry.height - this.geometry.minHeight) / 3.5);
+		if(this.properties.minLevel) this.geometry.levels -= this.properties.minLevel;
 	}
 
 	render() {
 		if(this.visible) {
 			if(this.closed && this.properties.type === 'building') {
-				this.triangulateFootprint(false);
+				this.triangulateFootprint({
+					color: this.geometry.roofColor,
+					height: this.geometry.height
+				});
+
 				this.generateWallSegments(25, 4);
 				this.triangulateWalls();
 			}
@@ -59,74 +104,41 @@ export default class Way {
 			}
 
 			if(this.properties.type === 'farmland') {
-				this.triangulateFootprint(true);
+				this.triangulateFootprint({
+					color: [63, 167, 37],
+					height: 1
+				});
 			}
 
 			if(this.properties.type === 'road') {
-				this.createPath();
+				this.createPath({
+					width: this.properties.roadWidth,
+					height: 1,
+					color: [50, 50, 50]
+				});
 			}
 		}
 	}
 
-	triangulateFootprint(isFlat) {
+	triangulateFootprint(params) {
 		let flattenVertices = this.flatten();
 		let triangles = earcut(flattenVertices).reverse();
-		let height, color;
-
-		if(isFlat) {
-			height = 1;
-			color = [63, 167, 37];
-		} else {
-			if(this.properties.height) {
-				height = this.properties.height;
-			} else if(this.properties.levels) {
-				height = this.properties.levels * 3.5;
-			} else {
-				height = 4;
-			}
-			height *= this.scaleFactor;
-			color = this.properties.roofColor || [79, 89, 88];
-		}
 
 		for(let i = 0; i < triangles.length; i++) {
-			this.mesh.vertices.push(flattenVertices[triangles[i] * 2], height, flattenVertices[triangles[i] * 2 + 1]);
+			this.mesh.vertices.push(flattenVertices[triangles[i] * 2], params.height, flattenVertices[triangles[i] * 2 + 1]);
 			this.mesh.normals.push(0, 1, 0);
-			this.mesh.colors.push(...color);
+			this.mesh.colors.push(...params.color);
 			this.mesh.uvs.push(0, 0);
 			this.mesh.textures.push(0);
 		}
 	}
 
 	triangulateWalls() {
-		const material = this.getMaterialData(this.properties.facadeMaterial);
-		let facadeColor = material.colored ? this.properties.facadeColor || [231, 216, 185] : [255, 255, 255];
-
-
-		let height, minHeight, levels;
-
-		if(this.properties.height) {
-			height = this.properties.height;
-		} else if(this.properties.levels) {
-			height = this.properties.levels * 3.5;
-		} else {
-			height = 4;
-		}
-
-		if(this.properties.minHeight) {
-			minHeight = this.properties.minHeight;
-		} else if(this.properties.minLevel) {
-			minHeight = this.properties.minLevel * 3.5;
-		} else {
-			minHeight = 0;
-		}
-
-		if(minHeight > height) minHeight = 0;
-
-		levels = this.properties.levels || Math.floor((height - minHeight) / 3.5);
-		if(this.properties.minLevel) levels -= this.properties.minLevel;
-
-		height *= this.scaleFactor;
-		minHeight *= this.scaleFactor;
+		const height = this.geometry.height;
+		const minHeight = this.geometry.minHeight;
+		const levels = this.geometry.levels;
+		const facadeColor = this.geometry.facadeColor;
+		const material = this.geometry.material;
 
 		for(let i = 0; i < this.vertices.length - 1; i++) {
 			let vertex = this.vertices[i];
@@ -343,10 +355,10 @@ export default class Way {
 		return points;
 	}
 
-	createPath() {
-		const width = this.properties.roadWidth;
-		const height = 1;
-		const color = [50, 50, 50];
+	createPath(params) {
+		const width = params.width;
+		const height = params.height;
+		const color = params.color;
 
 		const physicalVertices = this.closed ? this.vertices.length - 1 : this.vertices.length;
 

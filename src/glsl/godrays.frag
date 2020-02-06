@@ -14,6 +14,7 @@ uniform float asymmetryFactor;
 #define PI2 6.28318530718
 #define SHADOWMAP_SIZE 1000.
 #define CSM_CASCADES 3
+#define NB_STEPS 16
 
 struct Cascade {
 	sampler2D shadowMap;
@@ -34,8 +35,6 @@ const mat4 ditherPattern = mat4(
 0.1875, 0.6875, 0.0625, 0.5625,
 0.9375, 0.4375, 0.8125, 0.3125
 );
-
-const int NB_STEPS = 16;
 
 float computeScattering(float lightDotView) {
 	float G_SCATTERING = asymmetryFactor;

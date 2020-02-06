@@ -276,7 +276,6 @@ void main() {
     ao = texture(uAO, vUv).r;
     color = mix(color, color * ao, occlusionStrength);
 
-
     // FOG
 
     float density = 1. / 15000.;
@@ -288,7 +287,7 @@ void main() {
     // GOD RAYS
 
     //color = mix(color, vec3(.77, .86, .91), texture(uVolumetric, vUv).xxx);
-    color += vec3(.77, .86, .91) * texture(uVolumetric, vUv).xxx;
+    color += vec3(.77, .86, .91) * texture(uVolumetric, vUv).xyz;
 
     // OUT
 
