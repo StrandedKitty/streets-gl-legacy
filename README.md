@@ -1,6 +1,6 @@
 # Streets GL
 
-![Streets GL](https://i.imgur.com/P4uvoT4.png)
+![Streets GL](https://i.imgur.com/1m8fW1H.png)
 
 ## Implemented features
 
