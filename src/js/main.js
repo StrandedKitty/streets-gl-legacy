@@ -25,6 +25,7 @@ import CSM from "./CSM";
 import InstanceMaterial from "./materials/InstanceMaterial";
 import Models from "./Models";
 import SSAA from "./SSAA";
+import VolumetricLighting from "./materials/VolumetricLighting";
 
 const SunCalc = require('suncalc');
 
@@ -48,10 +49,10 @@ let instanceMaterial, instanceMaterialDepth;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
-let gBuffer, smaa, ssao, blur, ssaa;
+let gBuffer, smaa, ssao, blur, ssaa, volumetricLighting;
 let skybox;
 let light;
-let lightDirection = new vec3(-1, -1, -1);
+let lightDirection = new vec3(-1, -0.4, -1);
 let csm;
 
 init();
@@ -164,6 +165,7 @@ function init() {
 	ssao = new SSAO(RP, window.innerWidth * Config.SSAOResolution, window.innerHeight * Config.SSAOResolution);
 	blur = new Blur(RP, window.innerWidth, window.innerHeight);
 	ssaa = new SSAA(RP, window.innerWidth, window.innerHeight);
+	volumetricLighting = new VolumetricLighting(RP, window.innerWidth, window.innerHeight);
 
 	quad = RP.createMesh({
 		vertices: new Float32Array([
@@ -214,6 +216,7 @@ function init() {
 			uPosition: {type: 'texture', value: gBuffer.textures.position},
 			uMetallicRoughness: {type: 'texture', value: gBuffer.textures.metallicRoughness},
 			uAO: {type: 'texture', value: null},
+			uVolumetric: {type: 'texture', value: volumetricLighting.blurredTexture},
 			sky: {type: 'textureCube', value: sky},
 			tBRDF: {type: 'texture', value: RP.createTexture({url: '/textures/brdf.png', minFilter: 'LINEAR', wrap: 'clamp'})},
 			'uLight.direction': {type: '3fv', value: light.direction},
@@ -229,8 +232,7 @@ function init() {
 			cameraMatrixWorld: {type: 'Matrix4fv', value: null},
 			cameraMatrixWorldInverse: {type: 'Matrix4fv', value: null},
 			ambientIntensity: {type: '1f', value: 0.2},
-			uExposure: {type: '1f', value: 1.},
-			asymmetryFactor: {type: '1f', value: 0.2},
+			uExposure: {type: '1f', value: 1.}
 		}
 	});
 
@@ -242,9 +244,9 @@ function init() {
 	gui.add(Config, 'SMAA');
 	gui.add(Config, 'SSAO');
 	gui.add(Config, 'SSAOBlur');
+	gui.add(Config, 'volumetricLighting');
 	gui.add(light, 'intensity');
-	gui.add(quadMaterial.uniforms['ambientIntensity'], 'value');
-	gui.add(quadMaterial.uniforms['asymmetryFactor'], 'value');
+	gui.add(quadMaterial.uniforms.ambientIntensity, 'value');
 
 	window.addEventListener('resize', function() {
 		camera.aspect = window.innerWidth / window.innerHeight;
@@ -261,6 +263,7 @@ function init() {
 		ssao.setSize(window.innerWidth * Config.SSAOResolution, window.innerHeight * Config.SSAOResolution);
 		blur.setSize(window.innerWidth, window.innerHeight);
 		ssaa.setSize(window.innerWidth, window.innerHeight);
+		volumetricLighting.setSize(window.innerWidth, window.innerHeight);
 	}, false);
 }
 
@@ -555,6 +558,46 @@ function animate() {
 		RP.bindFramebuffer(ssao.framebuffer);
 
 		gl.clearColor(1, 1, 1, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+	}
+
+	// Volumetric lighting
+
+	if(Config.volumetricLighting) {
+		RP.bindFramebuffer(volumetricLighting.framebuffer);
+
+		gl.clearColor(0, 0, 0, 0);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+
+		volumetricLighting.material.uniforms.uPosition.value = gBuffer.textures.position;
+		volumetricLighting.material.uniforms.cameraMatrixWorld.value = rCamera.matrixWorld;
+		volumetricLighting.material.uniforms.cameraMatrixWorldInverse.value = rCamera.matrixWorldInverse;
+		volumetricLighting.material.uniforms.lightDirection.value = new Float32Array(vec3.toArray(csm.direction));
+		csm.updateUniforms(volumetricLighting.material);
+		volumetricLighting.material.use();
+		quad.draw(volumetricLighting.material);
+
+		// Blur
+
+		RP.bindFramebuffer(blur.framebufferTemp);
+
+		blur.material.uniforms.tColor.value = volumetricLighting.texture;
+		blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
+		blur.material.uniforms.direction.value = [0, 1];
+		blur.material.use();
+		quad.draw(blur.material);
+
+		RP.bindFramebuffer(volumetricLighting.framebufferBlurred);
+
+		blur.material.uniforms.tColor.value = blur.framebufferTemp.textures[0];
+		blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
+		blur.material.uniforms.direction.value = [1, 0];
+		blur.material.use();
+		quad.draw(blur.material);
+	} else {
+		RP.bindFramebuffer(volumetricLighting.framebufferBlurred);
+
+		gl.clearColor(0, 0, 0, 0);
 		gl.clear(gl.COLOR_BUFFER_BIT);
 	}
 

@@ -126,6 +126,7 @@ export default class Controls {
 		window.addEventListener("wheel", function(e){
 			self.distanceTarget += 0.2 * e.deltaY;
 			self.distanceTarget = clamp(self.distanceTarget, 2, 2500);
+			self.distance = self.distanceTarget;
 		});
 	}
 

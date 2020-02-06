@@ -7,6 +7,7 @@ let config = {
 	SSAO: true,
 	SSAOResolution: 0.5,
 	SSAOBlur: true,
+	volumetricLighting: false,
 	realTimeSun: false
 };
 

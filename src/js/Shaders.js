@@ -56,6 +56,10 @@ class Shaders {
 			fragment: require('../glsl/instanceDepth.frag').default,
 			vertex: require('../glsl/instance.vert').default
 		};
+		this.raw.volumetricLighting = {
+			fragment: require('../glsl/godrays.frag').default,
+			vertex: require('../glsl/godrays.vert').default
+		};
 
 		this.includes.tonemapping = require('../glsl/includes/tonemapping.glsl').default;
 		this.includes.shadowmapping = require('../glsl/includes/shadowmapping.glsl').default;
