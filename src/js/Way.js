@@ -97,7 +97,8 @@ export default class Way {
 
 				let points = this.distributeNodes({
 					interval: 8,
-					skipOutside: true
+					skipOutside: true,
+					random: 1.5
 				});
 
 				this.instances.trees.push(...points);
@@ -341,13 +342,22 @@ export default class Way {
 					x: edge[1].x - vector.x * vLength,
 					z: edge[1].z - vector.z * vLength
 				};
+				let transformedPoint = {
+					x: point.x,
+					z: point.z
+				};
+
+				if(params.random > 0) {
+					transformedPoint.x += (Math.random() - 0.5) * params.random;
+					transformedPoint.z += (Math.random() - 0.5) * params.random;
+				}
 
 				if(params.skipOutside) {
 					if(point.x >= 0 && point.x < this.tileSize && point.z >= 0 && point.z < this.tileSize) {
-						points.push(point.x, point.z);
+						points.push(transformedPoint.x, transformedPoint.z);
 					}
 				} else {
-					points.push(point.x, point.z);
+					points.push(transformedPoint.x, transformedPoint.z);
 				}
 			}
 		}

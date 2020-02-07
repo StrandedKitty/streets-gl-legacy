@@ -26,7 +26,7 @@ export default class OSMDescriptor {
 					}
 
 					if(res[i] === '@color') {
-						res[i] = colorNamesList[value] || hexToRgb(value);
+						res[i] = colorNamesList[value.toLowerCase()] || hexToRgb(value);
 					}
 
 					if(res[i] === '@int') {
