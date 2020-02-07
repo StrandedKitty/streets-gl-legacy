@@ -41,10 +41,17 @@ function overpass(x, y) {
 			node(${bbox});
 			way(${bbox});
 			rel["type"="building"](${bbox});
-		);
-		out;
-		>;
-		out;
+		 	/*rel["type"="multipolygon"]["building"](${bbox});*/
+		)->.data;
+		
+		.data > ->.dataMembers;
+		
+		(
+			.data;
+			.dataMembers;
+		)->.all;
+		
+		.all out body qt;
 	`;
 
 	let httpRequest = new XMLHttpRequest();

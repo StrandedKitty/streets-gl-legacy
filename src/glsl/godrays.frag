@@ -30,10 +30,10 @@ uniform float[CSM_CASCADES + 1] shadowSplits;
 #include <shadowmapping>
 
 const mat4 ditherPattern = mat4(
-0.0, 0.5, 0.125, 0.625,
-0.75, 0.22, 0.875f, 0.375,
-0.1875, 0.6875, 0.0625, 0.5625,
-0.9375, 0.4375, 0.8125, 0.3125
+	0.0, 0.5, 0.125, 0.625,
+	0.75, 0.22, 0.875, 0.375,
+	0.1875, 0.6875, 0.0625, 0.5625,
+	0.9375, 0.4375, 0.8125, 0.3125
 );
 
 float computeScattering(float lightDotView) {
@@ -68,19 +68,19 @@ void main() {
 
 		int cascadeId = 0;
 
-		for(int i = 0; i < CSM_CASCADES; i++) {
-			if(-cameraSpacePosition.z > shadowSplits[i] && -cameraSpacePosition.z <= shadowSplits[i + 1]) cascadeId = i;
+		for (int i = 0; i < CSM_CASCADES; i++) {
+			if (-cameraSpacePosition.z > shadowSplits[i] && -cameraSpacePosition.z <= shadowSplits[i + 1]) cascadeId = i;
 		}
 
 		float shadowMapValue;
 
-		if(cascadeId == 0) {
+		if (cascadeId == 0) {
 			vec4 shadowPosition = cascades[0].matrixWorldInverse * vec4(currentPosition, 1.);
 			shadowMapValue = getShadow(cascades[0].shadowMap, 0., shadowPosition, cascades[0].size);
-		} else if(cascadeId == 1) {
+		} else if (cascadeId == 1) {
 			vec4 shadowPosition = cascades[1].matrixWorldInverse * vec4(currentPosition, 1.);
 			shadowMapValue = getShadow(cascades[1].shadowMap, 0., shadowPosition, cascades[1].size);
-		} else if(cascadeId == 2) {
+		} else if (cascadeId == 2) {
 			vec4 shadowPosition = cascades[2].matrixWorldInverse * vec4(currentPosition, 1.);
 			shadowMapValue = getShadow(cascades[2].shadowMap, 0., shadowPosition, cascades[2].size);
 		}
