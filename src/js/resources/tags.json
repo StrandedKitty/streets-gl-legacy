@@ -12,7 +12,8 @@
 		"default": {"roofColor": "@color"}
 	},
 	"type": {
-		"building": {"relationType": "building"}
+		"building": {"relationType": "building"},
+		"multipolygon": {"relationType": "multipolygon"}
 	},
 	"natural": {
 		"tree": {"type": "tree"},

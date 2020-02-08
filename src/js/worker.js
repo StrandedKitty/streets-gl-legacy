@@ -41,7 +41,8 @@ function overpass(x, y) {
 			node(${bbox});
 			way(${bbox});
 			rel["type"="building"](${bbox});
-		 	/*rel["type"="multipolygon"]["building"](${bbox});*/
+		 	rel["type"="multipolygon"]["building"](${bbox});
+		 	rel["type"="multipolygon"]["building:part"](${bbox});
 		)->.data;
 		
 		.data > ->.dataMembers;
@@ -113,45 +114,156 @@ function processData(data, pivot) {
 	}
 
 	for (let id in raw.nodes) {
-		let item = raw.nodes[id];
+		const item = raw.nodes[id];
 
-		let node = new Node(item.id, item.lat, item.lon, item.tags, metersPivot);
+		const node = new Node(item.id, item.lat, item.lon, item.tags, metersPivot);
 		nodes.set(item.id, node);
 
 		meshData.instances.trees = [...meshData.instances.trees, ...node.instances.trees];
 	}
 
-	for (let id in raw.ways) {
-		let item = raw.ways[id];
+	const osmWays = new Map();
 
-		let vertices = [];
+	for (const id in raw.ways) {
+		const item = raw.ways[id];
 
-		for (let i = 0; i < item.nodes.length; i++) {
-			let vertex = nodes.get(item.nodes[i]);
-			vertices.push({x: vertex.x, z: vertex.z});
+		osmWays.set(item.id, item);
+
+		if(item.tags) {
+			const way = new Way({
+				id: item.id,
+				tags: item.tags,
+				pivot: pivot
+			});
+
+			ways.set(item.id, way);
+
+			let vertices = [];
+
+			for (let i = 0; i < item.nodes.length; i++) {
+				let vertex = nodes.get(item.nodes[i]);
+				vertices.push({x: vertex.x, z: vertex.z});
+			}
+
+			way.addRing({
+				type: 'outer',
+				id: item.id,
+				nodes: item.nodes,
+				vertices: vertices
+			});
 		}
-
-		let way = new Way(item.id, item.nodes, vertices, item.tags, pivot);
-		ways.set(item.id, way);
 	}
 
-	for (let id in raw.relations) {
-		let item = raw.relations[id];
+	for (const id in raw.relations) {
+		const item = raw.relations[id];
 
-		let descriptor = new OSMDescriptor(item.tags);
-		let properties = descriptor.properties;
+		const descriptor = new OSMDescriptor(item.tags);
+		const properties = descriptor.properties;
 
 		if (properties.relationType === 'building') {
-			for (let i = 0; i < item.members.length; i++) {
-				let member = item.members[i];
+			/*for (let i = 0; i < item.members.length; i++) {
+				const member = item.members[i];
+
 				if (member.type === 'way' && member.role === 'outline') {
 					ways.get(member.ref).visible = false;
 				}
+			}*/
+		} else if (properties.relationType === 'multipolygon') {
+			const way = new Way({
+				id: item.id,
+				tags: item.tags,
+				pivot: pivot
+			});
+
+			ways.set(item.id, way);
+
+			const rings = [];
+
+			for (let i = 0; i < item.members.length; i++) {
+				item.members[i].assigned = false;
+			}
+
+			for (let i = 0; i < item.members.length; i++) {
+				const relationMember = item.members[i];
+				const role = item.members[i].role;
+				const member = osmWays.get(item.members[i].ref);
+
+				if(member && !relationMember.assigned) {
+					let start = member.nodes[0];
+					let end = member.nodes[member.nodes.length - 1];
+
+					if(start === end) { // the current ring is closed
+						const vertices = [];
+
+						for (let i = 0; i < member.nodes.length; i++) {
+							let vertex = nodes.get(member.nodes[i]);
+							vertices.push({x: vertex.x, z: vertex.z});
+						}
+
+						rings.push({
+							type: role,
+							id: member.id,
+							nodes: member.nodes,
+							vertices: vertices
+						});
+
+						relationMember.assigned = true;
+					} else { // the current ring is not closed
+						relationMember.assigned = true;
+
+						let ringNodes = member.nodes.slice();
+
+						let partFound = true;
+
+						while(partFound) {
+							partFound = false;
+							for (let j = 0; j < item.members.length; j++) {
+								const part = osmWays.get(item.members[j].ref);
+
+								start = ringNodes[0];
+								end = ringNodes[ringNodes.length - 1];
+
+								if(part && !item.members[j].assigned && item.members[j].role === role) {
+									const joined = joinWays(ringNodes, part.nodes);
+									if(joined) {
+										ringNodes = joined;
+										item.members[j].assigned = true;
+										relationMember.assigned = true;
+										partFound = true;
+										break;
+									}
+								}
+							}
+						}
+
+						if(ringNodes[0] === ringNodes[ringNodes.length - 1]) {
+							const vertices = [];
+
+							for (let i = 0; i < ringNodes.length; i++) {
+								let vertex = nodes.get(ringNodes[i]);
+								vertices.push({x: vertex.x, z: vertex.z});
+							}
+
+							rings.push({
+								type: role,
+								id: member.id,
+								nodes: ringNodes,
+								vertices: vertices
+							});
+						} else {
+							console.log('Ring assignment for relation '+ item.id +' with way '+ item.members[i].ref +' has failed');
+						}
+					}
+				}
+			}
+
+			for(let i = 0; i < rings.length; i++) {
+				way.addRing(rings[i]);
 			}
 		}
 	}
 
-	for (const way of ways.values()) {
+	/*for (const way of ways.values()) {
 		if (way.properties.buildingPart) {
 			let verticesA = [];
 			for (let i = 0; i < way.vertices.length; i++) verticesA.push([way.vertices[i].x, way.vertices[i].z]);
@@ -170,7 +282,7 @@ function processData(data, pivot) {
 				}
 			}
 		}
-	}
+	}*/
 
 	//get geometry for ways
 
@@ -231,4 +343,33 @@ function intersect(p0, p1) {
 	}
 
 	return false;
+}
+
+function joinWays(nodesA, nodesB) {
+	let result = [];
+
+	const endA = nodesA.length - 1;
+	const endB = nodesB.length - 1;
+
+	if(nodesA[0] === nodesB[0]) {
+		result = [...nodesA.slice(1).reverse(), ...nodesB];
+		return result;
+	}
+
+	if(nodesA[endA] === nodesB[endB]) {
+		result = [...nodesA, ...nodesB.reverse().slice(1)];
+		return result;
+	}
+
+	if(nodesA[0] === nodesB[endB]) {
+		result = [...nodesB, ...nodesA.slice(1)];
+		return result;
+	}
+
+	if(nodesA[endA] === nodesB[0]) {
+		result = [...nodesA, ...nodesB.slice(1)];
+		return result;
+	}
+
+	return null;
 }
