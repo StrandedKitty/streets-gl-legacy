@@ -138,7 +138,7 @@ function processData(data, pivot) {
 
 			ways.set(item.id, way);
 
-			let vertices = [];
+			const vertices = [];
 
 			for (let i = 0; i < item.nodes.length; i++) {
 				let vertex = nodes.get(item.nodes[i]);
@@ -161,13 +161,13 @@ function processData(data, pivot) {
 		const properties = descriptor.properties;
 
 		if (properties.relationType === 'building') {
-			/*for (let i = 0; i < item.members.length; i++) {
+			for (let i = 0; i < item.members.length; i++) {
 				const member = item.members[i];
 
 				if (member.type === 'way' && member.role === 'outline') {
 					ways.get(member.ref).visible = false;
 				}
-			}*/
+			}
 		} else if (properties.relationType === 'multipolygon') {
 			const way = new Way({
 				id: item.id,
@@ -284,12 +284,24 @@ function processData(data, pivot) {
 		}
 	}*/
 
+	for (const way of ways.values()) {
+		if (way.properties.buildingPart) {
+			for (const way2 of ways.values()) {
+				if (!way2.properties.buildingPart && way2.properties.type === 'building') {
+					if(way.AABB.intersectsAABB(way2.AABB)) {
+						if (intersectMultipolygons(way.rings, way2.rings)) way2.visible = false;
+					}
+				}
+			}
+		}
+	}
+
 	//get geometry for ways
 
 	for (const [id, way] of ways.entries()) {
 		way.render();
 
-		if (way.mesh.vertices.length > 0) {
+		if (way.mesh.vertices.length > 0 && way.visible) {
 			meshData.ids.push(id);
 			meshData.offsets.push(meshData.vertices.length / 3);
 
@@ -325,7 +337,7 @@ function processData(data, pivot) {
 	self.postMessage(meshData);
 }
 
-function intersect(p0, p1) {
+/*function intersect(p0, p1) {
 	let i;
 
 	for (i = 0; i < p0.length; ++i) {
@@ -339,6 +351,49 @@ function intersect(p0, p1) {
 		const res = classifyPoint(p0, p1[i]);
 		if (res === -1) {
 			return true;
+		}
+	}
+
+	return false;
+}*/
+
+function intersectMultipolygons(p0, p1) {
+	const points0 = [];
+	const points1 = [];
+
+	for (let i = 0; i < p0.length; i++) {
+		for (let j = 0; j < p0[i].vertices.length; j++) points0.push([p0[i].vertices[j].x, p0[i].vertices[j].z]);
+	}
+
+	for (let i = 0; i < p1.length; i++) {
+		for (let j = 0; j < p1[i].vertices.length; j++) points1.push([p1[i].vertices[j].x, p1[i].vertices[j].z]);
+	}
+
+	for (let i = 0; i < p0.length; i++) {
+		if (p0[i].type === 'outer') {
+			const polygon = [];
+
+			for (let j = 0; j < p0[i].vertices.length; j++) polygon.push([p0[i].vertices[j].x, p0[i].vertices[j].z]);
+
+			for (let j = 0; j < points1.length; j++) {
+				if (classifyPoint(polygon, points1[j]) === -1) {
+					return true;
+				}
+			}
+		}
+	}
+
+	for (let i = 0; i < p1.length; i++) {
+		if (p1[i].type === 'outer') {
+			const polygon = [];
+
+			for (let j = 0; j < p1[i].vertices.length; j++) polygon.push([p1[i].vertices[j].x, p1[i].vertices[j].z]);
+
+			for (let j = 0; j < points0.length; j++) {
+				if (classifyPoint(polygon, points0[j]) === -1) {
+					return true;
+				}
+			}
 		}
 	}
 

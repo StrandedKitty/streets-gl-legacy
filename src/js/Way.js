@@ -13,6 +13,7 @@ export default class Way {
 		this.pivot = params.pivot;
 
 		this.AABB = new WayAABB();
+		this.visible = true;
 
 		this.mesh = {
 			vertices: [],
@@ -57,6 +58,8 @@ export default class Way {
 		});
 
 		this.rings.push(ring);
+
+		if(this.properties.type === 'building') this.expandAABB(ring);
 	}
 
 	render() {
@@ -65,8 +68,6 @@ export default class Way {
 				color: [79, 89, 88],
 				height: this.geometry.height
 			});
-
-			this.generateAABB();
 		}
 
 		for(let i = 0; i < this.rings.length; i++) {
@@ -162,15 +163,11 @@ export default class Way {
 		return {vertices, holes};
 	}
 
-	generateAABB() {
-		for(let j = 0; j < this.rings.length; j++) {
-			const ring = this.rings[j];
+	expandAABB(ring) {
+		for(let i = 0; i < ring.vertices.length - 1; i++) {
+			const vertex = ring.vertices[i];
 
-			for(let i = 0; i < ring.vertices.length - 1; i++) {
-				const vertex = ring.vertices[i];
-
-				this.AABB.includePoint({x: vertex.x, y: vertex.z});
-			}
+			this.AABB.includePoint({x: vertex.x, y: vertex.z});
 		}
 	}
 
