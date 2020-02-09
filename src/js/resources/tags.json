@@ -44,6 +44,7 @@
 		"default": {"type": "road", "roadWidth": 10},
 		"residential": {"type": "road", "roadWidth": 9},
 		"motorway": {"type": "road", "roadWidth": 12},
+		"service": {"type": "road", "roadWidth": 7},
 		"pedestrian": {"type": "road", "roadWidth": 6},
 
 		"primary": {"type": "road", "roadWidth": 15},

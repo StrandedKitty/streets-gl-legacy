@@ -65,7 +65,7 @@ export default class Way {
 	render() {
 		if(this.properties.type === 'building') {
 			this.triangulateFootprint({
-				color: [79, 89, 88],
+				color: this.geometry.roofColor,
 				height: this.geometry.height
 			});
 		}
