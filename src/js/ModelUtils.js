@@ -44,22 +44,25 @@ export default class ModelUtils {
 	}
 
 	static mergeTypedArrays(typedArrays) {
-		let length = 0;
+		if(typedArrays.length > 0) {
+			let length = 0;
 
-		for(let i = 0; i < typedArrays.length; i++) {
-			length += typedArrays[i].length;
+			for(let i = 0; i < typedArrays.length; i++) {
+				length += typedArrays[i].length;
+			}
+
+			const array = new typedArrays[0].constructor(length);
+
+			let currentLength = 0;
+
+			for(let i = 0; i < typedArrays.length; i++) {
+				array.set(typedArrays[i], currentLength);
+				currentLength += typedArrays[i].length;
+			}
+
+			return array;
 		}
 
-		const array = new typedArrays[0].constructor(length);
-
-		let currentLength = 0;
-
-		for(let i = 0; i < typedArrays.length; i++) {
-			array.set(typedArrays[i], currentLength);
-			currentLength += typedArrays[i].length;
-		}
-
-		return array;
+		return new Float32Array(0);
 	}
-
 }

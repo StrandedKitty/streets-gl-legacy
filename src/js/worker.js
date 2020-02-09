@@ -2,6 +2,7 @@ import Node from "./Node";
 import Way from "./Way";
 import {tile2degrees, degrees2meters} from "./Utils";
 import OSMDescriptor from "./OSMDescriptor";
+import ModelUtils from "./ModelUtils";
 
 const classifyPoint = require("robust-point-in-polygon");
 
@@ -76,7 +77,7 @@ function processData(data, pivot) {
 	let nodes = new Map();
 	let ways = new Map();
 
-	let meshData = {
+	const meshData = {
 		ids: [],
 		offsets: [],
 		vertices: [],
@@ -91,7 +92,18 @@ function processData(data, pivot) {
 		bboxMax: [0, 0, 0]
 	};
 
-	let raw = {
+	const meshArrays = {
+		vertices: [],
+		normals: [],
+		colors: [],
+		uvs: [],
+		textures: [],
+		instances: {
+			trees: []
+		}
+	};
+
+	const raw = {
 		nodes: {},
 		ways: {},
 		relations: {}
@@ -119,7 +131,7 @@ function processData(data, pivot) {
 		const node = new Node(item.id, item.lat, item.lon, item.tags, metersPivot);
 		nodes.set(item.id, node);
 
-		meshData.instances.trees = [...meshData.instances.trees, ...node.instances.trees];
+		meshArrays.instances.trees.push(new Float32Array(node.instances.trees));
 	}
 
 	const osmWays = new Map();
@@ -298,22 +310,35 @@ function processData(data, pivot) {
 
 	//get geometry for ways
 
+	let vertexOffset = 0;
+
 	for (const [id, way] of ways.entries()) {
-		way.render();
+		if(way.visible) {
+			way.render();
 
-		if (way.mesh.vertices.length > 0 && way.visible) {
-			meshData.ids.push(id);
-			meshData.offsets.push(meshData.vertices.length / 3);
+			if (way.mesh.vertices.length > 0) {
+				meshData.ids.push(id);
+				meshData.offsets.push(vertexOffset / 3);
 
-			meshData.vertices = [...meshData.vertices, ...way.mesh.vertices];
-			meshData.normals = [...meshData.normals, ...way.mesh.normals];
-			meshData.colors = [...meshData.colors, ...way.mesh.colors];
-			meshData.uvs = [...meshData.uvs, ...way.mesh.uvs];
-			meshData.textures = [...meshData.textures, ...way.mesh.textures];
+				vertexOffset += way.mesh.vertices.length;
+
+				meshArrays.vertices.push(new Float32Array(way.mesh.vertices));
+				meshArrays.normals.push(new Float32Array(way.mesh.normals));
+				meshArrays.colors.push(new Uint8Array(way.mesh.colors));
+				meshArrays.uvs.push(new Float32Array(way.mesh.uvs));
+				meshArrays.textures.push(new Float32Array(way.mesh.textures));
+			}
+
+			meshArrays.instances.trees.push(way.instances.trees);
 		}
-
-		meshData.instances.trees = [...meshData.instances.trees, ...way.instances.trees];
 	}
+
+	meshData.vertices = ModelUtils.mergeTypedArrays(meshArrays.vertices);
+	meshData.normals = ModelUtils.mergeTypedArrays(meshArrays.normals);
+	meshData.colors = ModelUtils.mergeTypedArrays(meshArrays.colors);
+	meshData.uvs = ModelUtils.mergeTypedArrays(meshArrays.uvs);
+	meshData.textures = ModelUtils.mergeTypedArrays(meshArrays.textures);
+	meshData.instances.trees = ModelUtils.mergeTypedArrays(meshArrays.instances.trees);
 
 	const tileSize = 40075016.7 / (1 << 16);
 
