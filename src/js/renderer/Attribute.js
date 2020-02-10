@@ -6,6 +6,7 @@ export default class Attribute {
 		this.type = params.type || 'FLOAT';
 		this.normalized = params.normalized || false;
 		this.instanced = params.instanced || false;
+		this.dataFormat = params.dataFormat || 'float';
 		this.data = null;
 		this.location = null;
 
@@ -20,7 +21,13 @@ export default class Attribute {
 		this.location = this.gl.getAttribLocation(this.program.WebGLProgram, this.name);
 
 		if(this.location !== -1) {
-			this.gl.vertexAttribPointer(this.location, this.size, this.gl[this.type], this.normalized, 0, 0);
+			if(this.dataFormat === 'integer') {
+				this.gl.vertexAttribIPointer(this.location, this.size, this.gl[this.type], 0, 0);
+			} else {
+				this.gl.vertexAttribPointer(this.location, this.size, this.gl[this.type], this.normalized, 0, 0);
+			}
+
+
 			if(this.instanced) this.gl.vertexAttribDivisor(this.location, 1);
 			this.gl.enableVertexAttribArray(this.location);
 
@@ -29,10 +36,12 @@ export default class Attribute {
 	}
 
 	setData(typedArray) {
-		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
-		this.gl.bufferData(this.gl.ARRAY_BUFFER, typedArray, this.gl.DYNAMIC_DRAW);
-		this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
-		this.data = typedArray;
+		if(typedArray) {
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+			this.gl.bufferData(this.gl.ARRAY_BUFFER, typedArray, this.gl.DYNAMIC_DRAW);
+			this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+			this.data = typedArray;
+		}
 	}
 
 	delete() {
