@@ -1,8 +1,35 @@
 body {
     margin: 0;
-    overflow: hidden;
+    font-family: "Segoe UI", serif;
+    color: #111111;
+}
+
+#wrapper {
+    width: 100%;
+    height: 100%;
 }
 
 #canvas {
+    display: block;
     width: 100%;
+    height: 100%;
+}
+
+a {
+    color: #006188;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+#copyright {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    padding: 1px 5px;
+    backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.7);
+    font-size: 11px;
 }

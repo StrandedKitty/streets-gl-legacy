@@ -2,11 +2,16 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
         <title>Streets GL</title>
         <link rel="stylesheet" type="text/css" href="./css/style.css">
     </head>
     <body>
-        <canvas id="canvas"></canvas>
+        <div id="wrapper">
+            <canvas id="canvas"></canvas>
+            <div id="copyright">© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors</div>
+        </div>
+
         <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
         <script src="./js/main.js"></script>
     </body>
