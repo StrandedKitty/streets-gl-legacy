@@ -5,7 +5,6 @@ import Controls from './Controls';
 import Tile from './Tile';
 import MapWorkerManager from './MapWorkerManager';
 import MapMesh from './MapMesh';
-import Meshes from './Meshes';
 import Renderer from "./renderer/Renderer";
 import SceneGraph from "./renderer/SceneGraph";
 import PerspectiveCamera from "./renderer/PerspectiveCamera";
@@ -37,10 +36,10 @@ let scene,
 
 let view = {};
 let tiles = new Map();
-let objects = {
-	meshes: new Map()
+
+const features = {
+	ways: new Map()
 };
-let meshes = {};
 
 let mesh, groundMaterial, groundMaterialDepth, wrapper, buildings, buildingMaterial, buildingDepthMaterial, tileMeshes, instanceMeshes;
 let quad, quadMaterial;
@@ -662,12 +661,12 @@ function animate() {
 
 		if(!tiles.get(name) && worker) {
 			let tile = new Tile(frustumTile.x, frustumTile.y, function (data) {
-				const vertices = new Float32Array(data.vertices);
-				const normals = new Float32Array(data.normals);
-				const uvs = new Float32Array(data.uvs);
+				const vertices = data.vertices;
+				const normals = data.normals;
+				const uvs = data.uvs;
 				const ids = data.ids;
-				const colors = new Uint8Array(data.colors);
-				const textures = new Float32Array(data.textures);
+				const colors = data.colors;
+				const textures = data.textures;
 				const instances = data.instances;
 				const bbox = {min: data.bboxMin, max: data.bboxMax};
 				const pivot = tile2meters(this.x, this.y + 1);
@@ -681,7 +680,7 @@ function animate() {
 						treesPositions[i * 3 + 2] = instances.trees[i * 2 + 1];
 					}
 
-					let treesMesh = RP.createMeshInstanced({
+					const treesMesh = RP.createMeshInstanced({
 						vertices: Models.Tree.mesh.attributes.POSITION,
 						indices: Models.Tree.mesh.indices,
 						instances: instances.trees.length / 2
@@ -730,7 +729,7 @@ function animate() {
 					this.instances.trees = treesMesh;
 				}
 
-				let mesh = RP.createMesh({
+				const mesh = RP.createMesh({
 					vertices: vertices
 				});
 
@@ -798,8 +797,8 @@ function animate() {
 				for(let i = 0; i < ids.length; i++) {
 					const id = ids[i];
 
-					if(objects.meshes.get(id)) {
-						const object = objects.meshes.get(id);
+					if(features.ways.get(id)) {
+						const object = features.ways.get(id);
 
 						object.setNewParent({
 							tile: this
@@ -810,7 +809,7 @@ function animate() {
 							tile: this
 						});
 
-						objects.meshes.set(id, object);
+						features.ways.set(id, object);
 
 						tile.animate(id);
 					}
@@ -820,11 +819,11 @@ function animate() {
 					tiles.delete(this.id);
 
 					for(const id in this.objects) {
-						let object = objects.meshes.get(parseInt(id));
+						const object = features.ways.get(id);
 
 						if(object) {
 							object.removeParent(this);
-							if(object.holder === null) objects.meshes.delete(parseInt(id));
+							if(object.holder === null) features.ways.delete(id);
 						}
 					}
 

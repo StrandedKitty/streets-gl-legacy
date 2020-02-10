@@ -143,7 +143,7 @@ function processData(data, pivot) {
 
 		if(item.tags) {
 			const way = new Way({
-				id: item.id,
+				id: 'w' + item.id,
 				tags: item.tags,
 				pivot: pivot
 			});
@@ -182,7 +182,7 @@ function processData(data, pivot) {
 			}
 		} else if (properties.relationType === 'multipolygon') {
 			const way = new Way({
-				id: item.id,
+				id: 'm' + item.id,
 				tags: item.tags,
 				pivot: pivot
 			});
@@ -317,7 +317,7 @@ function processData(data, pivot) {
 			way.render();
 
 			if (way.mesh.vertices.length > 0) {
-				meshData.ids.push(id);
+				meshData.ids.push(way.id);
 				meshData.offsets.push(vertexOffset / 3);
 
 				vertexOffset += way.mesh.vertices.length;
