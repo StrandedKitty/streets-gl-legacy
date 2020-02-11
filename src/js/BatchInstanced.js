@@ -1,6 +1,6 @@
 import Models from "./Models";
 import ModelUtils from "./ModelUtils";
-import {tile2meters} from "./Utils";
+import {tile2meters, tileDecode} from "./Utils";
 
 export default class BatchInstanced {
 	constructor(renderer, params) {
@@ -18,9 +18,6 @@ export default class BatchInstanced {
 	}
 
 	addTile(params) {
-		params.attributes.iTile = new Uint32Array(params.attributes.iPosition.length / 3);
-		params.attributes.iTile.fill(params.tile.id);
-
 		this.tiles.set(params.tile.id, params.attributes);
 
 		this.pivot = tile2meters(params.tile.x, params.tile.y + 1);
@@ -36,18 +33,23 @@ export default class BatchInstanced {
 	}
 
 	updateAttributes() {
+		for (const [tileId, attributes] of this.tiles.entries()) {
+			const array = new Float32Array(attributes.iPosition.length / 3 * 2);
+
+			const tilePosition = tileDecode(tileId);
+			const tilePivot = tile2meters(tilePosition.x, tilePosition.y + 1);
+			const delta = {x: tilePivot.x - this.pivot.x, z: tilePivot.z - this.pivot.z};
+
+			attributes.iOffset = ModelUtils.fillTypedArraySequence(array, new Float32Array([delta.x, delta.z]));
+		}
+
 		this.mergeAttributes();
 
 		this.mesh.setAttributeData('iPosition', this.mergedAttributes.iPosition);
 		this.mesh.updateAttribute('iPosition');
 
-		this.mesh.setAttributeData('iTile', this.mergedAttributes.iTile);
-		this.mesh.updateAttribute('iTile');
-
-		const pivots = new Uint32Array(this.mergedAttributes.iTile.length).fill(this.pivotId);
-
-		this.mesh.setAttributeData('iTilePivot', pivots);
-		this.mesh.updateAttribute('iTilePivot');
+		this.mesh.setAttributeData('iOffset', this.mergedAttributes.iOffset);
+		this.mesh.updateAttribute('iOffset');
 
 		this.mesh.instances = this.mergedAttributes.iPosition.length / 3;
 
@@ -114,23 +116,12 @@ export default class BatchInstanced {
 		mesh.setAttributeData('iPosition', null);
 
 		mesh.addAttribute({
-			name: 'iTile',
-			size: 1,
-			type: 'UNSIGNED_INT',
-			dataFormat: 'integer',
+			name: 'iOffset',
+			size: 2,
+			type: 'FLOAT',
 			normalized: false,
 			instanced: true
 		});
-		mesh.setAttributeData('iTile', null);
-
-		mesh.addAttribute({
-			name: 'iTilePivot',
-			size: 1,
-			type: 'UNSIGNED_INT',
-			dataFormat: 'integer',
-			normalized: false,
-			instanced: true
-		});
-		mesh.setAttributeData('iTilePivot', null);
+		mesh.setAttributeData('iOffset', null);
 	}
 }

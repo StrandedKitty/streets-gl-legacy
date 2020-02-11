@@ -329,7 +329,10 @@ function processData(data, pivot) {
 				meshArrays.textures.push(new Float32Array(way.mesh.textures));
 			}
 
-			meshArrays.instances.trees.push(way.instances.trees);
+
+			for(const instanceName in way.instances) {
+				meshArrays.instances[instanceName].push(way.instances[instanceName]);
+			}
 		}
 	}
 
@@ -338,7 +341,11 @@ function processData(data, pivot) {
 	meshData.colors = ModelUtils.mergeTypedArrays(meshArrays.colors);
 	meshData.uvs = ModelUtils.mergeTypedArrays(meshArrays.uvs);
 	meshData.textures = ModelUtils.mergeTypedArrays(meshArrays.textures);
-	meshData.instances.trees = ModelUtils.mergeTypedArrays(meshArrays.instances.trees);
+
+	for(const instanceName in meshArrays.instances) {
+		meshData.instances[instanceName] = ModelUtils.mergeTypedArrays(meshArrays.instances[instanceName]);
+	}
+
 
 	const tileSize = 40075016.7 / (1 << 16);
 

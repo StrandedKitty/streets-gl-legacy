@@ -55,7 +55,9 @@ let light;
 let lightDirection = new vec3(-1, -0.4, -1);
 let csm;
 
-let treesBatch;
+let batchesInstanced = {
+	trees: null
+};
 
 Models.callback = init;
 
@@ -138,9 +140,9 @@ function init() {
 	let position = degrees2meters(49.8969, 36.2894);
 	mesh.setPosition(position.x, 0, position.z);
 
-	treesBatch = new BatchInstanced(RP, {});
-	treesBatch.generateMesh();
-	wrapper.add(treesBatch.mesh);
+	batchesInstanced.trees = new BatchInstanced(RP, {});
+	batchesInstanced.trees.generateMesh();
+	wrapper.add(batchesInstanced.trees.mesh);
 
 	gBuffer = new GBuffer(RP, window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA, [
 		{
@@ -373,7 +375,7 @@ function animate() {
 		}
 
 		{
-			const object = treesBatch.mesh;
+			const object = batchesInstanced.trees.mesh;
 
 			instanceMaterialDepth.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
 			instanceMaterialDepth.use();
@@ -496,7 +498,7 @@ function animate() {
 
 		RP.culling = false;
 
-		const object = treesBatch.mesh;
+		const object = batchesInstanced.trees.mesh;
 
 		let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
 		let normalMatrix = mat4.normalMatrix(modelViewMatrix);
@@ -676,7 +678,7 @@ function animate() {
 						treesPositions[i * 3 + 2] = instances.trees[i * 2 + 1];
 					}
 
-					treesBatch.addTile({
+					batchesInstanced.trees.addTile({
 						tile: this,
 						attributes: {
 							iPosition: treesPositions
@@ -773,7 +775,7 @@ function animate() {
 				if(!tile.mesh.inCameraFrustum(camera)) {
 					tiles.delete(this.id);
 
-					treesBatch.removeTile({
+					batchesInstanced.trees.removeTile({
 						tile: this
 					});
 

@@ -65,4 +65,21 @@ export default class ModelUtils {
 
 		return new Float32Array(0);
 	}
+
+	static fillTypedArraySequence(typedArray, sequence) {
+		const length = typedArray.length;
+		let sequenceLength = sequence.length;
+		let position = sequenceLength;
+
+		typedArray.set(sequence);
+
+		while(position < length) {
+			if (position + sequenceLength > length) sequenceLength = length - position;
+			typedArray.copyWithin(position, 0, sequenceLength);
+			position += sequenceLength;
+			sequenceLength <<= 1;
+		}
+
+		return typedArray;
+	}
 }
