@@ -1,7 +1,9 @@
 export default class MapWorker {
 	constructor(path) {
-		this.used = false;
+		this.queue = 0;
 		this.worker = new Worker(path);
+
+		this.callbacks = {};
 
 		this.worker.addEventListener('message', this.onmessage.bind(this), false);
 
@@ -9,14 +11,17 @@ export default class MapWorker {
 	}
 
 	start(x, y, callback) {
-		this.used = true;
-		this.callback = callback;
+		this.queue++;
+		this.callbacks[x + ',' + y] = callback;
 
 		this.worker.postMessage({code: 'start', position: [x, y]});
 	}
 
 	onmessage(e) {
-		if(!e.data.type) this.used = false;
-		this.callback(e.data);
+		this.queue--;
+
+		const callback = this.callbacks[e.data.x + ',' + e.data.y];
+		callback(e.data.mesh);
+		delete this.callbacks[e.data.x + ',' + e.data.y];
 	}
 }

@@ -100,14 +100,6 @@ export default class Tile {
 	}
 
 	getGroundMesh(renderer) {
-		/*let loader = new THREE.TextureLoader();
-		loader.crossOrigin = '';
-		let texture = loader.load('https://tile.osmand.net/hd/16/' + this.x + '/' + this.y + '.png');
-		texture.anisotropy = Config.textureAnisotropy;
-		let material = new THREE.MeshBasicMaterial({
-			map: texture,
-			depthWrite: false
-		});*/
 		const tileSize = 40075016.7 / (1 << 16);
 		const position = tile2meters(this.x, this.y + 1);
 		let vertices = (new Shapes.plane(tileSize, tileSize)).vertices;

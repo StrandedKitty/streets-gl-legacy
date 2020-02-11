@@ -1,4 +1,5 @@
 import MapWorker from './MapWorker';
+import Config from "./Config";
 
 export default class MapWorkerManager {
 	constructor(num, path) {
@@ -14,7 +15,7 @@ export default class MapWorkerManager {
 		for(let i = 0; i < this.workers.length; i++) {
 			let worker = this.workers[i];
 
-			if(!worker.used) {
+			if(worker.queue < Config.tilesPerWorker) {
 				return worker;
 			}
 		}

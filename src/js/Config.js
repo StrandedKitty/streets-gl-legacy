@@ -2,6 +2,7 @@ let config = {
 	drawDistance: 5000,
 	textureAnisotropy: undefined,
 	maxTiles: 50,
+	tilesPerWorker: 2,
 	SSAA: 2,
 	SMAA: true,
 	SSAO: true,

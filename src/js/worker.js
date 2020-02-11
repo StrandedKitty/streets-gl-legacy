@@ -62,9 +62,9 @@ function overpass(x, y) {
 		if (httpRequest.readyState === XMLHttpRequest.DONE) {
 			if (httpRequest.status === 200) {
 				let data = JSON.parse(httpRequest.responseText).elements;
-				processData(data, position[0]);
+				processData(x, y, data, position[0]);
 			} else {
-				self.postMessage({code: 'error', error: 'request'});
+				console.error('Request error: ' + httpRequest.status);
 			}
 		}
 	};
@@ -72,7 +72,7 @@ function overpass(x, y) {
 	httpRequest.send();
 }
 
-function processData(data, pivot) {
+function processData(x, y, data, pivot) {
 	let metersPivot = degrees2meters(pivot.lat, pivot.lon);
 	let nodes = new Map();
 	let ways = new Map();
@@ -366,7 +366,7 @@ function processData(data, pivot) {
 		}
 	}
 
-	self.postMessage(meshData);
+	self.postMessage({x, y, mesh: meshData});
 }
 
 /*function intersect(p0, p1) {
