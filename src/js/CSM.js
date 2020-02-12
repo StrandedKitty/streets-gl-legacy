@@ -16,7 +16,7 @@ export default class CSM {
 		this.size = params.size || 2048;
 		this.bias = params.bias || 0;
 		this.direction = new vec3(-1, -1, -1);
-		this.bias = [-1, -3, -5];
+		this.bias = [-1.5, -4, -7];
 
 		this.lights = [];
 		this.materials = [];

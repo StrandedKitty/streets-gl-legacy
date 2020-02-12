@@ -26,6 +26,7 @@ import Models from "./Models";
 import SSAA from "./SSAA";
 import VolumetricLighting from "./materials/VolumetricLighting";
 import BatchInstanced from "./BatchInstanced";
+import Shapes from "./renderer/Shapes";
 
 const SunCalc = require('suncalc');
 
@@ -38,11 +39,14 @@ let scene,
 let view = {};
 let tiles = new Map();
 
+const tileSize = 40075016.7 / (1 << 16);
+
 const features = {
 	ways: new Map()
 };
 
-let mesh, groundMaterial, groundMaterialDepth, wrapper, buildings, buildingMaterial, buildingDepthMaterial, tileMeshes, instanceMeshes;
+let ground;
+let mesh, groundMaterial, groundMaterialDepth, wrapper, buildings, buildingMaterial, buildingDepthMaterial, instanceMeshes;
 let quad, quadMaterial;
 
 let instanceMaterial, instanceMaterialDepth;
@@ -76,15 +80,13 @@ function init() {
 
 	buildings = new Object3D();
 	wrapper.add(buildings);
-	tileMeshes = new Object3D();
-	wrapper.add(tileMeshes);
 	instanceMeshes = new Object3D();
 	wrapper.add(instanceMeshes);
 
 	camera = new PerspectiveCamera({
 		fov: 40,
 		near: 1,
-		far: 10000,
+		far: 15000,
 		aspect: window.innerWidth / window.innerHeight
 	});
 	wrapper.add(camera);
@@ -139,6 +141,22 @@ function init() {
 
 	let position = degrees2meters(49.8969, 36.2894);
 	mesh.setPosition(position.x, 0, position.z);
+
+	const groundShape = new Shapes.planeSubdivided(tileSize * 64, tileSize * 64, 32, 32);
+	console.log(groundShape);
+
+	ground = RP.createMesh({
+		vertices: groundShape.vertices
+	});
+
+	ground.addAttribute({
+		name: 'uv',
+		size: 2,
+		type: 'FLOAT'
+	});
+	ground.setAttributeData('uv', groundShape.uv);
+
+	wrapper.add(ground);
 
 	batchesInstanced.trees = new BatchInstanced(RP, {});
 	batchesInstanced.trees.generateMesh();
@@ -276,10 +294,10 @@ function init() {
 	animate();
 }
 
-function animate() {
+function animate(rafTime) {
 	requestAnimationFrame(animate);
 
-	const now = performance.now();
+	const now = rafTime || 0;
 	delta = (now - time) / 1e3;
 	time = now;
 
@@ -289,6 +307,8 @@ function animate() {
 
 	wrapper.position.x = -camera.position.x;
 	wrapper.position.z = -camera.position.z;
+
+	ground.setPosition(camera.position.x - camera.position.x % tileSize, 0, camera.position.z - camera.position.z % tileSize);
 
 	scene.updateMatrixRecursively();
 	scene.updateMatrixWorldRecursively();
@@ -331,23 +351,13 @@ function animate() {
 			groundMaterialDepth.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
 			groundMaterialDepth.use();
 
-			for(let j = 0; j < tileMeshes.children.length; j++) {
-				let object = tileMeshes.children[j];
+			let object = ground;
 
-				if(i === 0) object.data.time += delta;
+			let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+			groundMaterialDepth.uniforms.modelViewMatrix.value = modelViewMatrix;
+			groundMaterialDepth.updateUniform('modelViewMatrix');
 
-				if(object instanceof Mesh) {
-					const inFrustum = object.inCameraFrustum(rCamera);
-
-					if(inFrustum) {
-						let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-						groundMaterialDepth.uniforms.modelViewMatrix.value = modelViewMatrix;
-						groundMaterialDepth.updateUniform('modelViewMatrix');
-
-						object.draw(groundMaterialDepth);
-					}
-				}
-			}
+			object.draw(groundMaterialDepth);
 		}
 
 		{
@@ -416,41 +426,16 @@ function animate() {
 		groundMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
 		groundMaterial.use();
 
-		let noAnimationStreak = 0;
+		let object = ground;
 
-		for(let i = 0; i < tileMeshes.children.length; i++) {
-			let object = tileMeshes.children[i];
+		let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+		let normalMatrix = mat4.normalMatrix(modelViewMatrix);
+		groundMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+		groundMaterial.uniforms.normalMatrix.value = normalMatrix;
+		groundMaterial.updateUniform('modelViewMatrix');
+		groundMaterial.updateUniform('normalMatrix');
 
-			//object.data.time += delta;
-
-			if(object instanceof Mesh) {
-				const inFrustum = object.inCameraFrustum(rCamera);
-
-				if(inFrustum) {
-					let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-					let normalMatrix = mat4.normalMatrix(modelViewMatrix);
-					groundMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
-					groundMaterial.uniforms.normalMatrix.value = normalMatrix;
-					groundMaterial.updateUniform('modelViewMatrix');
-					groundMaterial.updateUniform('normalMatrix');
-
-					if(object.data.time - delta < 1) {
-						groundMaterial.uniforms.time = {type: '1f', value: object.data.time};
-						groundMaterial.updateUniform('time');
-						noAnimationStreak = 0;
-					} else {
-						if(noAnimationStreak === 0) {
-							groundMaterial.uniforms.time = {type: '1f', value: 1};
-							groundMaterial.updateUniform('time');
-						}
-
-						++noAnimationStreak;
-					}
-
-					object.draw(groundMaterial);
-				}
-			}
-		}
+		object.draw(groundMaterial);
 	}
 
 	{
@@ -668,7 +653,6 @@ function animate() {
 				const instances = data.instances;
 				const bbox = {min: data.bboxMin, max: data.bboxMax};
 				const pivot = tile2meters(this.x, this.y + 1);
-				const tileSize = 40075016.7 / (1 << 16);
 
 				if(instances.trees.length > 0) {
 					let treesPositions = new Float32Array(instances.trees.length / 2 * 3);
@@ -795,9 +779,6 @@ function animate() {
 			});
 
 			tiles.set(name, tile);
-
-			let ground = tile.getGroundMesh(RP);
-			tileMeshes.add(ground);
 
 			tile.load(worker);
 

@@ -199,7 +199,7 @@ void main() {
     specularColor = mix(f0, baseColor.rgb, metallic);
 
     if(baseColor.a == 0.) { // skip unlit objects
-        FragColor = vec4(baseColor.xyz, 1.);
+        FragColor = vec4(toneMap(baseColor.xyz), 1.);
         return;
     }
 
