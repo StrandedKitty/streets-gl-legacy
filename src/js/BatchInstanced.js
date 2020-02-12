@@ -8,7 +8,6 @@ export default class BatchInstanced {
 
 		this.tiles = new Map();
 		this.pivot = {x: 0, y: 0};
-		this.pivotId = 0;
 
 		this.mergedAttributes = {};
 
@@ -21,7 +20,6 @@ export default class BatchInstanced {
 		this.tiles.set(params.tile.id, params.attributes);
 
 		this.pivot = tile2meters(params.tile.x, params.tile.y + 1);
-		this.pivotId = params.tile.id;
 
 		this.updateAttributes();
 	}
@@ -51,7 +49,8 @@ export default class BatchInstanced {
 		this.mesh.setAttributeData('iOffset', this.mergedAttributes.iOffset);
 		this.mesh.updateAttribute('iOffset');
 
-		this.mesh.instances = this.mergedAttributes.iPosition.length / 3;
+		if(this.mergedAttributes.iPosition) this.mesh.instances = this.mergedAttributes.iPosition.length / 3;
+		else this.mesh.instances = 0;
 
 		this.mesh.setPosition(this.pivot.x, 0, this.pivot.z);
 	}

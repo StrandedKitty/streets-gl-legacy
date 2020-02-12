@@ -53,12 +53,12 @@ export default class MeshInstanced extends Object3D {
 			vao.bind();
 		}
 
-		if(this.indexed) {
+		if (this.indexed) {
 			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 
 			this.gl.drawElementsInstanced(this.gl[material.drawMode], this.indices.length, this.gl.UNSIGNED_SHORT, 0, this.instances);
 
-			if(this.indexed) this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
+			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
 		} else {
 			this.gl.drawArraysInstanced(this.gl[material.drawMode], 0, this.vertices.length / 3, this.instances);
 		}

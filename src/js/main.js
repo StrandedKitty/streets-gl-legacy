@@ -756,11 +756,11 @@ function animate(rafTime) {
 				}
 			}, function () {
 				if(!tile.mesh.inCameraFrustum(camera)) {
-					tiles.delete(this.id);
-
 					batchesInstanced.trees.removeTile({
 						tile: this
 					});
+
+					tiles.delete(this.id);
 
 					for(const id in this.objects) {
 						const object = features.ways.get(id);
