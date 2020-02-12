@@ -143,7 +143,6 @@ function init() {
 	mesh.setPosition(position.x, 0, position.z);
 
 	const groundShape = new Shapes.planeSubdivided(tileSize * 64, tileSize * 64, 32, 32);
-	console.log(groundShape);
 
 	ground = RP.createMesh({
 		vertices: groundShape.vertices
