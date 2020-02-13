@@ -6,6 +6,13 @@ export default class WayAABB {
 		this.empty = true;
 	}
 
+	set(minX, minY, maxX, maxY) {
+		this.min = {x: minX, y: minY};
+		this.max = {x: maxX, y: maxY};
+
+		this.empty = false;
+	}
+
 	includePoint(point) {
 		if(this.empty) {
 			this.min.x = point.x;
