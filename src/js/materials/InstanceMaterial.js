@@ -9,7 +9,8 @@ export default class InstanceMaterial {
 			fragmentShader: shaders.instance.fragment,
 			uniforms: {
 				projectionMatrix: {type: 'Matrix4fv', value: null},
-				modelViewMatrix: {type: 'Matrix4fv', value: null},
+				modelMatrix: {type: 'Matrix4fv', value: null},
+				viewMatrix: {type: 'Matrix4fv', value: null},
 				normalMatrix: {type: 'Matrix3fv', value: null},
 				'tDiffuse[0]': {type: 'texture', value: renderer.createTexture({url: '/textures/tree/bark.png', anisotropy: Config.textureAnisotropy})},
 				'tDiffuse[1]': {type: 'texture', value: renderer.createTexture({url: '/textures/tree/maple.png', anisotropy: Config.textureAnisotropy})}
@@ -22,7 +23,8 @@ export default class InstanceMaterial {
 			fragmentShader: shaders.instanceDepth.fragment,
 			uniforms: {
 				projectionMatrix: {type: 'Matrix4fv', value: null},
-				modelViewMatrix: {type: 'Matrix4fv', value: null},
+				modelMatrix: {type: 'Matrix4fv', value: null},
+				viewMatrix: {type: 'Matrix4fv', value: null},
 				normalMatrix: {type: 'Matrix3fv', value: null},
 				'tDiffuse[0]': {type: 'texture', value: renderer.createTexture({url: '/textures/tree/bark.png', anisotropy: Config.textureAnisotropy})},
 				'tDiffuse[1]': {type: 'texture', value: renderer.createTexture({url: '/textures/tree/maple.png', anisotropy: Config.textureAnisotropy})}

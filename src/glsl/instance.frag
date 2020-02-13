@@ -43,7 +43,8 @@ void main() {
     float specular = 0.01;
 
     outColor = vec4(diffuse.rgb, 1.);
-    outNormal = vNormal * 0.5 + 0.5;
+    vec3 normal = vNormal * (float(gl_FrontFacing) * 2.0 - 1.0);
+    outNormal = normal * 0.5 + 0.5;
     outPosition = vPosition;
     outMetallicRoughness = vec4(metalness, roughness, specular, 1.);
 }

@@ -15,21 +15,34 @@ out vec2 vUv;
 flat out int vMesh;
 
 uniform mat4 projectionMatrix;
-uniform mat4 modelViewMatrix;
-uniform mat3 normalMatrix;
+uniform mat4 modelMatrix;
+uniform mat4 viewMatrix;
 
 #define TILE_SIZE 611.496226
+
+mat2 rotate2d(float angle){
+    return mat2(
+        cos(angle), -sin(angle),
+        sin(angle), cos(angle)
+    );
+}
 
 void main() {
     vUv = uv;
     vMesh = int(mesh);
 
-    vec3 normal = normalize(normalMatrix * normal);
-    vNormal = normal;
+    vec3 mNormal = normalize((modelMatrix * vec4(normal, 0.)).xyz);
+    mNormal.xz = mNormal.xz * rotate2d(float(gl_InstanceID));
+    vec3 mvNormal = normalize((viewMatrix * vec4(mNormal, 0.)).xyz);
+    vNormal = mvNormal;
 
     vec3 transformedPosition = position;
+    transformedPosition.xz = transformedPosition.xz * rotate2d(float(gl_InstanceID));
     transformedPosition += iPosition;
     transformedPosition.xz += iOffset;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(transformedPosition, 1.0);
-    vPosition = vec3(modelViewMatrix * vec4(transformedPosition, 1.0));
+
+    vec4 mvPosition = viewMatrix * modelMatrix * vec4(transformedPosition, 1.0);
+    vPosition = vec3(mvPosition);
+
+    gl_Position = projectionMatrix * mvPosition;
 }

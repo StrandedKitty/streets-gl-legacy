@@ -391,9 +391,10 @@ function animate(rafTime) {
 
 			RP.culling = false;
 
-			let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-			instanceMaterialDepth.uniforms.modelViewMatrix.value = modelViewMatrix;
-			instanceMaterialDepth.updateUniform('modelViewMatrix');
+			instanceMaterialDepth.uniforms.modelMatrix.value = object.matrixWorld;
+			instanceMaterialDepth.updateUniform('modelMatrix');
+			instanceMaterialDepth.uniforms.viewMatrix.value = rCamera.matrixWorldInverse;
+			instanceMaterialDepth.updateUniform('viewMatrix');
 
 			object.draw(instanceMaterialDepth);
 
@@ -484,12 +485,10 @@ function animate(rafTime) {
 
 		const object = batchesInstanced.trees.mesh;
 
-		let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-		let normalMatrix = mat4.normalMatrix(modelViewMatrix);
-		instanceMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
-		instanceMaterial.uniforms.normalMatrix.value = normalMatrix;
-		instanceMaterial.updateUniform('modelViewMatrix');
-		instanceMaterial.updateUniform('normalMatrix');
+		instanceMaterial.uniforms.modelMatrix.value = object.matrixWorld;
+		instanceMaterial.updateUniform('modelMatrix');
+		instanceMaterial.uniforms.viewMatrix.value = rCamera.matrixWorldInverse;
+		instanceMaterial.updateUniform('viewMatrix');
 
 		object.draw(instanceMaterial);
 
