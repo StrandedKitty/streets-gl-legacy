@@ -141,12 +141,8 @@ export default class Way {
 	}
 
 	getFlattenVertices(outerRing) {
-		const vertices = [];
+		let vertices = outerRing.vertices.flat();
 		const holes = [];
-
-		for(let j = 0; j < outerRing.vertices.length; j++) {
-			vertices.push(outerRing.vertices[j].x, outerRing.vertices[j].z);
-		}
 
 		for(let i = 0; i < this.rings.length; i++) {
 			const ring = this.rings[i];
@@ -154,9 +150,7 @@ export default class Way {
 			if(ring.type === 'inner') {
 				holes.push(vertices.length / 2);
 
-				for(let j = 0; j < ring.vertices.length; j++) {
-					vertices.push(ring.vertices[j].x, ring.vertices[j].z);
-				}
+				vertices = vertices.concat(ring.vertices.flat());
 			}
 		}
 
@@ -167,7 +161,7 @@ export default class Way {
 		for(let i = 0; i < ring.vertices.length - 1; i++) {
 			const vertex = ring.vertices[i];
 
-			this.AABB.includePoint({x: vertex.x, y: vertex.z});
+			this.AABB.includePoint(vertex[0], vertex[1]);
 		}
 	}
 

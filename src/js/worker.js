@@ -154,7 +154,7 @@ function processData(x, y, data, pivot) {
 
 			for (let i = 0; i < item.nodes.length; i++) {
 				let vertex = nodes.get(item.nodes[i]);
-				vertices.push({x: vertex.x, z: vertex.z});
+				vertices.push([vertex.x, vertex.z]);
 			}
 
 			way.addRing({
@@ -209,7 +209,7 @@ function processData(x, y, data, pivot) {
 
 						for (let i = 0; i < member.nodes.length; i++) {
 							let vertex = nodes.get(member.nodes[i]);
-							vertices.push({x: vertex.x, z: vertex.z});
+							vertices.push([vertex.x, vertex.z]);
 						}
 
 						rings.push({
@@ -253,7 +253,7 @@ function processData(x, y, data, pivot) {
 
 							for (let i = 0; i < ringNodes.length; i++) {
 								let vertex = nodes.get(ringNodes[i]);
-								vertices.push({x: vertex.x, z: vertex.z});
+								vertices.push([vertex.x, vertex.z]);
 							}
 
 							rings.push({

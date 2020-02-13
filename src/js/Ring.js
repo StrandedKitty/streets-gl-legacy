@@ -57,7 +57,7 @@ export default class Ring {
 		for(let i = 0; i < this.nodes.length; i++) {
 			let point1 = this.vertices[i];
 			let point2 = this.vertices[i+1] || this.vertices[0];
-			sum += (point2.x - point1.x) * (point2.z + point1.z);
+			sum += (point2[0] - point1[0]) * (point2[1] + point1[1]);
 		}
 
 		return sum > 0;
@@ -76,7 +76,7 @@ export default class Ring {
 		for(let i = 0; i < this.vertices.length - 1; i++) {
 			let point1 = this.vertices[i];
 			let point2 = this.vertices[i + 1];
-			length += Math.sqrt((point2.x - point1.x) ** 2 + (point2.z - point1.z) ** 2);
+			length += Math.sqrt((point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2);
 		}
 
 		return length;
@@ -90,8 +90,8 @@ export default class Ring {
 		const material = this.geometry.material;
 
 		for(let i = 0; i < this.vertices.length - 1; i++) {
-			let vertex = this.vertices[i];
-			let nextVertex = this.vertices[i + 1];
+			let vertex = {x: this.vertices[i][0], z: this.vertices[i][1]};
+			let nextVertex = {x: this.vertices[i + 1][0], z: this.vertices[i + 1][1]};
 
 			this.parent.mesh.vertices.push(nextVertex.x, minHeight, nextVertex.z);
 			this.parent.mesh.vertices.push(vertex.x, height, vertex.z);
@@ -134,8 +134,8 @@ export default class Ring {
 		let currentSegment = -1;
 
 		for(let i = 0; i < this.vertices.length - 1; i++) {
-			let vertex = new vec2(this.vertices[i].x, this.vertices[i].z);
-			let nextVertex = new vec2(this.vertices[i + 1].x, this.vertices[i + 1].z);
+			let vertex = new vec2(this.vertices[i][0], this.vertices[i][1]);
+			let nextVertex = new vec2(this.vertices[i + 1][0], this.vertices[i + 1][1]);
 
 			let segmentVector = vec2.sub(nextVertex, vertex);
 			let length = Math.sqrt(segmentVector.x ** 2 + segmentVector.y ** 2);
@@ -143,7 +143,7 @@ export default class Ring {
 			if(i > 0) {
 				segmentVector = vec2.normalize(segmentVector);
 
-				let prevVertex = new vec2(this.vertices[i - 1].x, this.vertices[i - 1].z);
+				let prevVertex = new vec2(this.vertices[i - 1][0], this.vertices[i - 1][1]);
 				let prevSegmentVector = vec2.normalize(vec2.sub(vertex, prevVertex));
 
 				let dot = vec2.dot(segmentVector, prevSegmentVector);
@@ -174,8 +174,8 @@ export default class Ring {
 		let currentSegmentPosition = 0;
 
 		for(let i = 0; i < this.vertices.length - 1; i++) {
-			let vertex = new vec2(this.vertices[i].x, this.vertices[i].z);
-			let nextVertex = new vec2(this.vertices[i + 1].x, this.vertices[i + 1].z);
+			let vertex = new vec2(this.vertices[i][0], this.vertices[i][1]);
+			let nextVertex = new vec2(this.vertices[i + 1][0], this.vertices[i + 1][1]);
 
 			let segmentVector = vec2.sub(nextVertex, vertex);
 			let length = Math.sqrt(segmentVector.x ** 2 + segmentVector.y ** 2);
@@ -206,13 +206,13 @@ export default class Ring {
 			let cProgress = 0;
 			let nodeProgress = 0;
 
-			points.push(this.vertices[0].x, this.vertices[0].z);
+			points.push(this.vertices[0][0], this.vertices[0][1]);
 
 			for(let i = 0; i < number - 1; i++) {
 				while(availableDistance < distance && targetNode < this.vertices.length - 1) {
 					edge = [
-						this.vertices[targetNode],
-						this.vertices[targetNode + 1]
+						{x: this.vertices[targetNode][0], z: this.vertices[targetNode][1]},
+						{x: this.vertices[targetNode + 1][0], z: this.vertices[targetNode + 1][1]}
 					];
 
 					edgeLength = Math.sqrt((edge[1].x - edge[0].x) ** 2 + (edge[1].z - edge[0].z) ** 2);
@@ -270,10 +270,10 @@ export default class Ring {
 		for(let i = 0; i < physicalVertices; i++) {
 			let a, b, c;
 
-			a = new vec2(this.vertices[i].x, this.vertices[i].z);
+			a = new vec2(this.vertices[i][0], this.vertices[i][1]);
 
-			if(this.vertices[i + 1]) b = new vec2(this.vertices[i + 1].x, this.vertices[i + 1].z);
-			if(this.vertices[i - 1]) c = new vec2(this.vertices[i - 1].x, this.vertices[i - 1].z);
+			if(this.vertices[i + 1]) b = new vec2(this.vertices[i + 1][0], this.vertices[i + 1][1]);
+			if(this.vertices[i - 1]) c = new vec2(this.vertices[i - 1][0], this.vertices[i - 1][1]);
 
 			if(c === undefined) {
 				const dir = vec2.normalize(vec2.sub(b, a));
