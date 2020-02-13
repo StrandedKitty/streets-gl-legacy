@@ -7,7 +7,7 @@ export default class BatchInstanced {
 		this.renderer = renderer;
 
 		this.tiles = new Map();
-		this.pivot = {x: 0, y: 0};
+		this.pivot = {x: 0, z: 0};
 
 		this.mergedAttributes = {};
 
