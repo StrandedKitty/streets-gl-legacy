@@ -29,7 +29,7 @@ function load(tile) {
 }
 
 function overpass(x, y) {
-	let url = 'https://overpass.nchc.org.tw/api/interpreter?data=';
+	let url = 'https://overpass.kumi.systems/api/interpreter?data=';
 	let position = [
 		tile2degrees(x, y + 1),
 		tile2degrees(x + 1, y)

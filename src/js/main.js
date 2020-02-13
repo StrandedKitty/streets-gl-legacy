@@ -783,11 +783,25 @@ function animate(rafTime) {
 
 			const deleteCount = tiles.size - Config.maxTiles;
 
-			const arr = Array.from(tiles.keys());
-			for(let i = 0; i < deleteCount; i++) {
-				const id = arr[i];
-				const tile = tiles.get(id);
-				if(tile.loaded) {
+			if(deleteCount > 0) {
+				const tilesArray = [];
+
+				for(const [tileId, tile] of tiles.entries()) {
+					if(tile.loaded) {
+						const worldPosition = tile2meters(tile.x + 0.5, tile.y + 0.5);
+
+						tilesArray.push({
+							distance: Math.sqrt((worldPosition.x - camera.position.x) ** 2 + (worldPosition.z - camera.position.z) ** 2),
+							id: tileId
+						});
+					}
+				}
+
+				tilesArray.sort((a, b) => (a.distance > b.distance) ? -1 : 1);
+
+				for(let i = 0; i < deleteCount; i++) {
+					const tile = tiles.get(tilesArray[i].id);
+
 					tile.delete();
 				}
 			}
