@@ -52,7 +52,8 @@ export default class vec2 {
 	}
 
 	static dot(a, b) {
-		return (a.x * b.x) + (a.y * b.y);
+		const num = (a.x * b.x) + (a.y * b.y);
+		return num <= -1 ? -1 : num >= 1 ? 1 : num;
 	}
 
 	static copy(v) {
