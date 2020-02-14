@@ -652,6 +652,8 @@ function animate(rafTime) {
 				const bbox = {min: data.bboxMin, max: data.bboxMax};
 				const pivot = tile2meters(this.x, this.y + 1);
 
+				if(isNaN(bbox.min[0]) || isNaN(bbox.max[0])) console.error('Bounding box for tile ' + name + ' was generated incorrectly');
+
 				if(instances.trees.length > 0) {
 					let treesPositions = new Float32Array(instances.trees.length / 2 * 3);
 					for(let i = 0; i < instances.trees.length / 2; i++) {

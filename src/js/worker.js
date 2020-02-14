@@ -131,7 +131,9 @@ function processData(x, y, data, pivot) {
 		const node = new Node(item.id, item.lat, item.lon, item.tags, metersPivot);
 		nodes.set(item.id, node);
 
-		meshArrays.instances.trees.push(new Float32Array(node.instances.trees));
+		if(node.instances.trees.length > 0) {
+			meshArrays.instances.trees.push(new Float32Array(node.instances.trees));
+		}
 	}
 
 	const osmWays = new Map();
@@ -331,9 +333,69 @@ function processData(x, y, data, pivot) {
 
 
 			for(const instanceName in way.instances) {
-				meshArrays.instances[instanceName].push(way.instances[instanceName]);
+				if(way.instances[instanceName].length > 0) {
+					meshArrays.instances[instanceName].push(new Float32Array(way.instances[instanceName]));
+				}
 			}
 		}
+	}
+
+	{
+		let vertices = [];
+		let normals = [];
+		let colors = [];
+		let uvs = [];
+		let textures = [];
+
+		for(let i = 0; i < meshArrays.instances.trees.length; i++) {
+			for(let j = 0; j < 0; j++) {
+				const pivot = meshArrays.instances.trees[i];
+				const y = 10 + j * 5;
+
+				vertices.push(
+					pivot[0] + 0, y, pivot[1] + 0,
+					pivot[0] + 5, y, pivot[1] + 5,
+					pivot[0] + 5, y, pivot[1] + 0,
+					pivot[0] + 0, y, pivot[1] + 0,
+					pivot[0] + 0, y, pivot[1] + 5,
+					pivot[0] + 5, y, pivot[1] + 5
+				);
+				normals.push(
+					0, 1, 0,
+					0, 1, 0,
+					0, 1, 0,
+					0, 1, 0,
+					0, 1, 0,
+					0, 1, 0
+				);
+				colors.push(
+					1, 0, 1,
+					1, 0, 1,
+					1, 0, 1,
+					1, 0, 1,
+					1, 0, 1,
+					1, 0, 1
+				);
+				uvs.push(
+					0, 0,
+					0, 1,
+					1, 1,
+					0, 0,
+					1, 0,
+					1, 1
+				);
+				textures.push(0, 0, 0, 0, 0, 0);
+			}
+		}
+
+		meshData.ids.push(Math.floor(Math.random() * 100000));
+		meshData.offsets.push(vertexOffset / 3);
+
+		meshArrays.vertices.push(new Float32Array(vertices));
+		meshArrays.normals.push(new Float32Array(normals));
+		meshArrays.colors.push(new Uint8Array(colors));
+		meshArrays.uvs.push(new Float32Array(uvs));
+		meshArrays.textures.push(new Float32Array(textures));
 	}
 
 	meshData.vertices = ModelUtils.mergeTypedArrays(meshArrays.vertices);
@@ -345,7 +407,6 @@ function processData(x, y, data, pivot) {
 	for(const instanceName in meshArrays.instances) {
 		meshData.instances[instanceName] = ModelUtils.mergeTypedArrays(meshArrays.instances[instanceName]);
 	}
-
 
 	const tileSize = 40075016.7 / (1 << 16);
 

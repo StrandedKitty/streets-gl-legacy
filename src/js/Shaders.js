@@ -63,6 +63,7 @@ class Shaders {
 
 		this.includes.tonemapping = require('../glsl/includes/tonemapping.glsl').default;
 		this.includes.shadowmapping = require('../glsl/includes/shadowmapping.glsl').default;
+		this.includes.noise = require('../glsl/includes/noise.glsl').default;
 
 		this.addIncludes();
 	}

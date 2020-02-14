@@ -11,13 +11,13 @@ class Tree {
 	}
 
 	async load() {
-		this.data = await load('/models/tree.gltf', GLTFLoader);
+		this.data = await load('/models/tree_billboard.gltf', GLTFLoader);
 		this.processData();
 	}
 
 	processData() {
 		this.mesh = ModelUtils.combineAttributes({
-			primitives: [this.data.meshes[0].primitives[0], this.data.meshes[1].primitives[0]]
+			primitives: [this.data.meshes[0].primitives[0]]
 		});
 
 		this.loader.loadComplete();
