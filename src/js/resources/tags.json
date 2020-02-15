@@ -25,6 +25,9 @@
 	"height": {
 		"default": {"height": "@units"}
 	},
+	"building:height": {
+		"default": {"height": "@units"}
+	},
 	"min_height": {
 		"default": {"minHeight": "@units"}
 	},
