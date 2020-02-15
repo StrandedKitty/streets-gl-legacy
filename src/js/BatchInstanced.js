@@ -74,7 +74,7 @@ export default class BatchInstanced {
 	generateMesh() {
 		const mesh = this.renderer.createMeshInstanced({
 			vertices: Models.Tree.mesh.attributes.POSITION,
-			indices: Models.Tree.mesh.indices,
+			indices: new Uint32Array(Models.Tree.mesh.indices),
 			instances: 0
 		});
 
