@@ -46,7 +46,7 @@ const features = {
 };
 
 let ground;
-let mesh, groundMaterial, groundMaterialDepth, wrapper, buildings, buildingMaterial, buildingDepthMaterial, instanceMeshes;
+let groundMaterial, groundMaterialDepth, wrapper, buildings, buildingMaterial, buildingDepthMaterial, instanceMeshes;
 let quad, quadMaterial;
 
 let instanceMaterial, instanceMaterialDepth;
@@ -128,19 +128,7 @@ function init() {
 	buildingMaterial = buildingMaterialInstance.material;
 	buildingDepthMaterial = buildingMaterialInstance.depthMaterial;
 
-	mesh = RP.createMesh({
-		vertices: new Float32Array([
-			-5, 0, -5,
-			0, 0, 5,
-			5, 0, -5
-		])
-	});
-
-	wrapper.add(mesh);
 	console.log(scene);
-
-	let position = degrees2meters(49.8969, 36.2894);
-	mesh.setPosition(position.x, 0, position.z);
 
 	const groundShape = new Shapes.planeSubdivided(tileSize * 64, tileSize * 64, 32, 32);
 

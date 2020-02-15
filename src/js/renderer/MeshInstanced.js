@@ -60,6 +60,7 @@ export default class MeshInstanced extends Object3D {
 
 			this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
 		} else {
+			console.log(this.instances);
 			this.gl.drawArraysInstanced(this.gl[material.drawMode], 0, this.vertices.length / 3, this.instances);
 		}
 	}
