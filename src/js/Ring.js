@@ -32,7 +32,7 @@ export default class Ring {
 			let points = this.distributeNodes({
 				interval: 8,
 				skipOutside: true,
-				random: 1.5
+				random: 1
 			});
 
 			this.parent.instances.trees.push(...points);
@@ -246,7 +246,7 @@ export default class Ring {
 				}
 
 				if(params.skipOutside) {
-					if(point.x >= 0 && point.x < this.tileSize && point.z >= 0 && point.z < this.tileSize) {
+					if(point.x >= 0 && point.x < this.parent.tileSize && point.z >= 0 && point.z < this.parent.tileSize) {
 						points.push(transformedPoint.x, transformedPoint.z);
 					}
 				} else {
