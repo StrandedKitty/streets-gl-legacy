@@ -455,18 +455,18 @@ function intersectMultipolygons(p0, p1) {
 	const points1 = [];
 
 	for (let i = 0; i < p0.length; i++) {
-		for (let j = 0; j < p0[i].vertices.length; j++) points0.push([p0[i].vertices[j].x, p0[i].vertices[j].z]);
+		for (let j = 0; j < p0[i].vertices.length; j++) points0.push([p0[i].vertices[j][0], p0[i].vertices[j][1]]);
 	}
 
 	for (let i = 0; i < p1.length; i++) {
-		for (let j = 0; j < p1[i].vertices.length; j++) points1.push([p1[i].vertices[j].x, p1[i].vertices[j].z]);
+		for (let j = 0; j < p1[i].vertices.length; j++) points1.push([p1[i].vertices[j][0], p1[i].vertices[j][1]]);
 	}
 
 	for (let i = 0; i < p0.length; i++) {
 		if (p0[i].type === 'outer') {
 			const polygon = [];
 
-			for (let j = 0; j < p0[i].vertices.length; j++) polygon.push([p0[i].vertices[j].x, p0[i].vertices[j].z]);
+			for (let j = 0; j < p0[i].vertices.length; j++) polygon.push([p0[i].vertices[j][0], p0[i].vertices[j][1]]);
 
 			for (let j = 0; j < points1.length; j++) {
 				if (classifyPoint(polygon, points1[j]) === -1) {
@@ -480,7 +480,7 @@ function intersectMultipolygons(p0, p1) {
 		if (p1[i].type === 'outer') {
 			const polygon = [];
 
-			for (let j = 0; j < p1[i].vertices.length; j++) polygon.push([p1[i].vertices[j].x, p1[i].vertices[j].z]);
+			for (let j = 0; j < p1[i].vertices.length; j++) polygon.push([p1[i].vertices[j][0], p1[i].vertices[j][1]]);
 
 			for (let j = 0; j < points0.length; j++) {
 				if (classifyPoint(polygon, points0[j]) === -1) {
