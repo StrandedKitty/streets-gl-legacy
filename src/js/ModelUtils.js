@@ -43,6 +43,33 @@ export default class ModelUtils {
 		return {attributes: attributes, indices: mergedIndices};
 	}
 
+	static toNonIndexed(params) {
+		const attributes = params.attributes;
+		const indices = params.indices;
+		const components = {};
+		const dst = {};
+
+		const uniqueVertices = attributes.POSITION.length / 3;
+		const totalVertices = indices.length;
+
+		for(const attributeName in attributes) {
+			const attributeComponents = attributes[attributeName].length / uniqueVertices;
+			dst[attributeName] = new attributes[attributeName].constructor(totalVertices * attributeComponents);
+			components[attributeName] = attributeComponents;
+		}
+
+		for(let i = 0; i < indices.length; i++) {
+			const index = indices[i];
+
+			for(const attributeName in attributes) {
+				const sub = attributes[attributeName].subarray(index * components[attributeName], (index + 1) * components[attributeName]);
+				dst[attributeName].set(sub, i * components[attributeName]);
+			}
+		}
+
+		return {attributes: dst};
+	}
+
 	static mergeTypedArrays(typedArrays) {
 		if(typedArrays.length > 0) {
 			let length = 0;

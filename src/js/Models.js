@@ -16,8 +16,13 @@ class Tree {
 	}
 
 	processData() {
-		this.mesh = ModelUtils.combineAttributes({
+		const combinedData = ModelUtils.combineAttributes({
 			primitives: [this.data.meshes[0].primitives[0]]
+		});
+
+		this.mesh = ModelUtils.toNonIndexed({
+			attributes: combinedData.attributes,
+			indices: combinedData.indices
 		});
 
 		this.loader.loadComplete();
