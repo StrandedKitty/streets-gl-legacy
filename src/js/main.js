@@ -645,19 +645,22 @@ function animate(rafTime) {
 				if(instances.trees.length > 0) {
 					const positions = new Float32Array(instances.trees.length / 2 * 3);
 					const ids = new Uint16Array(instances.trees.length / 2);
+					const types = new Uint8Array(instances.trees.length / 2);
 
 					for(let i = 0; i < instances.trees.length / 2; i++) {
 						positions[i * 3] = instances.trees[i * 2];
 						positions[i * 3 + 1] = 0;
 						positions[i * 3 + 2] = instances.trees[i * 2 + 1];
 						ids[i] = i;
+						types[i] = i % 2;
 					}
 
 					batchesInstanced.trees.addTile({
 						tile: this,
 						attributes: {
 							iPosition: positions,
-							iId: ids
+							iId: ids,
+							iType: types
 						}
 					});
 				}

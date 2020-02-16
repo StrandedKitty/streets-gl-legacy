@@ -8,17 +8,13 @@ out vec4 outColor;
 in vec3 vNormal;
 in vec3 vPosition;
 in vec2 vUv;
-flat in int vMesh;
+flat in int vType;
 
-uniform sampler2D tDiffuse[1];
+uniform sampler2D tDiffuse[2];
 
 vec4 readDiffuse(const vec2 uv) {
-    if(vMesh == 0) return texture(tDiffuse[0], uv);
-    else return vec4(1, 0, 1, 1);
-}
-
-vec4 readDiffuseLod(const vec2 uv, const float lod) {
-    if(vMesh == 0) return textureLod(tDiffuse[0], uv, lod);
+    if(vType == 0) return texture(tDiffuse[0], uv);
+    if(vType == 1) return texture(tDiffuse[1], uv);
     else return vec4(1, 0, 1, 1);
 }
 

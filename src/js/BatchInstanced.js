@@ -52,6 +52,9 @@ export default class BatchInstanced {
 		this.mesh.setAttributeData('iId', this.mergedAttributes.iId);
 		this.mesh.updateAttribute('iId');
 
+		this.mesh.setAttributeData('iType', this.mergedAttributes.iType);
+		this.mesh.updateAttribute('iType');
+
 		if(this.mergedAttributes.iPosition) this.mesh.instances = this.mergedAttributes.iPosition.length / 3;
 		else this.mesh.instances = 0;
 
@@ -134,5 +137,15 @@ export default class BatchInstanced {
 			instanced: true
 		});
 		mesh.setAttributeData('iId', null);
+
+		mesh.addAttribute({
+			name: 'iType',
+			size: 1,
+			type: 'UNSIGNED_BYTE',
+			dataFormat: 'integer',
+			normalized: false,
+			instanced: true
+		});
+		mesh.setAttributeData('iType', null);
 	}
 }

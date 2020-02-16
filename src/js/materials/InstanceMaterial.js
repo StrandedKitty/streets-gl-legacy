@@ -13,7 +13,9 @@ export default class InstanceMaterial {
 				viewMatrix: {type: 'Matrix4fv', value: null},
 				normalMatrix: {type: 'Matrix3fv', value: null},
 				'tDiffuse[0]': {type: 'texture', value: renderer.createTexture({url: '/textures/tree/tree_beech_diffuse.png', anisotropy: Config.textureAnisotropy})},
-				'tNormal': {type: 'texture', value: renderer.createTexture({url: '/textures/tree/tree_beech_normal.png', anisotropy: Config.textureAnisotropy})},
+				'tDiffuse[1]': {type: 'texture', value: renderer.createTexture({url: '/textures/tree/tree_linden_diffuse.png', anisotropy: Config.textureAnisotropy})},
+				'tNormal[0]': {type: 'texture', value: renderer.createTexture({url: '/textures/tree/tree_beech_normal.png', anisotropy: Config.textureAnisotropy})},
+				'tNormal[1]': {type: 'texture', value: renderer.createTexture({url: '/textures/tree/tree_linden_normal.png', anisotropy: Config.textureAnisotropy})},
 				'tVolumeNormal': {type: 'texture', value: renderer.createTexture({url: '/textures/tree/tree_volume_normal.png', anisotropy: Config.textureAnisotropy})}
 			}
 		});

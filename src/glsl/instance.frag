@@ -10,21 +10,23 @@ layout(location = 3) out vec4 outMetallicRoughness;
 in vec3 vNormal;
 in vec3 vPosition;
 in vec2 vUv;
-flat in int vMesh;
 flat in int vInstanceID;
+flat in int vType;
 
-uniform sampler2D tDiffuse[1];
-uniform sampler2D tNormal;
+uniform sampler2D tDiffuse[2];
+uniform sampler2D tNormal[2];
 uniform sampler2D tVolumeNormal;
 
 vec4 readDiffuse(const vec2 uv) {
-    if(vMesh == 0) return texture(tDiffuse[0], uv);
+    if(vType == 0) return texture(tDiffuse[0], uv);
+    if(vType == 1) return texture(tDiffuse[1], uv);
     else return vec4(1, 0, 1, 1);
 }
 
-vec4 readDiffuseLod(const vec2 uv, const float lod) {
-    if(vMesh == 0) return textureLod(tDiffuse[0], uv, lod);
-    else return vec4(1, 0, 1, 1);
+vec4 readNormal(const vec2 uv) {
+    if(vType == 0) return texture(tNormal[0], uv);
+    if(vType == 1) return texture(tNormal[1], uv);
+    else return vec4(0, 1, 0, 1);
 }
 
 vec3 getNormal() {
@@ -40,7 +42,7 @@ vec3 getNormal() {
     vec3 b = normalize(cross(ng, t));
     mat3 tbn = mat3(t, b, ng);
 
-    vec3 map1 = texture(tNormal, vUv).rgb * 2. - 1.;
+    vec3 map1 = readNormal(vUv).rgb * 2. - 1.;
     vec3 map2 = texture(tVolumeNormal, vUv).rgb * 2. - 1.;
 
     vec3 normal = normalize(tbn * mix(map1, map2, 0.5));
@@ -68,7 +70,7 @@ vec3 hsv2rgb(vec3 c) {
 
 vec4 modifyTreeColor(const vec4 color) {
     vec3 hsv = rgb2hsv(color.rgb);
-    hsv.x = 0.1 + noise(float(vInstanceID)) * 0.1;
+    hsv.x = 0.15 + noise(float(vInstanceID)) * 0.1;
 
     return vec4(hsv2rgb(hsv), color.a);
 }
