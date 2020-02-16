@@ -23,7 +23,7 @@ vec4 readDiffuseLod(const vec2 uv, const float lod) {
 }
 
 void main() {
-    if(readDiffuseLod(vUv, 0.).a < 0.5) discard;
+    if(readDiffuse(vUv).a < 0.5) discard;
 
     outColor = vec4(vec3(-vPosition.z), 1.);
 }

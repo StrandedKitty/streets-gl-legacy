@@ -70,14 +70,12 @@ vec4 modifyTreeColor(const vec4 color) {
     vec3 hsv = rgb2hsv(color.rgb);
     hsv.x = 0.1 + noise(float(vInstanceID)) * 0.1;
 
-    return vec4(hsv2rgb(hsv), 1.);
+    return vec4(hsv2rgb(hsv), color.a);
 }
 
 void main() {
     vec4 diffuse = modifyTreeColor(readDiffuse(vUv));
-    vec4 diffuseLod0 = readDiffuseLod(vUv, 0.);
-    if(diffuseLod0.a < 0.5) discard;
-    if(diffuse.a < 1.) diffuse = diffuseLod0;
+    if(diffuse.a < 0.5) discard;
 
     float metalness = 0.01;
     float roughness = 0.9;

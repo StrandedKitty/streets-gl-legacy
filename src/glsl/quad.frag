@@ -165,7 +165,7 @@ vec3 getIBLContribution(MaterialInfo materialInfo, vec3 n, vec3 v) {
     vec2 brdfSamplePoint = clamp(vec2(NdotV, materialInfo.perceptualRoughness), vec2(0.0, 0.0), vec2(1.0, 1.0));
     vec2 brdf = texture(tBRDF, brdfSamplePoint).rg;
 
-    vec4 diffuseSample = textureLod(sky, n, 0.);
+    vec4 diffuseSample = texture(sky, n);
 
     vec4 specularSample = textureLod(sky, reflection, lod);
 
