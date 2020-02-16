@@ -9,6 +9,7 @@ in vec2 uv;
 in uint mesh;
 in vec3 iPosition;
 in vec2 iOffset;
+in uint iId;
 out vec3 vPosition;
 out vec3 vNormal;
 out vec2 vUv;
@@ -31,18 +32,18 @@ mat2 rotate2d(float angle){
 void main() {
     vUv = uv;
     vMesh = int(mesh);
-    vInstanceID = gl_InstanceID;
+    vInstanceID = int(iId);
 
     vec3 mNormal = normalize((modelMatrix * vec4(normal, 0.)).xyz);
-    mNormal.xz = mNormal.xz * rotate2d(float(gl_InstanceID));
+    mNormal.xz = mNormal.xz * rotate2d(float(vInstanceID));
     vec3 mvNormal = normalize((viewMatrix * vec4(mNormal, 0.)).xyz);
     vNormal = mvNormal;
 
-    float scaleFactor = noise(float(gl_InstanceID));
+    float scaleFactor = noise(float(vInstanceID));
     float scale = scaleFactor * 1.5 + 1.;
 
     vec3 transformedPosition = position * scale;
-    transformedPosition.xz = transformedPosition.xz * rotate2d(float(gl_InstanceID));
+    transformedPosition.xz = transformedPosition.xz * rotate2d(float(vInstanceID));
     transformedPosition += iPosition;
     transformedPosition.xz += iOffset;
 

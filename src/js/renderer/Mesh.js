@@ -52,11 +52,11 @@ export default class Mesh extends Object3D {
 			vao.bind();
 		}
 
-		//if(this.indexed) this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+		if(this.indexed) this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
 
 		this.gl.drawArrays(this.gl[material.drawMode], 0, this.vertices.length / 3);
 
-		//if(this.indexed) this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
+		if(this.indexed) this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, null);
 	}
 
 	createIndexBuffer() {

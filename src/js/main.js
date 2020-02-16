@@ -643,17 +643,21 @@ function animate(rafTime) {
 				if(isNaN(bbox.min[0]) || isNaN(bbox.max[0])) console.error('Bounding box for tile ' + name + ' was generated incorrectly');
 
 				if(instances.trees.length > 0) {
-					let treesPositions = new Float32Array(instances.trees.length / 2 * 3);
+					const positions = new Float32Array(instances.trees.length / 2 * 3);
+					const ids = new Uint16Array(instances.trees.length / 2);
+
 					for(let i = 0; i < instances.trees.length / 2; i++) {
-						treesPositions[i * 3] = instances.trees[i * 2];
-						treesPositions[i * 3 + 1] = 0;
-						treesPositions[i * 3 + 2] = instances.trees[i * 2 + 1];
+						positions[i * 3] = instances.trees[i * 2];
+						positions[i * 3 + 1] = 0;
+						positions[i * 3 + 2] = instances.trees[i * 2 + 1];
+						ids[i] = i;
 					}
 
 					batchesInstanced.trees.addTile({
 						tile: this,
 						attributes: {
-							iPosition: treesPositions
+							iPosition: positions,
+							iId: ids
 						}
 					});
 				}
