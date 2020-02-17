@@ -57,5 +57,8 @@
 		"footway": {"type": "road", "roadWidth": 3},
 		"cycleway": {"type": "road", "roadWidth": 3},
 		"path": {"type": "road", "roadWidth": 3}
+	},
+	"emergency": {
+		"fire_hydrant": {"type": "hydrant"}
 	}
 }

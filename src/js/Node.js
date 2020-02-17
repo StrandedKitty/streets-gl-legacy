@@ -8,7 +8,8 @@ export default class Node {
 		this.lon = lon;
 		this.tags = tags || {};
 		this.instances = {
-			trees: []
+			trees: [],
+			hydrants: []
 		};
 
 		let position = degrees2meters(this.lat, this.lon);
@@ -21,6 +22,10 @@ export default class Node {
 
 		if(this.properties.type === 'tree') {
 			this.instances.trees.push(this.x, this.z);
+		}
+
+		if(this.properties.type === 'hydrant') {
+			this.instances.hydrants.push(this.x, this.z);
 		}
 	}
 }

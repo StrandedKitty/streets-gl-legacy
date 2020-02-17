@@ -21,12 +21,13 @@ import Skybox from "./Skybox";
 import BuildingMaterial from "./materials/BuildingMaterial";
 import GroundMaterial from "./materials/GroundMaterial";
 import CSM from "./CSM";
-import InstanceMaterial from "./materials/InstanceMaterial";
+import TreeMaterial from "./materials/TreeMaterial";
 import Models from "./Models";
 import SSAA from "./SSAA";
 import VolumetricLighting from "./materials/VolumetricLighting";
 import BatchInstanced from "./BatchInstanced";
 import Shapes from "./renderer/Shapes";
+import InstanceMaterial from "./materials/InstanceMaterial";
 
 const SunCalc = require('suncalc');
 
@@ -49,8 +50,6 @@ let ground;
 let groundMaterial, groundMaterialDepth, wrapper, buildings, buildingMaterial, buildingDepthMaterial, instanceMeshes;
 let quad, quadMaterial;
 
-let instanceMaterial, instanceMaterialDepth;
-
 const gui = new dat.GUI();
 let time = 0, delta = 0;
 let gBuffer, smaa, ssao, blur, ssaa, volumetricLighting;
@@ -60,10 +59,11 @@ let lightDirection = new vec3(-1, -0.4, -1);
 let csm;
 
 let batchesInstanced = {
-	trees: null
+	trees: null,
+	hydrants: null
 };
 
-Models.callback = init;
+Models.onload = init;
 
 function init() {
 	RP = new Renderer(canvas);
@@ -109,10 +109,6 @@ function init() {
 	groundMaterial = groundMaterialInstance.material;
 	groundMaterialDepth = groundMaterialInstance.depthMaterial;
 
-	const instanceMaterialInstance = new InstanceMaterial(RP);
-	instanceMaterial = instanceMaterialInstance.material;
-	instanceMaterialDepth = instanceMaterialInstance.depthMaterial;
-
 	const sky = RP.createTextureCube({
 		urls: [
 			'/textures/sky/px.png',
@@ -145,9 +141,17 @@ function init() {
 
 	wrapper.add(ground);
 
-	batchesInstanced.trees = new BatchInstanced(RP, {});
-	batchesInstanced.trees.generateMesh();
+	batchesInstanced.trees = new BatchInstanced(RP, {
+		material: new TreeMaterial(RP),
+		attributes: Models.Tree.mesh.attributes
+	});
 	wrapper.add(batchesInstanced.trees.mesh);
+
+	batchesInstanced.hydrants = new BatchInstanced(RP, {
+		material: new InstanceMaterial(RP),
+		attributes: Models.Hydrant.mesh.attributes
+	});
+	wrapper.add(batchesInstanced.hydrants.mesh);
 
 	gBuffer = new GBuffer(RP, window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA, [
 		{
@@ -371,20 +375,22 @@ function animate(rafTime) {
 			}
 		}
 
-		{
-			const object = batchesInstanced.trees.mesh;
+		for(const batchName in batchesInstanced) {
+			const batch = batchesInstanced[batchName];
+			const object = batch.mesh;
+			const material = batch.materialDepth;
 
-			instanceMaterialDepth.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
-			instanceMaterialDepth.use();
+			material.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+			material.use();
 
 			RP.culling = false;
 
-			instanceMaterialDepth.uniforms.modelMatrix.value = object.matrixWorld;
-			instanceMaterialDepth.updateUniform('modelMatrix');
-			instanceMaterialDepth.uniforms.viewMatrix.value = rCamera.matrixWorldInverse;
-			instanceMaterialDepth.updateUniform('viewMatrix');
+			material.uniforms.modelMatrix.value = object.matrixWorld;
+			material.updateUniform('modelMatrix');
+			material.uniforms.viewMatrix.value = rCamera.matrixWorldInverse;
+			material.updateUniform('viewMatrix');
 
-			object.draw(instanceMaterialDepth);
+			object.draw(material);
 
 			RP.culling = true;
 		}
@@ -465,20 +471,22 @@ function animate(rafTime) {
 		}
 	}
 
-	{
-		instanceMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
-		instanceMaterial.use();
+	for(const batchName in batchesInstanced) {
+		const batch = batchesInstanced[batchName];
+		const object = batch.mesh;
+		const material = batch.material;
+
+		material.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+		material.use();
 
 		RP.culling = false;
 
-		const object = batchesInstanced.trees.mesh;
+		material.uniforms.modelMatrix.value = object.matrixWorld;
+		material.updateUniform('modelMatrix');
+		material.uniforms.viewMatrix.value = rCamera.matrixWorldInverse;
+		material.updateUniform('viewMatrix');
 
-		instanceMaterial.uniforms.modelMatrix.value = object.matrixWorld;
-		instanceMaterial.updateUniform('modelMatrix');
-		instanceMaterial.uniforms.viewMatrix.value = rCamera.matrixWorldInverse;
-		instanceMaterial.updateUniform('viewMatrix');
-
-		object.draw(instanceMaterial);
+		object.draw(material);
 
 		RP.culling = true;
 	}
@@ -665,6 +673,28 @@ function animate(rafTime) {
 					});
 				}
 
+				if(instances.hydrants.length > 0) {
+					const positions = new Float32Array(instances.hydrants.length / 2 * 3);
+					const ids = new Uint16Array(instances.hydrants.length / 2);
+					const types = new Uint8Array(instances.hydrants.length / 2);
+
+					for(let i = 0; i < instances.hydrants.length / 2; i++) {
+						positions[i * 3] = instances.hydrants[i * 2];
+						positions[i * 3 + 1] = 0;
+						positions[i * 3 + 2] = instances.hydrants[i * 2 + 1];
+						ids[i] = i;
+					}
+
+					batchesInstanced.hydrants.addTile({
+						tile: this,
+						attributes: {
+							iPosition: positions,
+							iId: ids,
+							iType: types
+						}
+					});
+				}
+
 				const mesh = RP.createMesh({
 					vertices: vertices
 				});
@@ -752,9 +782,11 @@ function animate(rafTime) {
 				}
 			}, function () {
 				if(!tile.mesh.inCameraFrustum(camera)) {
-					batchesInstanced.trees.removeTile({
-						tile: this
-					});
+					for(const batchName in batchesInstanced) {
+						batchesInstanced[batchName].removeTile({
+							tile: this
+						});
+					}
 
 					tiles.delete(this.id);
 

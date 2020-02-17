@@ -14,11 +14,15 @@ in uint iType;
 out vec3 vPosition;
 out vec3 vNormal;
 out vec2 vUv;
+flat out int vMesh;
 flat out int vInstanceID;
+flat out int vType;
 
 uniform mat4 projectionMatrix;
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
+
+#include <noise>
 
 mat2 rotate2d(float angle){
     return mat2(
@@ -29,14 +33,19 @@ mat2 rotate2d(float angle){
 
 void main() {
     vUv = uv;
+    vMesh = int(mesh);
     vInstanceID = int(iId);
+    vType = int(iType);
 
     vec3 mNormal = normalize((modelMatrix * vec4(normal, 0.)).xyz);
     mNormal.xz = mNormal.xz * rotate2d(float(vInstanceID));
     vec3 mvNormal = normalize((viewMatrix * vec4(mNormal, 0.)).xyz);
     vNormal = mvNormal;
 
-    vec3 transformedPosition = position;
+    float scaleFactor = noise(float(vInstanceID));
+    float scale = scaleFactor * 0.5 + 1.;
+
+    vec3 transformedPosition = position * scale;
     transformedPosition.xz = transformedPosition.xz * rotate2d(float(vInstanceID));
     transformedPosition += iPosition;
     transformedPosition.xz += iOffset;

@@ -7,26 +7,21 @@ layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec3 outNormal;
 layout(location = 2) out vec3 outPosition;
 layout(location = 3) out vec4 outMetallicRoughness;
+
 in vec3 vNormal;
 in vec3 vPosition;
 in vec2 vUv;
 flat in int vInstanceID;
-flat in int vType;
 
-uniform sampler2D tDiffuse[2];
-uniform sampler2D tNormal[2];
-uniform sampler2D tVolumeNormal;
+uniform sampler2D tDiffuse;
+uniform sampler2D tNormal;
 
 vec4 readDiffuse(const vec2 uv) {
-    if(vType == 0) return texture(tDiffuse[0], uv);
-    if(vType == 1) return texture(tDiffuse[1], uv);
-    else return vec4(1, 0, 1, 1);
+    return texture(tDiffuse, uv);
 }
 
 vec4 readNormal(const vec2 uv) {
-    if(vType == 0) return texture(tNormal[0], uv);
-    if(vType == 1) return texture(tNormal[1], uv);
-    else return vec4(0, 1, 0, 1);
+    return texture(tNormal, uv);
 }
 
 vec3 getNormal() {
@@ -42,45 +37,18 @@ vec3 getNormal() {
     vec3 b = normalize(cross(ng, t));
     mat3 tbn = mat3(t, b, ng);
 
-    vec3 map1 = readNormal(vUv).rgb * 2. - 1.;
-    vec3 map2 = texture(tVolumeNormal, vUv).rgb * 2. - 1.;
+    vec3 map = readNormal(vUv).rgb * 2. - 1.;
 
-    vec3 normal = normalize(tbn * mix(map1, map2, 0.5));
+    vec3 normal = normalize(tbn * map);
 
     return normal;
 }
 
-vec3 rgb2hsv(vec3 c) {
-    vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-    vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
-    vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
-
-    float d = q.x - min(q.w, q.y);
-    float e = 1.0e-10;
-    return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
-}
-
-vec3 hsv2rgb(vec3 c) {
-    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-}
-
-#include <noise>
-
-vec4 modifyTreeColor(const vec4 color) {
-    vec3 hsv = rgb2hsv(color.rgb);
-    hsv.x = 0.15 + noise(float(vInstanceID)) * 0.1;
-
-    return vec4(hsv2rgb(hsv), color.a);
-}
-
 void main() {
-    vec4 diffuse = modifyTreeColor(readDiffuse(vUv));
-    if(diffuse.a < 0.5) discard;
+    vec4 diffuse = readDiffuse(vUv);
 
     float metalness = 0.01;
-    float roughness = 0.9;
+    float roughness = 0.7;
     float specular = 0.01;
 
     outColor = vec4(diffuse.rgb, 1.);

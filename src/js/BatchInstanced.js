@@ -9,9 +9,13 @@ export default class BatchInstanced {
 		this.tiles = new Map();
 		this.pivot = {x: 0, z: 0};
 
+		this.attributes = params.attributes;
 		this.mergedAttributes = {};
 
 		this.mesh = null;
+
+		this.material = params.material.material;
+		this.materialDepth = params.material.materialDepth;
 
 		this.generateMesh();
 	}
@@ -79,7 +83,7 @@ export default class BatchInstanced {
 
 	generateMesh() {
 		const mesh = this.renderer.createMeshInstanced({
-			vertices: Models.Tree.mesh.attributes.POSITION,
+			vertices: this.attributes.POSITION,
 			instances: 0
 		});
 
@@ -91,7 +95,7 @@ export default class BatchInstanced {
 			type: 'FLOAT',
 			normalized: false
 		});
-		mesh.setAttributeData('normal', Models.Tree.mesh.attributes.NORMAL);
+		mesh.setAttributeData('normal', this.attributes.NORMAL);
 
 		mesh.addAttribute({
 			name: 'uv',
@@ -99,7 +103,7 @@ export default class BatchInstanced {
 			type: 'FLOAT',
 			normalized: false
 		});
-		mesh.setAttributeData('uv', Models.Tree.mesh.attributes.TEXCOORD_0);
+		mesh.setAttributeData('uv', this.attributes.TEXCOORD_0);
 
 		mesh.addAttribute({
 			name: 'mesh',
@@ -108,7 +112,7 @@ export default class BatchInstanced {
 			dataFormat: 'integer',
 			normalized: false
 		});
-		mesh.setAttributeData('mesh', Models.Tree.mesh.attributes.MESH);
+		mesh.setAttributeData('mesh', this.attributes.MESH);
 
 		mesh.addAttribute({
 			name: 'iPosition',

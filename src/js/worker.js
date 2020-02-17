@@ -86,7 +86,8 @@ function processData(x, y, data, pivot) {
 		uvs: [],
 		textures: [],
 		instances: {
-			trees: []
+			trees: [],
+			hydrants: []
 		},
 		bboxMin: [0, 0, 0],
 		bboxMax: [0, 0, 0]
@@ -99,7 +100,8 @@ function processData(x, y, data, pivot) {
 		uvs: [],
 		textures: [],
 		instances: {
-			trees: []
+			trees: [],
+			hydrants: []
 		}
 	};
 
@@ -131,8 +133,10 @@ function processData(x, y, data, pivot) {
 		const node = new Node(item.id, item.lat, item.lon, item.tags, metersPivot);
 		nodes.set(item.id, node);
 
-		if(node.instances.trees.length > 0) {
-			meshArrays.instances.trees.push(new Float32Array(node.instances.trees));
+		for(const instanceName in node.instances) {
+			if(node.instances[instanceName].length > 0) {
+				meshArrays.instances[instanceName].push(new Float32Array(node.instances[instanceName]));
+			}
 		}
 	}
 

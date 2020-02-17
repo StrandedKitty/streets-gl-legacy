@@ -4,15 +4,46 @@ import ModelUtils from './ModelUtils';
 
 class Tree {
 	constructor(loader) {
+		this.loader = loader;
 		this.mesh = {};
 		this.data = null;
-		this.load();
-		this.loader = loader;
+
+		this.load().then(function () {
+			this.processData() }.bind(this)
+		);
 	}
 
 	async load() {
 		this.data = await load('/models/tree_billboard.gltf', GLTFLoader);
-		this.processData();
+	}
+
+	processData() {
+		const combinedData = ModelUtils.combineAttributes({
+			primitives: [this.data.meshes[0].primitives[0]]
+		});
+
+		this.mesh = ModelUtils.toNonIndexed({
+			attributes: combinedData.attributes,
+			indices: combinedData.indices
+		});
+
+		this.loader.loadComplete();
+	}
+}
+
+class Hydrant {
+	constructor(loader) {
+		this.loader = loader;
+		this.mesh = {};
+		this.data = null;
+
+		this.load().then(function () {
+			this.processData() }.bind(this)
+		);
+	}
+
+	async load() {
+		this.data = await load('/models/fire_hydrant.gltf', GLTFLoader);
 	}
 
 	processData() {
@@ -31,14 +62,24 @@ class Tree {
 
 class Models {
 	constructor() {
-		this.Tree = new Tree(this);
 		this.loaded = false;
-		this.callback = null;
+		this.onload = null;
+
+		this.load();
+	}
+
+	load() {
+		this.totalCount = 2;
+		this.loadedCount = 0;
+		this.Tree = new Tree(this);
+		this.Hydrant = new Hydrant(this);
 	}
 
 	loadComplete() {
 		this.loaded = true;
-		this.callback();
+
+		++this.loadedCount;
+		if(this.loadedCount === this.totalCount) this.onload();
 	}
 }
 

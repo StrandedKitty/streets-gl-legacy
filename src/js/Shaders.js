@@ -48,6 +48,14 @@ class Shaders {
 			fragment: require('../glsl/groundDepth.frag').default,
 			vertex: require('../glsl/groundDepth.vert').default
 		};
+		this.raw.tree = {
+			fragment: require('../glsl/tree.frag').default,
+			vertex: require('../glsl/tree.vert').default
+		};
+		this.raw.treeDepth = {
+			fragment: require('../glsl/treeDepth.frag').default,
+			vertex: require('../glsl/tree.vert').default
+		};
 		this.raw.instance = {
 			fragment: require('../glsl/instance.frag').default,
 			vertex: require('../glsl/instance.vert').default
