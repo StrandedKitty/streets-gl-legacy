@@ -8,10 +8,10 @@ in vec2 vUv;
 in vec3 vNormal;
 in vec3 vPosition;
 
-uniform sampler2D sampleTexture;
+uniform sampler2D tDiffuse;
 
 void main() {
-    outColor = texture(sampleTexture, vUv * 8. * 64.);
+    outColor = texture(tDiffuse, vUv * 8. * 64.);
     outNormal = vNormal * 0.5 + 0.5;
     outPosition = vPosition;
     outMetallicRoughness = vec4(0, 1., 0, 1.);

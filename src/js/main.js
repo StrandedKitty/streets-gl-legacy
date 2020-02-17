@@ -63,7 +63,9 @@ let batchesInstanced = {
 	hydrants: null
 };
 
-Models.onload = init;
+Models.onload = function () {
+	init();
+};
 
 function init() {
 	RP = new Renderer(canvas);
