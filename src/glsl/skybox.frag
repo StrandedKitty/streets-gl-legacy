@@ -7,7 +7,6 @@ layout(location = 3) out vec4 outMetallicRoughness;
 in vec3 vColor;
 in vec3 vNormal;
 in vec3 vPosition;
-in vec3 vWorldPosition;
 
 uniform samplerCube tCube;
 

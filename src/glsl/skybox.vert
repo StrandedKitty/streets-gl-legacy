@@ -5,7 +5,7 @@ out vec3 vPosition;
 out vec3 vWorldPosition;
 out vec3 vNormal;
 
-#define scale 5.
+#define scale 5000.
 
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
@@ -16,7 +16,6 @@ void main() {
     mat4 modelViewMatrix = viewMatrix * modelMatrix;
     vec4 cameraSpacePosition = modelViewMatrix * vec4(transformedPosition, 1.0);
     vPosition = cameraSpacePosition.xyz;
-    vWorldPosition = vec3(modelMatrix * vec4(transformedPosition, 1.0));
     vNormal = normalize(position);
     gl_Position = projectionMatrix * cameraSpacePosition;
 }

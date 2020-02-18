@@ -281,27 +281,6 @@ function processData(x, y, data, pivot) {
 		}
 	}
 
-	/*for (const way of ways.values()) {
-		if (way.properties.buildingPart) {
-			let verticesA = [];
-			for (let i = 0; i < way.vertices.length; i++) verticesA.push([way.vertices[i].x, way.vertices[i].z]);
-
-			for (const way2 of ways.values()) {
-				if (!way2.properties.buildingPart && way2.properties.type === 'building') {
-					let intersection = way.AABB.intersectsAABB(way2.AABB);
-
-					if(intersection) {
-						let verticesB = [];
-
-						for (let i = 0; i < way2.vertices.length; i++) verticesB.push([way2.vertices[i].x, way2.vertices[i].z]);
-
-						if (intersect(verticesA, verticesB)) way2.visible = false;
-					}
-				}
-			}
-		}
-	}*/
-
 	for (const way of ways.values()) {
 		if (way.properties.buildingPart) {
 			for (const way2 of ways.values()) {
@@ -344,64 +323,6 @@ function processData(x, y, data, pivot) {
 		}
 	}
 
-	{
-		let vertices = [];
-		let normals = [];
-		let colors = [];
-		let uvs = [];
-		let textures = [];
-
-		for(let i = 0; i < meshArrays.instances.trees.length; i++) {
-			for(let j = 0; j < 0; j++) {
-				const pivot = meshArrays.instances.trees[i];
-				const y = 10 + j * 5;
-
-				vertices.push(
-					pivot[0] + 0, y, pivot[1] + 0,
-					pivot[0] + 5, y, pivot[1] + 5,
-					pivot[0] + 5, y, pivot[1] + 0,
-					pivot[0] + 0, y, pivot[1] + 0,
-					pivot[0] + 0, y, pivot[1] + 5,
-					pivot[0] + 5, y, pivot[1] + 5
-				);
-				normals.push(
-					0, 1, 0,
-					0, 1, 0,
-					0, 1, 0,
-					0, 1, 0,
-					0, 1, 0,
-					0, 1, 0
-				);
-				colors.push(
-					1, 0, 1,
-					1, 0, 1,
-					1, 0, 1,
-					1, 0, 1,
-					1, 0, 1,
-					1, 0, 1
-				);
-				uvs.push(
-					0, 0,
-					0, 1,
-					1, 1,
-					0, 0,
-					1, 0,
-					1, 1
-				);
-				textures.push(0, 0, 0, 0, 0, 0);
-			}
-		}
-
-		meshData.ids.push(Math.floor(Math.random() * 100000));
-		meshData.offsets.push(vertexOffset / 3);
-
-		meshArrays.vertices.push(new Float32Array(vertices));
-		meshArrays.normals.push(new Float32Array(normals));
-		meshArrays.colors.push(new Uint8Array(colors));
-		meshArrays.uvs.push(new Float32Array(uvs));
-		meshArrays.textures.push(new Float32Array(textures));
-	}
-
 	meshData.vertices = ModelUtils.mergeTypedArrays(meshArrays.vertices);
 	meshData.normals = ModelUtils.mergeTypedArrays(meshArrays.normals);
 	meshData.colors = ModelUtils.mergeTypedArrays(meshArrays.colors);
@@ -433,26 +354,6 @@ function processData(x, y, data, pivot) {
 
 	self.postMessage({x, y, mesh: meshData});
 }
-
-/*function intersect(p0, p1) {
-	let i;
-
-	for (i = 0; i < p0.length; ++i) {
-		const res = classifyPoint(p1, p0[i]);
-		if (res === -1) {
-			return true;
-		}
-	}
-
-	for (i = 0; i < p1.length; ++i) {
-		const res = classifyPoint(p0, p1[i]);
-		if (res === -1) {
-			return true;
-		}
-	}
-
-	return false;
-}*/
 
 function intersectMultipolygons(p0, p1) {
 	const points0 = [];
