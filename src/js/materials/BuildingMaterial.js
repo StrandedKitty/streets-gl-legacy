@@ -23,7 +23,6 @@ export default class BuildingMaterial {
 			uniforms: {
 				projectionMatrix: {type: 'Matrix4fv', value: null},
 				modelViewMatrix: {type: 'Matrix4fv', value: null},
-				normalMatrix: {type: 'Matrix3fv', value: null},
 				tColor: {type: 'texture2DArray', value: this.textureArrays.color},
 				tMetalness: {type: 'texture2DArray', value: this.textureArrays.metalness},
 				tRoughness: {type: 'texture2DArray', value: this.textureArrays.roughness},

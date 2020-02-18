@@ -17,7 +17,6 @@ out vec3 vCenter;
 
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
-uniform mat3 normalMatrix;
 uniform float time;
 
 float CubicOut(float k) {
@@ -34,7 +33,7 @@ void main() {
     vTextureId = textureId;
     vUv = uv;
     vec3 transformedNormal = normal;
-    transformedNormal = vec3(normalMatrix * transformedNormal);
+    transformedNormal = vec3(modelViewMatrix * vec4(transformedNormal, 0));
     vNormal = transformedNormal;
 
     vec3 transformedPosition = position;

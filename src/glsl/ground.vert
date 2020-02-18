@@ -8,11 +8,10 @@ out vec3 vNormal;
 
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
-uniform mat3 normalMatrix;
 
 void main() {
     vUv = uv;
-    vec3 normal = normalMatrix * vec3(0, 1, 0);
+    vec3 normal = vec3(modelViewMatrix * vec4(0, 1, 0, 0));
     vNormal = normal;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);

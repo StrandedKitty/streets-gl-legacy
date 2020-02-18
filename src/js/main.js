@@ -422,14 +422,11 @@ function animate(rafTime) {
 		groundMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
 		groundMaterial.use();
 
-		let object = ground;
+		const object = ground;
 
-		let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-		let normalMatrix = mat4.normalMatrix(modelViewMatrix);
+		const modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
 		groundMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
-		groundMaterial.uniforms.normalMatrix.value = normalMatrix;
 		groundMaterial.updateUniform('modelViewMatrix');
-		groundMaterial.updateUniform('normalMatrix');
 
 		object.draw(groundMaterial);
 	}
@@ -441,7 +438,7 @@ function animate(rafTime) {
 		let noAnimationStreak = 0;
 
 		for(let i = 0; i < buildings.children.length; i++) {
-			let object = buildings.children[i];
+			const object = buildings.children[i];
 
 			//object.data.tile.time += delta;
 
@@ -449,11 +446,8 @@ function animate(rafTime) {
 
 			if(inFrustum) {
 				let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-				let normalMatrix = mat4.normalMatrix(modelViewMatrix);
 				buildingMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
-				buildingMaterial.uniforms.normalMatrix.value = normalMatrix;
 				buildingMaterial.updateUniform('modelViewMatrix');
-				buildingMaterial.updateUniform('normalMatrix');
 
 				if(object.data.tile.time - delta < 1) {
 					buildingMaterial.uniforms.time.value = object.data.tile.time;
