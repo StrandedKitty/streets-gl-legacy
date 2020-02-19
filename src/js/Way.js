@@ -62,6 +62,35 @@ export default class Way {
 		if(this.properties.type === 'building') this.expandAABB(ring);
 	}
 
+	generateGeoJson() {
+		this.geoJson = {
+			type: 'MultiPolygon',
+			coordinates: []
+		};
+
+		const inners = [];
+
+		for(let i = 0; i < this.rings.length; i++) {
+			const ring = this.rings[i];
+
+			if(ring.type === 'inner' && ring.closed) inners.push(ring);
+		}
+
+		for(let i = 0; i < this.rings.length; i++) {
+			const ring = this.rings[i];
+
+			if(ring.type === 'outer' && ring.closed) {
+				const item = [ring.vertices];
+
+				for(let j = 0; j < inners.length; j++) {
+					item.push(inners[j].vertices);
+				}
+
+				this.geoJson.coordinates.push(item);
+			}
+		}
+	}
+
 	render() {
 		if(this.properties.type === 'building') {
 			this.triangulateFootprint({

@@ -3,8 +3,7 @@ import Way from "./Way";
 import {tile2degrees, degrees2meters} from "./Utils";
 import OSMDescriptor from "./OSMDescriptor";
 import ModelUtils from "./ModelUtils";
-
-const classifyPoint = require("robust-point-in-polygon");
+import * as martinez from 'martinez-polygon-clipping';
 
 self.addEventListener('message', function (e) {
 	let code = e.data.code;
@@ -280,13 +279,23 @@ function processData(x, y, data, pivot) {
 			}
 		}
 	}
-
+	
 	for (const way of ways.values()) {
 		if (way.properties.buildingPart) {
 			for (const way2 of ways.values()) {
 				if (!way2.properties.buildingPart && way2.properties.type === 'building') {
 					if(way.AABB.intersectsAABB(way2.AABB)) {
-						if (intersectMultipolygons(way.rings, way2.rings)) way2.visible = false;
+						if(!way.geoJson) way.generateGeoJson();
+						if(!way2.geoJson) way2.generateGeoJson();
+
+						if(way.geoJson.coordinates.length > 0 && way2.geoJson.coordinates.length > 0) {
+							try {
+								const t = martinez.intersection(way.geoJson.coordinates, way2.geoJson.coordinates);
+								if(t && t.length > 0) way2.visible = false;
+							} catch (e) {
+								console.error('Building-building:part intersection test failed for ' + way.id + ' and ' + way2.id);
+							}
+						}
 					}
 				}
 			}
@@ -353,49 +362,6 @@ function processData(x, y, data, pivot) {
 	}
 
 	self.postMessage({x, y, mesh: meshData});
-}
-
-function intersectMultipolygons(p0, p1) {
-	const points0 = [];
-	const points1 = [];
-
-	for (let i = 0; i < p0.length; i++) {
-		for (let j = 0; j < p0[i].vertices.length; j++) points0.push([p0[i].vertices[j][0], p0[i].vertices[j][1]]);
-	}
-
-	for (let i = 0; i < p1.length; i++) {
-		for (let j = 0; j < p1[i].vertices.length; j++) points1.push([p1[i].vertices[j][0], p1[i].vertices[j][1]]);
-	}
-
-	for (let i = 0; i < p0.length; i++) {
-		if (p0[i].type === 'outer') {
-			const polygon = [];
-
-			for (let j = 0; j < p0[i].vertices.length; j++) polygon.push([p0[i].vertices[j][0], p0[i].vertices[j][1]]);
-
-			for (let j = 0; j < points1.length; j++) {
-				if (classifyPoint(polygon, points1[j]) === -1) {
-					return true;
-				}
-			}
-		}
-	}
-
-	for (let i = 0; i < p1.length; i++) {
-		if (p1[i].type === 'outer') {
-			const polygon = [];
-
-			for (let j = 0; j < p1[i].vertices.length; j++) polygon.push([p1[i].vertices[j][0], p1[i].vertices[j][1]]);
-
-			for (let j = 0; j < points0.length; j++) {
-				if (classifyPoint(polygon, points0[j]) === -1) {
-					return true;
-				}
-			}
-		}
-	}
-
-	return false;
 }
 
 function joinWays(nodesA, nodesB) {
