@@ -28,6 +28,7 @@ import VolumetricLighting from "./materials/VolumetricLighting";
 import BatchInstanced from "./BatchInstanced";
 import Shapes from "./renderer/Shapes";
 import InstanceMaterial from "./materials/InstanceMaterial";
+import FullScreenQuad from "./FullScreenQuad";
 
 const SunCalc = require('suncalc');
 
@@ -55,7 +56,7 @@ let time = 0, delta = 0;
 let gBuffer, smaa, ssao, blur, ssaa, volumetricLighting;
 let skybox;
 let light;
-let lightDirection = new vec3(-1, -0.4, -1);
+let lightDirection = new vec3(-1, -1, -1);
 let csm;
 
 let batchesInstanced = {
@@ -185,33 +186,6 @@ function init() {
 	ssaa = new SSAA(RP, window.innerWidth, window.innerHeight);
 	volumetricLighting = new VolumetricLighting(RP, window.innerWidth, window.innerHeight);
 
-	quad = RP.createMesh({
-		vertices: new Float32Array([
-			-1, 1, 0,
-			-1, -1, 0,
-			1, 1, 0,
-			-1, -1, 0,
-			1, -1, 0,
-			1, 1, 0
-		])
-	});
-
-	quad.addAttribute({
-		name: 'uv',
-		size: 2,
-		type: 'FLOAT',
-		normalized: false
-	});
-
-	quad.setAttributeData('uv', new Float32Array([
-		0, 1,
-		0, 0,
-		1, 1,
-		0, 0,
-		1, 0,
-		1, 1
-	]));
-
 	light = {
 		direction: new Float32Array([-1, -1, -1]),
 		range: -1,
@@ -223,6 +197,8 @@ function init() {
 		type: 0,
 		padding: new Float32Array([0, 0])
 	};
+
+	quad = new FullScreenQuad({renderer: RP}).mesh;
 
 	quadMaterial = RP.createMaterial({
 		name: 'quad',

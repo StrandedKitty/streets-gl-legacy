@@ -279,7 +279,7 @@ function processData(x, y, data, pivot) {
 			}
 		}
 	}
-	
+
 	for (const way of ways.values()) {
 		if (way.properties.buildingPart) {
 			for (const way2 of ways.values()) {
