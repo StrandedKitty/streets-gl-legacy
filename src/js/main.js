@@ -596,11 +596,11 @@ function animate(rafTime) {
 
 	//
 
-	let wsFrustum = view.frustum.toSpace(camera.matrix);
-	let frustumTiles = wsFrustum.getTiles(camera.position, 16);
+	const wsFrustum = view.frustum.toSpace(camera.matrix);
+	const frustumTiles = wsFrustum.getTiles(camera.position, 16);
 
 	for(let i = 0; i < frustumTiles.length; i++) {
-		let frustumTile = frustumTiles[i];
+		const frustumTile = frustumTiles[i];
 
 		frustumTile.x = Math.floor(frustumTile.x);
 		frustumTile.y = Math.floor(frustumTile.y);
@@ -730,7 +730,7 @@ function animate(rafTime) {
 					{x: bbox.max[0], y: bbox.max[1], z: bbox.max[2]}
 				);
 
-				this.mesh = mesh;
+				this.meshes.buildings = mesh;
 
 				for(let i = 0; i < ids.length; i++) {
 					const id = ids[i];
@@ -753,7 +753,7 @@ function animate(rafTime) {
 					}
 				}
 			}, function () {
-				if(!tile.mesh.inCameraFrustum(camera)) {
+				if(!tile.meshes.buildings.inCameraFrustum(camera)) {
 					for(const batchName in batchesInstanced) {
 						batchesInstanced[batchName].removeTile({
 							tile: this

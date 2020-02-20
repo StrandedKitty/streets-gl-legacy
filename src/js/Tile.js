@@ -11,7 +11,10 @@ export default class Tile {
 		this.onDelete = onDelete;
 		this.loaded = false;
 		this.worker = null;
-		this.mesh = null;
+		this.meshes = {
+			buildings: null,
+			roads: null
+		};
 		this.displayBuffer = null;
 		this.objects = null;
 		this.displayedCount = null;
@@ -51,8 +54,8 @@ export default class Tile {
 			this.displayBuffer[i] = 255;
 		}
 
-		this.mesh.setAttributeData('display', this.displayBuffer);
-		this.mesh.updateAttribute('display');
+		this.meshes.buildings.setAttributeData('display', this.displayBuffer);
+		this.meshes.buildings.updateAttribute('display');
 
 		if(!this.objects[id].visible) console.error('Mesh part ' + id + ' is already hidden');
 		else {
@@ -72,8 +75,8 @@ export default class Tile {
 			this.displayBuffer[i] = 0;
 		}
 
-		this.mesh.setAttributeData('display', this.displayBuffer);
-		this.mesh.updateAttribute('display');
+		this.meshes.buildings.setAttributeData('display', this.displayBuffer);
+		this.meshes.buildings.updateAttribute('display');
 
 		if(this.objects[id].visible) console.error('Mesh part ' + id + ' is already displayed');
 		else {
@@ -92,8 +95,8 @@ export default class Tile {
 			this.fadeBuffer[i] = 255;
 		}
 
-		this.mesh.setAttributeData('fade', this.fadeBuffer);
-		this.mesh.updateAttribute('fade');
+		this.meshes.buildings.setAttributeData('fade', this.fadeBuffer);
+		this.meshes.buildings.updateAttribute('fade');
 	}
 
 	getGroundMesh(renderer) {
@@ -162,8 +165,8 @@ export default class Tile {
 			if(this.groundMesh) this.groundMesh.delete();
 			this.groundMesh = null;
 
-			this.mesh.delete();
-			this.mesh = null;
+			this.meshes.buildings.delete();
+			this.meshes.buildings = null;
 
 			for(let i = 0; i < this.verts; i++) {
 				this.displayBuffer[i] = 255;
