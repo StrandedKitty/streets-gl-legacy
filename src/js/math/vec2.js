@@ -56,6 +56,12 @@ export default class vec2 {
 		return num <= -1 ? -1 : num >= 1 ? 1 : num;
 	}
 
+	static angleClockwise(a, b) {
+		const dot = a.x * b.x + a.y * b.y;
+		const det = a.x * b.y - a.y * b.x;
+		return Math.atan2(det, dot);
+	}
+
 	static copy(v) {
 		return new this(v.x, v.y);
 	}

@@ -278,16 +278,18 @@ void main() {
 
     // FOG
 
+    vec3 fogColor = SRGBtoLINEAR(vec4(.77, .86, .91, 1)).rgb;
+
     float density = 1. / 15000.;
     float distance = length(position);
     float fog = 1. / pow(Eu, pow(distance * density, 2.));
 
-    color = mix(vec3(.77, .86, .91), color, fog);
+    color = mix(fogColor, color, fog);
 
     // GOD RAYS
 
     //color = mix(color, vec3(.77, .86, .91), texture(uVolumetric, vUv).xxx);
-    color += vec3(.77, .86, .91) * texture(uVolumetric, vUv).xyz;
+    color += fogColor * texture(uVolumetric, vUv).xyz;
 
     // OUT
 
