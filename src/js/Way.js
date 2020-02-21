@@ -29,6 +29,9 @@ export default class Way {
 		this.scaleFactor = mercatorScaleFactor(toRad(this.pivot.lat));
 		this.tileSize = 40075016.7 / (1 << 16);
 
+		this.tileAABB = new WayAABB();
+		this.tileAABB.set(0, 0, this.tileSize, this.tileSize);
+
 		const descriptor = new OSMDescriptor(this.tags);
 		this.properties = descriptor.properties;
 
@@ -42,6 +45,8 @@ export default class Way {
 			levels: null,
 			material: null
 		};
+
+		this.geometryType = null;
 
 		this.fillGeometry();
 	}
@@ -93,10 +98,16 @@ export default class Way {
 
 	render() {
 		if(this.properties.type === 'building') {
+			this.geometryType = 'building';
+
 			this.triangulateFootprint({
 				color: this.geometry.roofColor,
 				height: this.geometry.height
 			});
+		}
+
+		if(this.properties.type === 'road') {
+			this.geometryType = 'road';
 		}
 
 		for(let i = 0; i < this.rings.length; i++) {

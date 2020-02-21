@@ -92,16 +92,11 @@ function processData(x, y, data, pivot) {
 		bboxMax: [0, 0, 0]
 	};
 
-	const meshArrays = {
+	const roadsData = {
 		vertices: [],
 		normals: [],
-		colors: [],
 		uvs: [],
-		textures: [],
-		instances: {
-			trees: [],
-			hydrants: []
-		}
+		textures: []
 	};
 
 	const raw = {
@@ -134,7 +129,7 @@ function processData(x, y, data, pivot) {
 
 		for(const instanceName in node.instances) {
 			if(node.instances[instanceName].length > 0) {
-				meshArrays.instances[instanceName].push(new Float32Array(node.instances[instanceName]));
+				meshData.instances[instanceName].push(new Float32Array(node.instances[instanceName]));
 			}
 		}
 	}
@@ -311,35 +306,46 @@ function processData(x, y, data, pivot) {
 			way.render();
 
 			if (way.mesh.vertices.length > 0) {
-				meshData.ids.push(way.id);
-				meshData.offsets.push(vertexOffset / 3);
+				if(way.geometryType === 'building') {
+					meshData.ids.push(way.id);
+					meshData.offsets.push(vertexOffset / 3);
 
-				vertexOffset += way.mesh.vertices.length;
+					vertexOffset += way.mesh.vertices.length;
 
-				meshArrays.vertices.push(new Float32Array(way.mesh.vertices));
-				meshArrays.normals.push(new Float32Array(way.mesh.normals));
-				meshArrays.colors.push(new Uint8Array(way.mesh.colors));
-				meshArrays.uvs.push(new Float32Array(way.mesh.uvs));
-				meshArrays.textures.push(new Float32Array(way.mesh.textures));
+					meshData.vertices.push(new Float32Array(way.mesh.vertices));
+					meshData.normals.push(new Float32Array(way.mesh.normals));
+					meshData.colors.push(new Uint8Array(way.mesh.colors));
+					meshData.uvs.push(new Float32Array(way.mesh.uvs));
+					meshData.textures.push(new Float32Array(way.mesh.textures));
+				} else if(way.geometryType === 'road') {
+					roadsData.vertices.push(new Float32Array(way.mesh.vertices));
+					roadsData.normals.push(new Float32Array(way.mesh.normals));
+					roadsData.uvs.push(new Float32Array(way.mesh.uvs));
+					roadsData.textures.push(new Float32Array(way.mesh.textures));
+				}
 			}
 
 
 			for(const instanceName in way.instances) {
 				if(way.instances[instanceName].length > 0) {
-					meshArrays.instances[instanceName].push(new Float32Array(way.instances[instanceName]));
+					meshData.instances[instanceName].push(new Float32Array(way.instances[instanceName]));
 				}
 			}
 		}
 	}
 
-	meshData.vertices = ModelUtils.mergeTypedArrays(meshArrays.vertices);
-	meshData.normals = ModelUtils.mergeTypedArrays(meshArrays.normals);
-	meshData.colors = ModelUtils.mergeTypedArrays(meshArrays.colors);
-	meshData.uvs = ModelUtils.mergeTypedArrays(meshArrays.uvs);
-	meshData.textures = ModelUtils.mergeTypedArrays(meshArrays.textures);
+	meshData.vertices = ModelUtils.mergeTypedArrays(meshData.vertices);
+	meshData.normals = ModelUtils.mergeTypedArrays(meshData.normals);
+	meshData.colors = ModelUtils.mergeTypedArrays(meshData.colors);
+	meshData.uvs = ModelUtils.mergeTypedArrays(meshData.uvs);
+	meshData.textures = ModelUtils.mergeTypedArrays(meshData.textures);
 
-	for(const instanceName in meshArrays.instances) {
-		meshData.instances[instanceName] = ModelUtils.mergeTypedArrays(meshArrays.instances[instanceName]);
+	roadsData.vertices = ModelUtils.mergeTypedArrays(roadsData.vertices);
+	roadsData.normals = ModelUtils.mergeTypedArrays(roadsData.normals);
+	roadsData.uvs = ModelUtils.mergeTypedArrays(roadsData.uvs);
+
+	for(const instanceName in meshData.instances) {
+		meshData.instances[instanceName] = ModelUtils.mergeTypedArrays(meshData.instances[instanceName]);
 	}
 
 	const tileSize = 40075016.7 / (1 << 16);
@@ -361,7 +367,7 @@ function processData(x, y, data, pivot) {
 		}
 	}
 
-	self.postMessage({x, y, mesh: meshData});
+	self.postMessage({x, y, mesh: {buildings: meshData, roads: roadsData}});
 }
 
 function joinWays(nodesA, nodesB) {

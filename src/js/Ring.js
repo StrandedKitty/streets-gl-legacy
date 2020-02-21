@@ -1,6 +1,7 @@
 import vec2 from "./math/vec2";
 import vec3 from "./math/vec3";
 import {toRad} from "./Utils";
+import WayAABB from "./WayAABB";
 
 export default class Ring {
 	constructor(params) {
@@ -41,8 +42,9 @@ export default class Ring {
 		if(this.parent.properties.type === 'road') {
 			this.createPath({
 				width: this.parent.properties.roadWidth,
-				height: 1,
-				color: [50, 50, 50]
+				height: 0,
+				color: [50, 50, 50],
+				clip: true
 			});
 		}
 	}
@@ -262,6 +264,7 @@ export default class Ring {
 		const width = params.width;
 		const height = params.height;
 		const color = params.color;
+		const clip = params.clip;
 
 		const physicalVertices = this.closed ? this.vertices.length - 1 : this.vertices.length;
 
@@ -338,29 +341,44 @@ export default class Ring {
 
 			// geometry
 
-			this.parent.mesh.vertices.push(
-				vertices[0].x, height, vertices[0].y,
-				vertices[2].x, height, vertices[2].y,
-				vertices[1].x, height, vertices[1].y,
+			let aabb;
 
-				vertices[1].x, height, vertices[1].y,
-				vertices[2].x, height, vertices[2].y,
-				vertices[3].x, height, vertices[3].y
-			);
+			if(clip) {
+				aabb = new WayAABB();
 
-			this.parent.mesh.uvs.push(
-				0, 0,
-				0, 0,
-				0, 0,
+				aabb.includePoint(vertices[0].x, vertices[0].y);
+				aabb.includePoint(vertices[2].x, vertices[2].y);
+				aabb.includePoint(vertices[1].x, vertices[1].y);
+				aabb.includePoint(vertices[1].x, vertices[1].y);
+				aabb.includePoint(vertices[2].x, vertices[2].y);
+				aabb.includePoint(vertices[3].x, vertices[3].y);
+			}
 
-				0, 0,
-				0, 0,
-				0, 0
-			);
+			if(!clip || aabb.intersectsAABB(this.parent.tileAABB)) {
+				this.parent.mesh.vertices.push(
+					vertices[0].x, height, vertices[0].y,
+					vertices[2].x, height, vertices[2].y,
+					vertices[1].x, height, vertices[1].y,
 
-			this.parent.mesh.normals.push(0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0);
-			this.parent.mesh.colors.push(...color, ...color, ...color, ...color, ...color, ...color);
-			this.parent.mesh.textures.push(0, 0, 0, 0, 0, 0);
+					vertices[1].x, height, vertices[1].y,
+					vertices[2].x, height, vertices[2].y,
+					vertices[3].x, height, vertices[3].y
+				);
+
+				this.parent.mesh.uvs.push(
+					0, 0,
+					0, 0,
+					0, 0,
+
+					0, 0,
+					0, 0,
+					0, 0
+				);
+
+				this.parent.mesh.normals.push(0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0);
+				this.parent.mesh.colors.push(...color, ...color, ...color, ...color, ...color, ...color);
+				this.parent.mesh.textures.push(0, 0, 0, 0, 0, 0);
+			}
 		}
 	}
 

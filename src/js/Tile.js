@@ -36,9 +36,9 @@ export default class Tile {
 		} else {
 			this.worker = null;
 			this.objects = this.createObjectsTable(data);
-			this.displayedCount = data.ids.length;
-			this.displayBuffer = new Uint8Array(data.vertices.length / 3);
-			this.fadeBuffer = new Uint8Array(data.vertices.length / 3);
+			this.displayedCount = data.buildings.ids.length;
+			this.displayBuffer = new Uint8Array(data.buildings.vertices.length / 3);
+			this.fadeBuffer = new Uint8Array(data.buildings.vertices.length / 3);
 			this.callback(data);
 			this.loaded = true;
 		}
@@ -141,14 +141,14 @@ export default class Tile {
 	createObjectsTable(data) {
 		const obj = {};
 
-		this.verts = data.vertices.length / 3;
+		this.verts = data.buildings.vertices.length / 3;
 
-		for(let i = 0; i < data.ids.length; i++) {
-			const offset = data.offsets[i];
-			const nextOffset = data.offsets[i + 1] || (data.vertices.length / 3);
+		for(let i = 0; i < data.buildings.ids.length; i++) {
+			const offset = data.buildings.offsets[i];
+			const nextOffset = data.buildings.offsets[i + 1] || (data.buildings.vertices.length / 3);
 			const size = nextOffset - offset;
 
-			obj[data.ids[i]] = {
+			obj[data.buildings.ids[i]] = {
 				visible: true,
 				offset,
 				size
@@ -167,6 +167,9 @@ export default class Tile {
 
 			this.meshes.buildings.delete();
 			this.meshes.buildings = null;
+
+			this.meshes.roads.delete();
+			this.meshes.roads = null;
 
 			for(let i = 0; i < this.verts; i++) {
 				this.displayBuffer[i] = 255;

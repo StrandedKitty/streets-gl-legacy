@@ -29,6 +29,7 @@ import BatchInstanced from "./BatchInstanced";
 import Shapes from "./renderer/Shapes";
 import InstanceMaterial from "./materials/InstanceMaterial";
 import FullScreenQuad from "./FullScreenQuad";
+import RoadMaterial from "./materials/RoadMaterial";
 
 const SunCalc = require('suncalc');
 
@@ -48,7 +49,9 @@ const features = {
 };
 
 let ground;
-let groundMaterial, groundMaterialDepth, wrapper, buildings, buildingMaterial, buildingDepthMaterial, instanceMeshes;
+let groundMaterial, groundMaterialDepth, wrapper, buildings, roads, instanceMeshes;
+let buildingMaterial, buildingDepthMaterial;
+let roadMaterial, roadDepthMaterial;
 let quad, quadMaterial;
 
 const gui = new dat.GUI();
@@ -83,6 +86,8 @@ function init() {
 
 	buildings = new Object3D();
 	wrapper.add(buildings);
+	roads = new Object3D();
+	wrapper.add(roads);
 	instanceMeshes = new Object3D();
 	wrapper.add(instanceMeshes);
 
@@ -126,6 +131,10 @@ function init() {
 	const buildingMaterialInstance = new BuildingMaterial(RP);
 	buildingMaterial = buildingMaterialInstance.material;
 	buildingDepthMaterial = buildingMaterialInstance.depthMaterial;
+
+	const roadMaterialInstance = new RoadMaterial(RP);
+	roadMaterial = roadMaterialInstance.material;
+	roadDepthMaterial = roadMaterialInstance.depthMaterial;
 
 	console.log(scene);
 
@@ -407,6 +416,46 @@ function animate(rafTime) {
 		object.draw(groundMaterial);
 	}
 
+	RP.depthTest = false;
+
+	{
+		roadMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+		roadMaterial.use();
+
+		let noAnimationStreak = 0;
+
+		for(let i = 0; i < roads.children.length; i++) {
+			const object = roads.children[i];
+
+			object.data.tile.time += delta;
+
+			const inFrustum = object.inCameraFrustum(rCamera);
+
+			if(inFrustum) {
+				let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+				roadMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+				roadMaterial.updateUniform('modelViewMatrix');
+
+				if(object.data.tile.time - delta < 1) {
+					roadDepthMaterial.uniforms.time.value = object.data.tile.time;
+					roadDepthMaterial.updateUniform('time');
+					noAnimationStreak = 0;
+				} else {
+					if(noAnimationStreak === 0) {
+						roadDepthMaterial.uniforms.time.value = 1;
+						roadDepthMaterial.updateUniform('time');
+					}
+
+					++noAnimationStreak;
+				}
+
+				object.draw(roadMaterial);
+			}
+		}
+	}
+
+	RP.depthTest = true;
+
 	{
 		buildingMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
 		buildingMaterial.use();
@@ -610,14 +659,14 @@ function animate(rafTime) {
 
 		if(!tiles.get(name) && worker) {
 			let tile = new Tile(frustumTile.x, frustumTile.y, function (data) {
-				const vertices = data.vertices;
-				const normals = data.normals;
-				const uvs = data.uvs;
-				const ids = data.ids;
-				const colors = data.colors;
-				const textures = data.textures;
-				const instances = data.instances;
-				const bbox = {min: data.bboxMin, max: data.bboxMax};
+				const vertices = data.buildings.vertices;
+				const normals = data.buildings.normals;
+				const uvs = data.buildings.uvs;
+				const ids = data.buildings.ids;
+				const colors = data.buildings.colors;
+				const textures = data.buildings.textures;
+				const instances = data.buildings.instances;
+				const bbox = {min: data.buildings.bboxMin, max: data.buildings.bboxMax};
 				const pivot = tile2meters(this.x, this.y + 1);
 
 				if(isNaN(bbox.min[0]) || isNaN(bbox.max[0])) console.error('Bounding box for tile ' + name + ' was generated incorrectly');
@@ -731,6 +780,43 @@ function animate(rafTime) {
 				);
 
 				this.meshes.buildings = mesh;
+
+				//
+
+				const roadsMesh = RP.createMesh({
+					vertices: data.roads.vertices
+				});
+
+				roadsMesh.addAttribute({
+					name: 'normal',
+					size: 3,
+					type: 'FLOAT',
+					normalized: false
+				});
+				roadsMesh.setAttributeData('normal', data.roads.normals);
+
+				roadsMesh.addAttribute({
+					name: 'uv',
+					size: 2,
+					type: 'FLOAT',
+					normalized: false
+				});
+				roadsMesh.setAttributeData('uv', data.roads.uvs);
+
+				roadsMesh.setPosition(pivot.x, 0, pivot.z);
+
+				roadsMesh.data.tile = this;
+
+				roads.add(roadsMesh);
+
+				roadsMesh.setBoundingBox(
+					{x: 0, y: 0, z: 0},
+					{x: tileSize, y: 1, z: tileSize}
+				);
+
+				this.meshes.roads = roadsMesh;
+
+				//
 
 				for(let i = 0; i < ids.length; i++) {
 					const id = ids[i];

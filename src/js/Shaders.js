@@ -8,6 +8,18 @@ class Shaders {
 			fragment: require('../glsl/building.frag').default,
 			vertex: require('../glsl/building.vert').default
 		};
+		this.raw.buildingDepth = {
+			fragment: require('../glsl/buildingDepth.frag').default,
+			vertex: require('../glsl/building.vert').default
+		};
+		this.raw.road = {
+			fragment: require('../glsl/road.frag').default,
+			vertex: require('../glsl/road.vert').default
+		};
+		this.raw.roadDepth = {
+			fragment: require('../glsl/roadDepth.frag').default,
+			vertex: require('../glsl/road.vert').default
+		};
 		this.raw.ground = {
 			fragment: require('../glsl/ground.frag').default,
 			vertex: require('../glsl/ground.vert').default
@@ -39,10 +51,6 @@ class Shaders {
 		this.raw.skybox = {
 			fragment: require('../glsl/skybox.frag').default,
 			vertex: require('../glsl/skybox.vert').default
-		};
-		this.raw.buildingDepth = {
-			fragment: require('../glsl/buildingDepth.frag').default,
-			vertex: require('../glsl/building.vert').default
 		};
 		this.raw.groundDepth = {
 			fragment: require('../glsl/groundDepth.frag').default,
