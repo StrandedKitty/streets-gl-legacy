@@ -58,6 +58,10 @@
 		"cycleway": {"type": "road", "roadWidth": 3},
 		"path": {"type": "road", "roadWidth": 3}
 	},
+	"aeroway": {
+		"runway": {"type": "road", "roadWidth": 50},
+		"taxiway": {"type": "road", "roadWidth": 25}
+	},
 	"emergency": {
 		"fire_hydrant": {"type": "hydrant"}
 	}

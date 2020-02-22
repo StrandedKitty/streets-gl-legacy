@@ -11,8 +11,7 @@ export default class RoadMaterial {
 			fragmentShader: shaders.road.fragment,
 			uniforms: {
 				projectionMatrix: {type: 'Matrix4fv', value: null},
-				modelViewMatrix: {type: 'Matrix4fv', value: null},
-				time: {type: '1f', value: 0}
+				modelViewMatrix: {type: 'Matrix4fv', value: null}
 			}
 		});
 
@@ -22,8 +21,7 @@ export default class RoadMaterial {
 			fragmentShader: shaders.roadDepth.fragment,
 			uniforms: {
 				projectionMatrix: {type: 'Matrix4fv', value: null},
-				modelViewMatrix: {type: 'Matrix4fv', value: null},
-				time: {type: '1f', value: 0}
+				modelViewMatrix: {type: 'Matrix4fv', value: null}
 			}
 		});
 	}

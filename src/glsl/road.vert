@@ -12,11 +12,6 @@ out vec3 vCenter;
 
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
-uniform float time;
-
-float CubicOut(float k) {
-    return --k * k * k + 1.;
-}
 
 void main() {
     vCenter = vec3(0);

@@ -422,12 +422,8 @@ function animate(rafTime) {
 		roadMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
 		roadMaterial.use();
 
-		let noAnimationStreak = 0;
-
 		for(let i = 0; i < roads.children.length; i++) {
 			const object = roads.children[i];
-
-			object.data.tile.time += delta;
 
 			const inFrustum = object.inCameraFrustum(rCamera);
 
@@ -435,19 +431,6 @@ function animate(rafTime) {
 				let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
 				roadMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
 				roadMaterial.updateUniform('modelViewMatrix');
-
-				if(object.data.tile.time - delta < 1) {
-					roadDepthMaterial.uniforms.time.value = object.data.tile.time;
-					roadDepthMaterial.updateUniform('time');
-					noAnimationStreak = 0;
-				} else {
-					if(noAnimationStreak === 0) {
-						roadDepthMaterial.uniforms.time.value = 1;
-						roadDepthMaterial.updateUniform('time');
-					}
-
-					++noAnimationStreak;
-				}
 
 				object.draw(roadMaterial);
 			}
@@ -464,8 +447,6 @@ function animate(rafTime) {
 
 		for(let i = 0; i < buildings.children.length; i++) {
 			const object = buildings.children[i];
-
-			//object.data.tile.time += delta;
 
 			const inFrustum = object.inCameraFrustum(rCamera);
 

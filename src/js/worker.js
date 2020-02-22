@@ -29,11 +29,12 @@ function load(tile) {
 
 function overpass(x, y) {
 	let url = 'https://overpass.kumi.systems/api/interpreter?data=';
+	const offset = 0.05;
 	let position = [
-		tile2degrees(x, y + 1),
-		tile2degrees(x + 1, y)
+		tile2degrees(x - offset, y + 1 + offset),
+		tile2degrees(x + 1 + offset, y - offset)
 	];
-	let bbox = position[0].lat + ',' + position[0].lon + ',' + position[1].lat + ',' + position[1].lon;
+	const bbox = position[0].lat + ',' + position[0].lon + ',' + position[1].lat + ',' + position[1].lon;
 
 	url += `
 		[out:json][timeout:25];
