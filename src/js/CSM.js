@@ -9,8 +9,8 @@ export default class CSM {
 		this.camera = params.camera;
 		this.parent = params.parent;
 
-		this.near = params.near || this.camera.near;
-		this.far = params.far || this.camera.far;
+		this.near = this.camera.near;
+		this.far = params.far;
 
 		this.cascades = params.cascades;
 		this.size = params.size || 2048;
@@ -131,7 +131,7 @@ export default class CSM {
 		let res = [this.near];
 
 		for(let i = 0; i < this.breaks.length; i++) {
-			res.push(this.breaks[i] * (this.far - this.near) + this.near)
+			res.push(this.breaks[i] * this.far);
 		}
 
 		return res;

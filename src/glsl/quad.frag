@@ -9,6 +9,8 @@ out vec4 FragColor;
 #define TONEMAP_ACES 1
 #define SHADOW_MAPPING 2
 #define SHADOWMAP_SIZE 1000.
+#define SHADOWMAP_FADE 1
+#define SHADOWMAP_FADE_DISTANCE 200.
 
 #define CSM_CASCADES 3
 
@@ -261,6 +263,14 @@ void main() {
             if(cascadeId == 2) shadowFactor = getShadowSoft(cascades[2].shadowMap, vec2(shadowResolution), shadowBias, 1., shadowPosition, shadowSize);
             #elif SHADOW_MAPPING == 3
             shadowFactor = getShadowPCSS(cascades[0].shadowMap, shadowBias, shadowPosition);
+            #endif
+
+            #if SHADOWMAP_FADE
+            if(cascadeId == CSM_CASCADES - 1 && shadowSplits[cascadeId + 1] + position.z < SHADOWMAP_FADE_DISTANCE) {
+                float fadeFactor = (shadowSplits[cascadeId + 1] + position.z) / SHADOWMAP_FADE_DISTANCE;
+                float smoothFade = smoothstep(0., 1., fadeFactor);
+                shadowFactor = mix(1., shadowFactor, smoothFade);
+            }
             #endif
         }
     #endif
