@@ -3,6 +3,8 @@ precision highp float;
 precision highp int;
 precision highp sampler2D;
 precision highp samplerCube;
+precision highp sampler2DArray;
+
 in vec3 position;
 in vec3 normal;
 in vec2 uv;

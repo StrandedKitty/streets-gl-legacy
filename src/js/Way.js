@@ -102,8 +102,17 @@ export default class Way {
 
 			this.triangulateFootprint({
 				color: this.geometry.roofColor,
-				height: this.geometry.height
+				height: this.geometry.height,
+				normal: 1
 			});
+
+			if(this.geometry.minHeight > 0) {
+				this.triangulateFootprint({
+					color: this.geometry.roofColor,
+					height: this.geometry.minHeight,
+					normal: -1
+				});
+			}
 		}
 
 		if(this.properties.type === 'road') {
@@ -166,11 +175,16 @@ export default class Way {
 
 			if(ring.type === 'outer') {
 				const {vertices, holes} = this.getFlattenVertices(ring);
-				const triangles = earcut(vertices, holes).reverse();
+				let triangles = earcut(vertices, holes);
+
+				if(params.normal === 1) triangles = triangles.reverse();
 
 				for(let i = 0; i < triangles.length; i++) {
 					this.mesh.vertices.push(vertices[triangles[i] * 2], params.height, vertices[triangles[i] * 2 + 1]);
-					this.mesh.normals.push(0, 1, 0);
+
+					if(params.normal === 1) this.mesh.normals.push(0, 1, 0);
+					else this.mesh.normals.push(0, -1, 0);
+
 					this.mesh.colors.push(...params.color);
 					this.mesh.uvs.push(0, 0);
 					this.mesh.textures.push(0);

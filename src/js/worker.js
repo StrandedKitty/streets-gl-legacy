@@ -73,9 +73,9 @@ function overpass(x, y) {
 }
 
 function processData(x, y, data, pivot) {
-	let metersPivot = degrees2meters(pivot.lat, pivot.lon);
-	let nodes = new Map();
-	let ways = new Map();
+	const metersPivot = degrees2meters(pivot.lat, pivot.lon);
+	const nodes = new Map();
+	const ways = new Map();
 
 	const meshData = {
 		ids: [],

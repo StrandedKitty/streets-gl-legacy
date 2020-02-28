@@ -11,6 +11,7 @@ out vec4 FragColor;
 #define SHADOWMAP_SIZE 1000.
 #define SHADOWMAP_FADE 1
 #define SHADOWMAP_FADE_DISTANCE 200.
+#define SHADOWMAP_SOFT_RADIUS 1.
 
 #define CSM_CASCADES 3
 
@@ -258,9 +259,9 @@ void main() {
             if(cascadeId == 1) shadowFactor = getShadow(cascades[1].shadowMap, shadowBias, shadowPosition, shadowSize);
             if(cascadeId == 2) shadowFactor = getShadow(cascades[2].shadowMap, shadowBias, shadowPosition, shadowSize);
             #elif SHADOW_MAPPING == 2
-            if(cascadeId == 0) shadowFactor = getShadowSoft(cascades[0].shadowMap, vec2(shadowResolution), shadowBias, 1., shadowPosition, shadowSize);
-            if(cascadeId == 1) shadowFactor = getShadowSoft(cascades[1].shadowMap, vec2(shadowResolution), shadowBias, 1., shadowPosition, shadowSize);
-            if(cascadeId == 2) shadowFactor = getShadowSoft(cascades[2].shadowMap, vec2(shadowResolution), shadowBias, 1., shadowPosition, shadowSize);
+            if(cascadeId == 0) shadowFactor = getShadowSoft(cascades[0].shadowMap, vec2(shadowResolution), shadowBias, SHADOWMAP_SOFT_RADIUS, shadowPosition, shadowSize);
+            if(cascadeId == 1) shadowFactor = getShadowSoft(cascades[1].shadowMap, vec2(shadowResolution), shadowBias, SHADOWMAP_SOFT_RADIUS, shadowPosition, shadowSize);
+            if(cascadeId == 2) shadowFactor = getShadowSoft(cascades[2].shadowMap, vec2(shadowResolution), shadowBias, SHADOWMAP_SOFT_RADIUS, shadowPosition, shadowSize);
             #elif SHADOW_MAPPING == 3
             shadowFactor = getShadowPCSS(cascades[0].shadowMap, shadowBias, shadowPosition);
             #endif

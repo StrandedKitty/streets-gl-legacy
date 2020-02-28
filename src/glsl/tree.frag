@@ -3,6 +3,8 @@ precision highp float;
 precision highp int;
 precision highp sampler2D;
 precision highp samplerCube;
+precision highp sampler2DArray;
+
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec3 outNormal;
 layout(location = 2) out vec3 outPosition;
@@ -13,20 +15,16 @@ in vec2 vUv;
 flat in int vInstanceID;
 flat in int vType;
 
-uniform sampler2D tDiffuse[2];
-uniform sampler2D tNormal[2];
+uniform sampler2DArray tDiffuse;
+uniform sampler2DArray tNormal;
 uniform sampler2D tVolumeNormal;
 
 vec4 readDiffuse(const vec2 uv) {
-    if(vType == 0) return texture(tDiffuse[0], uv);
-    if(vType == 1) return texture(tDiffuse[1], uv);
-    else return vec4(1, 0, 1, 1);
+    return texture(tDiffuse, vec3(uv, vType));
 }
 
 vec4 readNormal(const vec2 uv) {
-    if(vType == 0) return texture(tNormal[0], uv);
-    if(vType == 1) return texture(tNormal[1], uv);
-    else return vec4(0, 1, 0, 1);
+    return texture(tNormal, vec3(uv, vType));
 }
 
 vec3 getNormal() {
