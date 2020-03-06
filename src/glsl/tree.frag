@@ -28,10 +28,12 @@ vec4 readNormal(const vec2 uv) {
 }
 
 vec3 getNormal() {
+    vec2 uv = gl_FrontFacing ? vUv : -vUv;
+
     vec3 pos_dx = dFdx(vPosition);
     vec3 pos_dy = dFdy(vPosition);
-    vec3 tex_dx = dFdx(vec3(vUv, 0.0));
-    vec3 tex_dy = dFdy(vec3(vUv, 0.0));
+    vec3 tex_dx = dFdx(vec3(uv, 0.0));
+    vec3 tex_dy = dFdy(vec3(uv, 0.0));
     vec3 t = (tex_dy.t * pos_dx - tex_dx.t * pos_dy) / (tex_dx.s * tex_dy.t - tex_dy.s * tex_dx.t);
 
     vec3 ng = normalize(vNormal);
@@ -44,6 +46,8 @@ vec3 getNormal() {
     vec3 map2 = texture(tVolumeNormal, vUv).rgb * 2. - 1.;
 
     vec3 normal = normalize(tbn * mix(map1, map2, 0.5));
+
+    normal *= float(gl_FrontFacing) * 2.0 - 1.0;
 
     return normal;
 }
@@ -82,7 +86,8 @@ void main() {
     float specular = 0.01;
 
     outColor = vec4(diffuse.rgb, 1.);
-    vec3 normal = getNormal() * (float(gl_FrontFacing) * 2.0 - 1.0);
+    vec3 normal = getNormal();
+
     outNormal = normal * 0.5 + 0.5;
     outPosition = vPosition;
     outMetallicRoughness = vec4(metalness, roughness, specular, 1.);
