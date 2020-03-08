@@ -2,6 +2,7 @@ body {
     margin: 0;
     font-family: "Segoe UI", serif;
     color: #111111;
+    overflow: hidden;
 }
 
 #wrapper {

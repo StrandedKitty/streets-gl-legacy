@@ -1,9 +1,10 @@
-let config = {
+const Config = {
 	drawDistance: 5000,
 	textureAnisotropy: undefined,
 	maxTiles: 50,
 	tilesPerWorker: 2,
-	SSAA: 2,
+	pixelRatio: undefined,
+	SSAA: 1,
 	SMAA: true,
 	SSAO: true,
 	SSAOResolution: 0.5,
@@ -12,9 +13,9 @@ let config = {
 	realTimeSun: false
 };
 
-config.set = function (key, value, force) {
-	if(config[key] === undefined || force)
-		config[key] = value;
+Config.set = function (key, value, force) {
+	if(Config[key] === undefined || force)
+		Config[key] = value;
 };
 
-export default config;
+export default Config;

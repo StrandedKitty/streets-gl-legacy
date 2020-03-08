@@ -72,8 +72,10 @@ Models.onload = function () {
 };
 
 function init() {
+	Config.set('pixelRatio', window.devicePixelRatio, true);
+
 	RP = new Renderer(canvas);
-	RP.setSize(window.innerWidth, window.innerHeight);
+	RP.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	RP.culling = true;
 
 	Config.set('textureAnisotropy', RP.capabilities.maxAnisotropy);
@@ -165,7 +167,7 @@ function init() {
 	});
 	wrapper.add(batchesInstanced.hydrants.mesh);
 
-	gBuffer = new GBuffer(RP, window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA, [
+	gBuffer = new GBuffer(RP, window.innerWidth * Config.SSAA * Config.pixelRatio, window.innerHeight * Config.SSAA * Config.pixelRatio, [
 		{
 			name: 'color',
 			internalFormat: 'RGBA8',
@@ -189,11 +191,11 @@ function init() {
 		}
 	]);
 
-	smaa = new SMAA(RP, window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
-	ssao = new SSAO(RP, window.innerWidth * Config.SSAOResolution, window.innerHeight * Config.SSAOResolution);
-	blur = new Blur(RP, window.innerWidth, window.innerHeight);
-	ssaa = new SSAA(RP, window.innerWidth, window.innerHeight);
-	volumetricLighting = new VolumetricLighting(RP, window.innerWidth, window.innerHeight);
+	smaa = new SMAA(RP, window.innerWidth * Config.SSAA * Config.pixelRatio, window.innerHeight * Config.SSAA * Config.pixelRatio);
+	ssao = new SSAO(RP, window.innerWidth * Config.SSAOResolution * Config.pixelRatio, window.innerHeight * Config.SSAOResolution * Config.pixelRatio);
+	blur = new Blur(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
+	ssaa = new SSAA(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
+	volumetricLighting = new VolumetricLighting(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 
 	light = {
 		direction: new Float32Array([-1, -1, -1]),
@@ -260,13 +262,15 @@ function init() {
 
 		csm.resize();
 
-		RP.setSize(window.innerWidth, window.innerHeight);
-		gBuffer.setSize(window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
-		smaa.setSize(window.innerWidth * Config.SSAA, window.innerHeight * Config.SSAA);
-		ssao.setSize(window.innerWidth * Config.SSAOResolution, window.innerHeight * Config.SSAOResolution);
-		blur.setSize(window.innerWidth, window.innerHeight);
-		ssaa.setSize(window.innerWidth, window.innerHeight);
-		volumetricLighting.setSize(window.innerWidth, window.innerHeight);
+		Config.set('pixelRatio', window.devicePixelRatio, true);
+
+		RP.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
+		gBuffer.setSize(window.innerWidth * Config.SSAA * Config.pixelRatio, window.innerHeight * Config.SSAA * Config.pixelRatio);
+		smaa.setSize(window.innerWidth * Config.SSAA * Config.pixelRatio, window.innerHeight * Config.SSAA * Config.pixelRatio);
+		ssao.setSize(window.innerWidth * Config.SSAOResolution * Config.pixelRatio, window.innerHeight * Config.SSAOResolution * Config.pixelRatio);
+		blur.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
+		ssaa.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
+		volumetricLighting.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	}, false);
 
 	animate();
