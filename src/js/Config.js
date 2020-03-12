@@ -7,10 +7,11 @@ const Config = {
 	SSAA: 1,
 	SMAA: true,
 	SSAO: true,
-	SSAOResolution: 0.5,
+	SSAOResolution: 1,
 	SSAOBlur: true,
 	volumetricLighting: false,
-	realTimeSun: false
+	realTimeSun: false,
+	layerHeight: 6
 };
 
 Config.set = function (key, value, force) {

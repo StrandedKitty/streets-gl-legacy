@@ -8,7 +8,6 @@ precision highp sampler2DArray;
 in vec3 position;
 in vec3 normal;
 in vec2 uv;
-in uint mesh;
 in vec3 iPosition;
 in vec2 iOffset;
 in uint iId;
@@ -16,7 +15,6 @@ in uint iType;
 out vec3 vPosition;
 out vec3 vNormal;
 out vec2 vUv;
-flat out int vMesh;
 flat out int vInstanceID;
 flat out int vType;
 
@@ -35,7 +33,6 @@ mat2 rotate2d(float angle){
 
 void main() {
     vUv = uv;
-    vMesh = int(mesh);
     vInstanceID = int(iId);
     vType = int(iType);
 

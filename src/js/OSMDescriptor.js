@@ -11,30 +11,26 @@ export default class OSMDescriptor {
 	}
 
 	getProperties() {
-		for(let key in this.tags) {
-			let value = this.tags[key];
+		for(const key in this.tags) {
+			const value = this.tags[key];
 
 			if(tagsMap[key]) {
-				let props = tagsMap[key][value] || tagsMap[key].default || {};
-				let res = {};
+				const props = tagsMap[key][value] || tagsMap[key].default || {};
+				const res = {};
 
 				for(let i in props) {
-					res[i] = props[i];
+					const mapValue = props[i];
 
-					if(res[i] === '@units') {
+					if(mapValue === '@units') {
 						res[i] = this.parseUnits(value);
-					}
-
-					if(res[i] === '@color') {
+					} else if(mapValue === '@color') {
 						res[i] = colorNamesList[value.toLowerCase()] || hexToRgb(value);
-					}
-
-					if(res[i] === '@int') {
+					} else if(mapValue === '@int') {
 						res[i] = parseInt(value);
-					}
-
-					if(res[i] === '@this') {
+					} else if(mapValue === '@this') {
 						res[i] = value;
+					} else {
+						res[i] = mapValue;
 					}
 
 					if(res[i]) this.properties[i] = res[i];

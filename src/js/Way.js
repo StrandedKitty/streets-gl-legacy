@@ -148,10 +148,13 @@ export default class Way {
 		this.geometry.roofColor = this.properties.roofColor || [79, 89, 88];
 
 		this.geometry.material = this.getMaterialData(this.properties.facadeMaterial);
-		this.geometry.facadeColor = this.geometry.material.colored ? (this.properties.facadeColor || [231, 216, 185]) : [255, 255, 255];
+		this.geometry.facadeColor = this.geometry.material.colored ? (this.properties.facadeColor || [239, 232, 219]) : [255, 255, 255];
 
 		this.geometry.levels = this.properties.levels || Math.floor((this.geometry.height - this.geometry.minHeight) / 3.5);
 		if(this.properties.minLevel) this.geometry.levels -= this.properties.minLevel;
+
+		if(this.properties.layer) this.geometry.layer = this.properties.layer;
+		else this.geometry.layer = 0;
 	}
 
 	getMaterialData(material) {

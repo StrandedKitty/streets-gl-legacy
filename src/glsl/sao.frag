@@ -25,7 +25,7 @@ float readDepth(const vec2 uv) {
 	return readPosition(uv).z;
 }
 
-const int kernelSize = 32;
+const int kernelSize = 16;
 const float radius = 15.;
 const float bias = 1.0;
 

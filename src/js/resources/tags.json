@@ -64,5 +64,8 @@
 	},
 	"emergency": {
 		"fire_hydrant": {"type": "hydrant"}
+	},
+	"layer": {
+		"default": {"layer": "@int"}
 	}
 }

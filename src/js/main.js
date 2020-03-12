@@ -201,7 +201,7 @@ function init() {
 		direction: new Float32Array([-1, -1, -1]),
 		range: -1,
 		color: new Float32Array([1, 1, 1]),
-		intensity: 4,
+		intensity: 5,
 		position: new Float32Array([0, 0, 0]),
 		innerConeCos: 1,
 		outerConeCos: 0.7071067811865476,
@@ -236,7 +236,7 @@ function init() {
 			normalMatrix: {type: 'Matrix3fv', value: null},
 			cameraMatrixWorld: {type: 'Matrix4fv', value: null},
 			cameraMatrixWorldInverse: {type: 'Matrix4fv', value: null},
-			ambientIntensity: {type: '1f', value: 0.2},
+			ambientIntensity: {type: '1f', value: 0.3},
 			uExposure: {type: '1f', value: 1.}
 		}
 	});

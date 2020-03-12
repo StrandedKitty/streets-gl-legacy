@@ -1,4 +1,3 @@
-import Models from "./Models";
 import ModelUtils from "./ModelUtils";
 import {tile2meters, tileDecode} from "./Utils";
 
@@ -104,15 +103,6 @@ export default class BatchInstanced {
 			normalized: false
 		});
 		mesh.setAttributeData('uv', this.attributes.TEXCOORD_0);
-
-		mesh.addAttribute({
-			name: 'mesh',
-			size: 1,
-			type: 'UNSIGNED_BYTE',
-			dataFormat: 'integer',
-			normalized: false
-		});
-		mesh.setAttributeData('mesh', this.attributes.MESH);
 
 		mesh.addAttribute({
 			name: 'iPosition',

@@ -2,6 +2,7 @@ import vec2 from "./math/vec2";
 import vec3 from "./math/vec3";
 import {toRad} from "./Utils";
 import WayAABB from "./WayAABB";
+import Config from "./Config";
 
 export default class Ring {
 	constructor(params) {
@@ -39,7 +40,7 @@ export default class Ring {
 			this.parent.instances.trees.push(...points);
 		}
 
-		if(this.parent.properties.type === 'road') {
+		if(this.parent.properties.type === 'road' && this.parent.geometry.layer >= 0) {
 			this.createPath({
 				width: this.parent.properties.roadWidth,
 				height: 0,
