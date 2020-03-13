@@ -18,7 +18,7 @@ void main() {
     int centerIndex = gl_VertexID - 3 * int(float(gl_VertexID) / 3.);
     vCenter[centerIndex] = 1.;
 
-    vColor = vec3(1, 0, 1);
+    vColor = vec3(0.2);
     vUv = uv;
     vec3 transformedNormal = normal;
     transformedNormal = vec3(modelViewMatrix * vec4(transformedNormal, 0));

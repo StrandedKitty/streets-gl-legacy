@@ -27,12 +27,15 @@ float readDepth(const vec2 uv) {
 
 const int kernelSize = 16;
 const float radius = 15.;
-const float bias = 1.0;
+const float biasStart = 0.5;
+const float biasDepthFactor = 1000.;
 
 void main() {
 	vec2 noiseScale = resolution / 4.;
 
 	vec3 fragPos = readPosition(vUv);
+	float bias = biasStart - fragPos.z / biasDepthFactor;
+
 	vec3 normal = normalize(readNormal(vUv));
 	float depth = readDepth(vUv);
 	vec3 randomVec = normalize(texture(tNoise, vUv * noiseScale).xyz);

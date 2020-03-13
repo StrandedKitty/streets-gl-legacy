@@ -28,13 +28,16 @@ function load(tile) {
 }
 
 function overpass(x, y) {
-	let url = 'https://overpass.kumi.systems/api/interpreter?data=';
+	//let url = 'https://overpass.kumi.systems/api/interpreter?data=';
+	let url = 'https://overpass.nchc.org.tw/api/interpreter?data=';
 	const offset = 0.05;
-	let position = [
+	const position = [
 		tile2degrees(x - offset, y + 1 + offset),
 		tile2degrees(x + 1 + offset, y - offset)
 	];
 	const bbox = position[0].lat + ',' + position[0].lon + ',' + position[1].lat + ',' + position[1].lon;
+
+	const pivot = tile2degrees(x, y + 1);
 
 	url += `
 		[out:json][timeout:25];
@@ -62,7 +65,7 @@ function overpass(x, y) {
 		if (httpRequest.readyState === XMLHttpRequest.DONE) {
 			if (httpRequest.status === 200) {
 				let data = JSON.parse(httpRequest.responseText).elements;
-				processData(x, y, data, position[0]);
+				processData(x, y, data, pivot);
 			} else {
 				console.error('Request error: ' + httpRequest.status);
 			}

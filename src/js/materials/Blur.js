@@ -40,7 +40,7 @@ export default class Blur {
 			uniforms: {
 				samplerOffsets: {type: '1fv', value: [-15.5, -13.5, -11.5, -9.5, -7.5, -5.5, -3.5, -1.5, 0.5, 2.5, 4.5, 6.5, 8.5, 10.5, 12.5, 14.5]},
 				direction: {type: '2fv', value: [1, 0]},
-				texelSize: {type: '1f', value: 0.2},
+				texelSize: {type: '1f', value: 0.23},
 				resolution: {type: '2fv', value: [this.width, this.height]},
 				tColor: {type: 'texture', value: null},
 				tDepth: {type: 'texture', value: null},

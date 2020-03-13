@@ -1,6 +1,7 @@
 import shaders from '../Shaders';
 import vec3 from "../math/vec3";
 import {lerp} from "../Utils";
+import SeededRandom from "../math/SeededRandom";
 
 export default class SSAO {
 	constructor(renderer, width, height) {
@@ -58,10 +59,11 @@ export default class SSAO {
 	}
 
 	getRandomSamples(number) {
-		let samples = [];
+		const random = new SeededRandom(3216);
+		const samples = [];
 
-		for (let i = 0; i < number; ++i){
-			let sample = new vec3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random());
+		for (let i = 0; i < number; ++i) {
+			let sample = new vec3(random.generate() * 2 - 1, random.generate() * 2 - 1, random.generate());
 			sample = vec3.normalize(sample);
 			//sample = vec3.multiplyScalar(sample, Math.random());
 			let scale = i / number;
