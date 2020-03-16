@@ -6,7 +6,7 @@
 		"build": "webpack --config webpack.config.js --mode=production",
 		"dev": "concurrently \"http-server ./build -p 8080\" \"webpack --config webpack.config.js --watch --mode=development\""
 	},
-	"author": "vtHawk",
+	"author": "vHawk",
 	"license": "MIT",
 	"devDependencies": {
 		"@babel/core": "^7.7.5",
