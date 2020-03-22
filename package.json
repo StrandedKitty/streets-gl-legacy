@@ -25,6 +25,7 @@
 		"@loaders.gl/gltf": "^2.0.2",
 		"martinez-polygon-clipping": "^0.6.2",
 		"polygon-overlap": "^1.0.5",
+		"polylabel": "^1.0.2",
 		"suncalc": "^1.8.0",
 		"turf-overlaps": "^1.0.3"
 	}

@@ -1,3 +1,5 @@
+import vec3 from "./math/vec3";
+
 export function clamp(num, min, max) {
 	return num <= min ? min : num >= max ? max : num;
 }
@@ -124,4 +126,11 @@ export function sphericalToCartesian(azimuth, altitude) {
 
 export function normalizeAngle(angle) {
 	return (angle %= 2 * Math.PI) >= 0 ? angle : (angle + 2 * Math.PI);
+}
+
+export function calculateNormal(vA, vB, vC) {
+	let cb = vec3.sub(vC, vB);
+	let ab = vec3.sub(vA, vB);
+	cb = vec3.cross(cb, ab);
+	return vec3.normalize(cb);
 }

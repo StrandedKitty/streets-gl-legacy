@@ -5,6 +5,7 @@ import vec3 from "./math/vec3";
 import vec2 from "./math/vec2";
 import WayAABB from "./WayAABB";
 import Ring from "./Ring";
+import PyramidalRoof from "./roofs/PyramidalRoof";
 
 export default class Way {
 	constructor(params) {
@@ -100,11 +101,13 @@ export default class Way {
 		if(this.properties.type === 'building') {
 			this.geometryType = 'building';
 
-			this.triangulateFootprint({
-				color: this.geometry.roofColor,
-				height: this.geometry.height,
-				normal: 1
-			});
+			if(this.geometry.roofHeight === 0) {
+				this.triangulateFootprint({
+					color: this.geometry.roofColor,
+					height: this.geometry.height,
+					normal: 1
+				});
+			}
 
 			if(this.geometry.minHeight > 0) {
 				this.triangulateFootprint({
@@ -113,6 +116,10 @@ export default class Way {
 					normal: -1
 				});
 			}
+
+			this.generateRoof({
+
+			});
 		}
 
 		if(this.properties.type === 'road') {
@@ -142,6 +149,17 @@ export default class Way {
 			this.geometry.minHeight = 0;
 		}
 		this.geometry.minHeight *= this.scaleFactor;
+
+		if(this.properties.roofHeight && this.properties.roofShape) {
+			this.geometry.roofHeight = this.properties.roofHeight;
+			this.geometry.roofShape = this.properties.roofShape || 'flat';
+		} else {
+			this.geometry.roofHeight = 0;
+			this.geometry.roofShape = 'flat';
+		}
+		this.geometry.roofHeight *= this.scaleFactor;
+
+		this.geometry.height -= this.geometry.roofHeight;
 
 		if(this.geometry.minHeight > this.geometry.height) this.geometry.minHeight = 0;
 
@@ -194,7 +212,34 @@ export default class Way {
 				}
 			}
 		}
+	}
 
+	generateRoof(params) {
+		const roofHeight = this.geometry.roofHeight;
+		const roofShape = this.geometry.roofShape;
+		const buildingHeight = this.geometry.height;
+		let roof;
+
+		switch(roofShape) {
+			case 'pyramidal':
+				roof = new PyramidalRoof({
+					way: this,
+					height: roofHeight,
+					buildingHeight: buildingHeight,
+					color: this.geometry.roofColor
+				});
+				break;
+		}
+
+		if(roof && roof.mesh.vertices.length > 0) {
+			const vertices = roof.mesh.vertices.length;
+
+			this.mesh.vertices = this.mesh.vertices.concat(roof.mesh.vertices);
+			this.mesh.normals = this.mesh.normals.concat(roof.mesh.normals);
+			this.mesh.colors = this.mesh.colors.concat(roof.mesh.colors);
+			this.mesh.uvs = this.mesh.uvs.concat(new Array(vertices / 3 * 2).fill(0));
+			this.mesh.textures = this.mesh.textures.concat(new Array(vertices / 3).fill(0));
+		}
 	}
 
 	getFlattenVertices(outerRing) {

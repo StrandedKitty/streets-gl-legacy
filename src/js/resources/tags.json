@@ -11,6 +11,12 @@
 	"roof:colour": {
 		"default": {"roofColor": "@color"}
 	},
+	"roof:shape": {
+		"pyramidal": {"roofShape": "pyramidal"}
+	},
+	"roof:height": {
+		"default": {"roofHeight": "@units"}
+	},
 	"type": {
 		"building": {"relationType": "building"},
 		"multipolygon": {"relationType": "multipolygon"}

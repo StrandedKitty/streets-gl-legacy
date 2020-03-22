@@ -5,7 +5,7 @@ const Config = {
 	tilesPerWorker: 2,
 	pixelRatio: undefined,
 	SSAA: 1,
-	SMAA: true,
+	SMAA: false,
 	SSAO: true,
 	SSAOResolution: 1,
 	SSAOBlur: true,

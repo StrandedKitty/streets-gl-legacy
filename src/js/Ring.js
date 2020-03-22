@@ -1,6 +1,6 @@
 import vec2 from "./math/vec2";
 import vec3 from "./math/vec3";
-import {toRad} from "./Utils";
+import {calculateNormal, toRad} from "./Utils";
 import WayAABB from "./WayAABB";
 import Config from "./Config";
 
@@ -115,7 +115,7 @@ export default class Ring {
 			this.parent.mesh.uvs.push(segmentUvEnd, 0);
 			this.parent.mesh.uvs.push(segmentUvStart, 0);
 
-			const normal = this.calculateNormal(
+			const normal = calculateNormal(
 				new vec3(nextVertex.x, minHeight, nextVertex.z),
 				new vec3(vertex.x, height, vertex.z),
 				new vec3(vertex.x, minHeight, vertex.z)
@@ -381,12 +381,5 @@ export default class Ring {
 				this.parent.mesh.textures.push(0, 0, 0, 0, 0, 0);
 			}
 		}
-	}
-
-	calculateNormal(vA, vB, vC) {
-		let cb = vec3.sub(vC, vB);
-		let ab = vec3.sub(vA, vB);
-		cb = vec3.cross(cb, ab);
-		return vec3.normalize(cb);
 	}
 }

@@ -28,8 +28,8 @@ function load(tile) {
 }
 
 function overpass(x, y) {
-	//let url = 'https://overpass.kumi.systems/api/interpreter?data=';
-	let url = 'https://overpass.nchc.org.tw/api/interpreter?data=';
+	let url = 'https://overpass.kumi.systems/api/interpreter?data=';
+	//let url = 'https://overpass.nchc.org.tw/api/interpreter?data=';
 	const offset = 0.05;
 	const position = [
 		tile2degrees(x - offset, y + 1 + offset),
