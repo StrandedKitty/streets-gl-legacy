@@ -12,7 +12,9 @@
 		"default": {"roofColor": "@color"}
 	},
 	"roof:shape": {
-		"pyramidal": {"roofShape": "pyramidal"}
+		"default": {"roofShape": "flat"},
+		"pyramidal": {"roofShape": "pyramidal"},
+		"dome": {"roofShape": "dome"}
 	},
 	"roof:height": {
 		"default": {"roofHeight": "@units"}

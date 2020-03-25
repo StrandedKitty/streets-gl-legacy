@@ -56,6 +56,10 @@ export default class vec2 {
 		return num <= -1 ? -1 : num >= 1 ? 1 : num;
 	}
 
+	static distance(a, b) {
+		return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+	}
+
 	static angleClockwise(a, b) {
 		const dot = a.x * b.x + a.y * b.y;
 		const det = a.x * b.y - a.y * b.x;

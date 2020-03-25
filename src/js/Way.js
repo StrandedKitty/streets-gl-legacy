@@ -6,6 +6,7 @@ import vec2 from "./math/vec2";
 import WayAABB from "./WayAABB";
 import Ring from "./Ring";
 import PyramidalRoof from "./roofs/PyramidalRoof";
+import DomeRoof from "./roofs/DomeRoof";
 
 export default class Way {
 	constructor(params) {
@@ -223,6 +224,14 @@ export default class Way {
 		switch(roofShape) {
 			case 'pyramidal':
 				roof = new PyramidalRoof({
+					way: this,
+					height: roofHeight,
+					buildingHeight: buildingHeight,
+					color: this.geometry.roofColor
+				});
+				break;
+			case 'dome':
+				roof = new DomeRoof({
 					way: this,
 					height: roofHeight,
 					buildingHeight: buildingHeight,

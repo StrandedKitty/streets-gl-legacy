@@ -7,7 +7,7 @@ out vec4 FragColor;
 #define Eu 2.71828182846
 
 #define TONEMAP_ACES 1
-#define SHADOW_MAPPING 1
+#define SHADOW_MAPPING 2
 #define SHADOWMAP_SIZE 1000.
 #define SHADOWMAP_FADE 1
 #define SHADOWMAP_FADE_DISTANCE 200.
