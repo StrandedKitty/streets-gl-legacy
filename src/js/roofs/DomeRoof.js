@@ -32,7 +32,7 @@ export default class DomeRoof {
 
         if(ring) {
             const vertices = ring.vertices.slice(0, -1);
-            const center = polylabel([vertices], 1);
+            const center = polylabel([vertices], 0.1);
             const centerVec = new vec2(center[0], center[1]);
 
             const dims = {

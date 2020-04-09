@@ -38,7 +38,7 @@ module.exports = [{
 		]
 	}
 },{
-	entry: './src/js/worker.js',
+	entry: './src/js/worker/worker.js',
 	output: {
 		filename: 'worker.js',
 		path: path.resolve(__dirname, 'build/js')

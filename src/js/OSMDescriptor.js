@@ -1,6 +1,6 @@
 import {hexToRgb} from "./Utils";
 const tagsMap = Object.freeze(require('./resources/tags.json'));
-const colorNamesList = Object.freeze(require('./resources/colors'));
+const colorsList = Object.freeze(require('./resources/colors'));
 
 export default class OSMDescriptor {
 	constructor(tags) {
@@ -11,9 +11,7 @@ export default class OSMDescriptor {
 	}
 
 	getProperties() {
-		for(const key in this.tags) {
-			const value = this.tags[key];
-
+		for(const [key, value] of Object.entries(this.tags)) {
 			if(tagsMap[key]) {
 				const props = tagsMap[key][value] || tagsMap[key].default || {};
 				const res = {};
@@ -24,7 +22,7 @@ export default class OSMDescriptor {
 					if(mapValue === '@units') {
 						res[i] = this.parseUnits(value);
 					} else if(mapValue === '@color') {
-						res[i] = colorNamesList[value.toLowerCase()] || hexToRgb(value);
+						res[i] = colorsList[value.toLowerCase()] || hexToRgb(value);
 					} else if(mapValue === '@int') {
 						res[i] = parseInt(value);
 					} else if(mapValue === '@this') {
@@ -40,7 +38,7 @@ export default class OSMDescriptor {
 	}
 
 	parseUnits(value) {
-		let num = 0;
+		let num;
 		value = value.replace(/,/g,'.').replace(/ /g,'').replace(/ft/g,'\'');
 
 		if(value.search(/m/) !== -1) {
@@ -48,8 +46,8 @@ export default class OSMDescriptor {
 		} else if(value.search(/'/) !== -1) {
 			if(value.search(/"/) !== -1) {
 				value = value.replace(/"/g,'').split('\'');
-				let feet = parseFloat(value[0]) + parseFloat(value[1]) / 12;
-				num = parseFloat(feet) / 3.2808;
+				const feet = parseFloat(value[0]) + parseFloat(value[1]) / 12;
+				num = feet / 3.2808;
 			} else {
 				num = parseFloat(value.replace(/'/g,'')) / 3.2808;
 			}

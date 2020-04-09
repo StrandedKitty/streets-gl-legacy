@@ -1,7 +1,7 @@
-import Object3D from "./Object3D";
+import Object3D from "../core/Object3D";
 import Attribute from "./Attribute";
 import VAO from "./VAO";
-import AABB from "../AABB";
+import AABB from "../core/AABB";
 import vec3 from "../math/vec3";
 
 export default class MeshInstanced extends Object3D {

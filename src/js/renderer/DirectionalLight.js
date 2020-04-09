@@ -1,4 +1,4 @@
-import Object3D from "./Object3D";
+import Object3D from "../core/Object3D";
 import OrthographicCamera from "./OrthographicCamera";
 
 export default class Mesh extends Object3D {

@@ -1,8 +1,8 @@
-import Node from "./Node";
+import Node from "../Node";
 import Way from "./Way";
-import {tile2degrees, degrees2meters} from "./Utils";
-import OSMDescriptor from "./OSMDescriptor";
-import ModelUtils from "./ModelUtils";
+import {tile2degrees, degrees2meters} from "../Utils";
+import OSMDescriptor from "../OSMDescriptor";
+import ModelUtils from "../ModelUtils";
 import * as martinez from 'martinez-polygon-clipping';
 
 self.addEventListener('message', function (e) {

@@ -1,4 +1,4 @@
-import vec3 from "./math/vec3";
+import vec3 from "../math/vec3";
 
 export default class AABB {
 	constructor(min, max) {
@@ -47,13 +47,11 @@ export default class AABB {
 	}
 
 	getSize() {
-		const size = {
+		return {
 			x: this.max.x - this.min.x,
 			y: this.max.y - this.min.y,
 			z: this.max.z - this.min.z
 		};
-
-		return size;
 	}
 
 	getCenter() {

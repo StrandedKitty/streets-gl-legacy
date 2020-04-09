@@ -1,6 +1,6 @@
 import {tile2meters, tileEncode, toRad} from "./Utils";
 import Config from "./Config";
-import Shapes from "./renderer/Shapes";
+import Shapes from "./Shapes";
 
 export default class Tile {
 	constructor(x, y, callback, onDelete) {

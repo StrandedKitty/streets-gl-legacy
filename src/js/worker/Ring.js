@@ -1,8 +1,8 @@
-import vec2 from "./math/vec2";
-import vec3 from "./math/vec3";
-import {calculateNormal, toRad} from "./Utils";
+import vec2 from "../math/vec2";
+import vec3 from "../math/vec3";
+import {calculateNormal, toRad} from "../Utils";
 import WayAABB from "./WayAABB";
-import Config from "./Config";
+import Config from "../Config";
 
 export default class Ring {
 	constructor(params) {

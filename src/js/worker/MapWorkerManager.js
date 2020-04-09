@@ -1,5 +1,5 @@
 import MapWorker from './MapWorker';
-import Config from "./Config";
+import Config from "../Config";
 
 export default class MapWorkerManager {
 	constructor(num, path) {

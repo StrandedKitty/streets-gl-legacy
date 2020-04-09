@@ -1,12 +1,11 @@
-import earcut from './earcut';
-import OSMDescriptor from "./OSMDescriptor";
-import {toRad, mercatorScaleFactor, toDeg} from "./Utils";
-import vec3 from "./math/vec3";
-import vec2 from "./math/vec2";
+import earcut from '../earcut';
+import OSMDescriptor from "../OSMDescriptor";
+import {toRad, mercatorScaleFactor} from "../Utils";
+import vec3 from "../math/vec3";
 import WayAABB from "./WayAABB";
 import Ring from "./Ring";
-import PyramidalRoof from "./roofs/PyramidalRoof";
-import DomeRoof from "./roofs/DomeRoof";
+import PyramidalRoof from "../roofs/PyramidalRoof";
+import DomeRoof from "../roofs/DomeRoof";
 
 export default class Way {
 	constructor(params) {
@@ -102,7 +101,7 @@ export default class Way {
 		if(this.properties.type === 'building') {
 			this.geometryType = 'building';
 
-			if(this.geometry.roofHeight === 0) {
+			if(this.geometry.roofHeight === 0 || this.geometry.roofShape === 'flat') {
 				this.triangulateFootprint({
 					color: this.geometry.roofColor,
 					height: this.geometry.height,
@@ -118,9 +117,7 @@ export default class Way {
 				});
 			}
 
-			this.generateRoof({
-
-			});
+			this.generateRoof();
 		}
 
 		if(this.properties.type === 'road') {

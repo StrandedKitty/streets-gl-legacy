@@ -1,6 +1,6 @@
 import vec3 from "./math/vec3";
 import Frustum from "./Frustum";
-import AABB from "./AABB";
+import AABB from "./core/AABB";
 
 export default class CSM {
 	constructor(params) {

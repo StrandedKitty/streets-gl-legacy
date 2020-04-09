@@ -1,14 +1,14 @@
-import {degrees2meters, sphericalToCartesian, tile2meters, tileEncode, toDeg, toRad} from './Utils';
+import {clamp, degrees2meters, sphericalToCartesian, tile2meters, tileEncode, toDeg, toRad} from './Utils';
 import Config from './Config';
 import Frustum from './Frustum';
 import Controls from './Controls';
 import Tile from './Tile';
-import MapWorkerManager from './MapWorkerManager';
+import MapWorkerManager from './worker/MapWorkerManager';
 import MapMesh from './MapMesh';
 import Renderer from "./renderer/Renderer";
-import SceneGraph from "./renderer/SceneGraph";
+import SceneGraph from "./core/SceneGraph";
 import PerspectiveCamera from "./renderer/PerspectiveCamera";
-import Object3D from "./renderer/Object3D";
+import Object3D from "./core/Object3D";
 import Mesh from "./renderer/Mesh";
 import vec3 from "./math/vec3";
 import mat4 from "./math/mat4";
@@ -26,7 +26,7 @@ import Models from "./Models";
 import SSAA from "./SSAA";
 import VolumetricLighting from "./materials/VolumetricLighting";
 import BatchInstanced from "./BatchInstanced";
-import Shapes from "./renderer/Shapes";
+import Shapes from "./Shapes";
 import InstanceMaterial from "./materials/InstanceMaterial";
 import FullScreenQuad from "./FullScreenQuad";
 import RoadMaterial from "./materials/RoadMaterial";
@@ -61,6 +61,10 @@ let skybox;
 let light;
 let lightDirection = new vec3(-1, -1, -1);
 let csm;
+
+const debugSettings = {
+	timeOffset: 0
+};
 
 let batchesInstanced = {
 	trees: null,
@@ -252,6 +256,7 @@ function init() {
 	gui.add(Config, 'volumetricLighting');
 	gui.add(light, 'intensity');
 	gui.add(quadMaterial.uniforms.ambientIntensity, 'value');
+	gui.add(debugSettings, 'timeOffset', -4e4, 4e4);
 
 	window.addEventListener('resize', function() {
 		camera.aspect = window.innerWidth / window.innerHeight;
@@ -301,7 +306,7 @@ function animate(rafTime) {
 	// Directional light
 
 	const cameraLatLon = controls.latLon();
-	const sunPosition = SunCalc.getPosition(Date.now(), cameraLatLon.lat, cameraLatLon.lon);
+	const sunPosition = SunCalc.getPosition(Date.now() + 1e3 * debugSettings.timeOffset, cameraLatLon.lat, cameraLatLon.lon);
 	const sunDirection = sphericalToCartesian(sunPosition.azimuth + Math.PI, sunPosition.altitude);
 	let sunIntensity = 1;
 
@@ -311,6 +316,10 @@ function animate(rafTime) {
 	} else {
 		csm.direction = lightDirection;
 	}
+
+	const intensityFactor = clamp(-sunDirection.y, 0, 1);
+	quadMaterial.uniforms.ambientIntensity.value = intensityFactor * 0.3;
+	sunIntensity *= intensityFactor;
 
 	csm.update(camera.matrix);
 

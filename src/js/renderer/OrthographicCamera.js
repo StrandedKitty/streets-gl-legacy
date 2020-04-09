@@ -1,4 +1,4 @@
-import Object3D from "./Object3D";
+import Object3D from "../core/Object3D";
 import mat4 from "../math/mat4";
 import Frustum from "../Frustum";
 
