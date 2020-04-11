@@ -4,6 +4,8 @@ import {tile2degrees, degrees2meters} from "../Utils";
 import OSMDescriptor from "../OSMDescriptor";
 import ModelUtils from "../ModelUtils";
 import * as martinez from 'martinez-polygon-clipping';
+import VectorTile from "./VectorTile";
+import earcut from "../earcut";
 
 self.addEventListener('message', function (e) {
 	let code = e.data.code;
@@ -23,11 +25,41 @@ self.addEventListener('message', function (e) {
 	}
 }, false);
 
-function load(tile) {
-	overpass(tile.x, tile.y);
+async function load(tile) {
+	const waterVertices = await vectorTile(tile.x, tile.y);
+	overpass(tile.x, tile.y, waterVertices);
 }
 
-function overpass(x, y) {
+async function vectorTile(x, y) {
+	const tile = new VectorTile({
+		x: x,
+		y: y
+	});
+
+	const vertices = [];
+	const rings = await tile.get();
+
+	for(let i = 0; i < rings.length; i++) {
+		const points = rings[i];
+
+		const flatVertices = new Array(points.length * 2);
+
+		for(let i = 0; i < points.length; i++) {
+			flatVertices[i * 2] = points[i][0];
+			flatVertices[i * 2 + 1] = points[i][1];
+		}
+
+		const triangles = earcut(flatVertices, []).reverse();
+
+		for(let i = 0; i < triangles.length; i++) {
+			vertices.push(flatVertices[triangles[i] * 2], 0, flatVertices[triangles[i] * 2 + 1]);
+		}
+	}
+
+	return new Float32Array(vertices);
+}
+
+function overpass(x, y, waterVertices) {
 	let url = 'https://overpass.kumi.systems/api/interpreter?data=';
 	//let url = 'https://overpass.nchc.org.tw/api/interpreter?data=';
 	const offset = 0.05;
@@ -65,7 +97,7 @@ function overpass(x, y) {
 		if (httpRequest.readyState === XMLHttpRequest.DONE) {
 			if (httpRequest.status === 200) {
 				let data = JSON.parse(httpRequest.responseText).elements;
-				processData(x, y, data, pivot);
+				processData(x, y, data, pivot, waterVertices);
 			} else {
 				console.error('Request error: ' + httpRequest.status);
 			}
@@ -75,7 +107,7 @@ function overpass(x, y) {
 	httpRequest.send();
 }
 
-function processData(x, y, data, pivot) {
+function processData(x, y, data, pivot, waterVertices) {
 	const metersPivot = degrees2meters(pivot.lat, pivot.lon);
 	const nodes = new Map();
 	const ways = new Map();
@@ -371,7 +403,7 @@ function processData(x, y, data, pivot) {
 		}
 	}
 
-	self.postMessage({x, y, mesh: {buildings: meshData, roads: roadsData}});
+	self.postMessage({x, y, mesh: {buildings: meshData, roads: roadsData, water: waterVertices}});
 }
 
 function joinWays(nodesA, nodesB) {

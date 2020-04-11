@@ -1,6 +1,6 @@
 import Object3D from "../core/Object3D";
 import mat4 from "../math/mat4";
-import Frustum from "../Frustum";
+import Frustum from "../core/Frustum";
 import {toRad} from "../Utils";
 
 export default class PerspectiveCamera extends Object3D {

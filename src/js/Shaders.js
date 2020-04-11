@@ -16,6 +16,10 @@ class Shaders {
 			fragment: require('../glsl/road.frag').default,
 			vertex: require('../glsl/road.vert').default
 		};
+		this.raw.water = {
+			fragment: require('../glsl/water.frag').default,
+			vertex: require('../glsl/water.vert').default
+		};
 		this.raw.roadDepth = {
 			fragment: require('../glsl/roadDepth.frag').default,
 			vertex: require('../glsl/road.vert').default

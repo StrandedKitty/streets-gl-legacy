@@ -13,7 +13,8 @@ export default class Tile {
 		this.worker = null;
 		this.meshes = {
 			buildings: null,
-			roads: null
+			roads: null,
+			water: null
 		};
 		this.displayBuffer = null;
 		this.objects = null;
@@ -170,6 +171,9 @@ export default class Tile {
 
 			this.meshes.roads.delete();
 			this.meshes.roads = null;
+
+			if(this.meshes.water) this.meshes.water.delete();
+			this.meshes.water = null;
 
 			for(let i = 0; i < this.verts; i++) {
 				this.displayBuffer[i] = 255;

@@ -1,6 +1,6 @@
 import {clamp, degrees2meters, sphericalToCartesian, tile2meters, tileEncode, toDeg, toRad} from './Utils';
 import Config from './Config';
-import Frustum from './Frustum';
+import Frustum from './core/Frustum';
 import Controls from './Controls';
 import Tile from './Tile';
 import MapWorkerManager from './worker/MapWorkerManager';
@@ -30,6 +30,7 @@ import Shapes from "./Shapes";
 import InstanceMaterial from "./materials/InstanceMaterial";
 import FullScreenQuad from "./FullScreenQuad";
 import RoadMaterial from "./materials/RoadMaterial";
+import WaterMaterial from "./materials/WaterMaterial";
 
 const SunCalc = require('suncalc');
 
@@ -61,6 +62,7 @@ let skybox;
 let light;
 let lightDirection = new vec3(-1, -1, -1);
 let csm;
+let waterMeshes, waterMaterial;
 
 const debugSettings = {
 	timeOffset: 0
@@ -94,6 +96,8 @@ function init() {
 	wrapper.add(buildings);
 	roads = new Object3D();
 	wrapper.add(roads);
+	waterMeshes = new Object3D();
+	wrapper.add(waterMeshes);
 	instanceMeshes = new Object3D();
 	wrapper.add(instanceMeshes);
 
@@ -141,6 +145,9 @@ function init() {
 	const roadMaterialInstance = new RoadMaterial(RP);
 	roadMaterial = roadMaterialInstance.material;
 	roadDepthMaterial = roadMaterialInstance.depthMaterial;
+
+	const waterMaterialInstance = new WaterMaterial(RP);
+	waterMaterial = waterMaterialInstance.material;
 
 	console.log(scene);
 
@@ -430,6 +437,26 @@ function animate(rafTime) {
 	}
 
 	RP.depthTest = false;
+
+	waterMaterial.uniforms.time.value += delta;
+	{
+		waterMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+		waterMaterial.use();
+
+		for (let i = 0; i < waterMeshes.children.length; i++) {
+			const object = waterMeshes.children[i];
+
+			const inFrustum = object.inCameraFrustum(rCamera);
+
+			if (inFrustum) {
+				let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+				waterMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+				waterMaterial.updateUniform('modelViewMatrix');
+
+				object.draw(waterMaterial);
+			}
+		}
+	}
 
 	{
 		roadMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
@@ -809,6 +836,35 @@ function animate(rafTime) {
 				);
 
 				this.meshes.roads = roadsMesh;
+
+				//
+
+				if(data.water.length > 0) {
+					const waterMesh = RP.createMesh({
+						vertices: data.water
+					});
+
+					waterMesh.addAttribute({
+						name: 'normal',
+						size: 3,
+						type: 'FLOAT',
+						normalized: false
+					});
+					waterMesh.setAttributeData('normal', new Float32Array(data.water.length));
+
+					waterMesh.setPosition(pivot.x, 0, pivot.z);
+
+					waterMesh.data.tile = this;
+
+					waterMeshes.add(waterMesh);
+
+					waterMesh.setBoundingBox(
+						{x: 0, y: 0, z: 0},
+						{x: tileSize, y: 1, z: tileSize}
+					);
+
+					this.meshes.water = waterMesh;
+				}
 
 				//
 

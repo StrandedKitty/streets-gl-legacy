@@ -1,5 +1,5 @@
-import {toRad, meters2tile, tile2meters, calculateLine} from './Utils';
-import vec3 from "./math/vec3";
+import {toRad, meters2tile, tile2meters, calculateLine} from '../Utils';
+import vec3 from "../math/vec3";
 import Plane from './Plane';
 
 export default class Frustum {

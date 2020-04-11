@@ -1,4 +1,4 @@
-import vec3 from "./math/vec3";
+import vec3 from "../math/vec3";
 
 export default class Plane {
 	constructor(x, y, z, w) {

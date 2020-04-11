@@ -1,6 +1,6 @@
 import Object3D from "../core/Object3D";
 import mat4 from "../math/mat4";
-import Frustum from "../Frustum";
+import Frustum from "../core/Frustum";
 
 export default class OrthographicCamera extends Object3D {
 	constructor(params) {

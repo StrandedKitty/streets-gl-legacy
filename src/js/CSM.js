@@ -1,5 +1,5 @@
 import vec3 from "./math/vec3";
-import Frustum from "./Frustum";
+import Frustum from "./core/Frustum";
 import AABB from "./core/AABB";
 
 export default class CSM {
