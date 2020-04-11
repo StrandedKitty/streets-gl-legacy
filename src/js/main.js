@@ -1,4 +1,4 @@
-import {clamp, degrees2meters, sphericalToCartesian, tile2meters, tileEncode, toDeg, toRad} from './Utils';
+import {clamp, degrees2meters, hexToRgb, sphericalToCartesian, tile2meters, tileEncode, toDeg, toRad} from './Utils';
 import Config from './Config';
 import Frustum from './core/Frustum';
 import Controls from './Controls';
@@ -248,7 +248,9 @@ function init() {
 			cameraMatrixWorld: {type: 'Matrix4fv', value: null},
 			cameraMatrixWorldInverse: {type: 'Matrix4fv', value: null},
 			ambientIntensity: {type: '1f', value: 0.3},
-			uExposure: {type: '1f', value: 1.}
+			uExposure: {type: '1f', value: 1.},
+			sunIntensity: {type: '1f', value: 1.},
+			fogColor: {type: '3fv', value: new Float32Array([.77, .86, .91])}
 		}
 	});
 
@@ -264,6 +266,10 @@ function init() {
 	gui.add(light, 'intensity');
 	gui.add(quadMaterial.uniforms.ambientIntensity, 'value');
 	gui.add(debugSettings, 'timeOffset', -4e4, 4e4);
+	gui.addColor({color: '#1861b3'}, 'color').onChange(function (e) {
+		const v = hexToRgb(e);
+		quadMaterial.uniforms.fogColor.value = new Float32Array([v[0] / 255, v[1] / 255, v[2] / 255]);
+	});
 
 	window.addEventListener('resize', function() {
 		camera.aspect = window.innerWidth / window.innerHeight;
@@ -629,6 +635,7 @@ function animate(rafTime) {
 	csm.updateUniforms(quadMaterial);
 	quadMaterial.uniforms['uLight.direction'].value = new Float32Array(vec3.toArray(csm.direction));
 	quadMaterial.uniforms['uLight.intensity'].value = light.intensity * sunIntensity;
+	quadMaterial.uniforms.sunIntensity.value = sunIntensity;
 	quadMaterial.uniforms.uAO.value = Config.SSAOBlur ? blur.framebuffer.textures[0] : ssao.framebuffer.textures[0];
 	quadMaterial.uniforms.normalMatrix.value = mat4.normalMatrix(rCamera.matrixWorld);
 	quadMaterial.uniforms.cameraMatrixWorld.value = rCamera.matrixWorld;

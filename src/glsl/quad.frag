@@ -24,6 +24,8 @@ uniform sampler2D uPosition;
 uniform sampler2D uMetallicRoughness;
 uniform sampler2D uAO;
 uniform float ambientIntensity;
+uniform float sunIntensity;
+uniform vec3 fogColor;
 uniform samplerCube sky;
 uniform sampler2D tBRDF;
 uniform sampler2D uVolumetric;
@@ -202,7 +204,7 @@ void main() {
     specularColor = mix(f0, baseColor.rgb, metallic);
 
     if(baseColor.a == 0.) { // skip unlit objects
-        FragColor = vec4(toneMap(baseColor.xyz), 1.);
+        FragColor = vec4(toneMap(baseColor.xyz * sunIntensity), 1.);
         return;
     }
 
@@ -278,7 +280,7 @@ void main() {
 
     color += applyDirectionalLight(light, materialInfo, worldNormal, worldView) * shadowFactor;
     color += materialInfo.diffuseColor * ambientIntensity;
-    color += getIBLContribution(materialInfo, worldNormal, worldView);
+    color += getIBLContribution(materialInfo, worldNormal, worldView) * sunIntensity;
 
     // AO
 
@@ -289,18 +291,18 @@ void main() {
 
     // FOG
 
-    vec3 fogColor = SRGBtoLINEAR(vec4(.77, .86, .91, 1)).rgb;
+    //vec3 fogColor = SRGBtoLINEAR(vec4(.77, .86, .91, 1)).rgb;
 
     float density = 1. / 15000.;
     float distance = length(position);
     float fog = 1. / pow(Eu, pow(distance * density, 2.));
 
-    color = mix(fogColor, color, fog);
+    color = mix(fogColor, color, fog) * sunIntensity;
 
     // GOD RAYS
 
-    //color = mix(color, vec3(.77, .86, .91), texture(uVolumetric, vUv).xxx);
-    color += fogColor * texture(uVolumetric, vUv).xyz;
+    //color += fogColor * texture(uVolumetric, vUv).xyz * sunIntensity;
+    color = mix(color, fogColor, texture(uVolumetric, vUv).rgb * sunIntensity);
 
     // OUT
 

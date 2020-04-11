@@ -93,6 +93,7 @@ void main() {
 	}
 
 	accumFog /= float(NB_STEPS);
+	accumFog *= rayLength / 400.;
 
 	FragColor = vec4(vec3(accumFog), 1.0);
 }
