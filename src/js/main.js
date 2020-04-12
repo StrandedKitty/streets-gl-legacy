@@ -1,4 +1,4 @@
-import {clamp, degrees2meters, hexToRgb, sphericalToCartesian, tile2meters, tileEncode, toDeg, toRad} from './Utils';
+import {clamp, hexToRgb, sphericalToCartesian, tile2meters, tileEncode, toDeg, toRad} from './Utils';
 import Config from './Config';
 import Frustum from './core/Frustum';
 import Controls from './Controls';
@@ -9,14 +9,12 @@ import Renderer from "./renderer/Renderer";
 import SceneGraph from "./core/SceneGraph";
 import PerspectiveCamera from "./renderer/PerspectiveCamera";
 import Object3D from "./core/Object3D";
-import Mesh from "./renderer/Mesh";
 import vec3 from "./math/vec3";
 import mat4 from "./math/mat4";
 import GBuffer from "./renderer/GBuffer";
-import shaders from "./Shaders";
 import SMAA from "./materials/SMAA";
 import SSAO from "./materials/SSAO";
-import Blur from "./materials/Blur";
+import BilateralBlur from "./materials/BilateralBlur";
 import Skybox from "./Skybox";
 import BuildingMaterial from "./materials/BuildingMaterial";
 import GroundMaterial from "./materials/GroundMaterial";
@@ -31,6 +29,8 @@ import InstanceMaterial from "./materials/InstanceMaterial";
 import FullScreenQuad from "./FullScreenQuad";
 import RoadMaterial from "./materials/RoadMaterial";
 import WaterMaterial from "./materials/WaterMaterial";
+import HDRCompose from "./materials/HDRCompose";
+import LDRCompose from "./materials/LDRCompose";
 
 const SunCalc = require('suncalc');
 
@@ -53,7 +53,7 @@ let ground;
 let groundMaterial, groundMaterialDepth, wrapper, buildings, roads, instanceMeshes;
 let buildingMaterial, buildingDepthMaterial;
 let roadMaterial, roadDepthMaterial;
-let quad, quadMaterial;
+let quad, hdrCompose, ldrCompose;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
@@ -68,7 +68,7 @@ const debugSettings = {
 	timeOffset: 0
 };
 
-let batchesInstanced = {
+const batchesInstanced = {
 	trees: null,
 	hydrants: null
 };
@@ -80,7 +80,7 @@ Models.onload = function () {
 function init() {
 	Config.set('pixelRatio', window.devicePixelRatio, true);
 
-	RP = new Renderer(canvas);
+	RP = new Renderer(document.getElementById('canvas'));
 	RP.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	RP.culling = true;
 
@@ -127,17 +127,6 @@ function init() {
 	groundMaterial = groundMaterialInstance.material;
 	groundMaterialDepth = groundMaterialInstance.depthMaterial;
 
-	const sky = RP.createTextureCube({
-		urls: [
-			'/textures/sky/px.png',
-			'/textures/sky/nx.png',
-			'/textures/sky/py.png',
-			'/textures/sky/ny.png',
-			'/textures/sky/pz.png',
-			'/textures/sky/nz.png',
-		]
-	});
-
 	const buildingMaterialInstance = new BuildingMaterial(RP);
 	buildingMaterial = buildingMaterialInstance.material;
 	buildingDepthMaterial = buildingMaterialInstance.depthMaterial;
@@ -178,6 +167,9 @@ function init() {
 	});
 	wrapper.add(batchesInstanced.hydrants.mesh);
 
+	skybox = new Skybox(RP);
+	wrapper.add(skybox.mesh);
+
 	gBuffer = new GBuffer(RP, window.innerWidth * Config.SSAA * Config.pixelRatio, window.innerHeight * Config.SSAA * Config.pixelRatio, [
 		{
 			name: 'color',
@@ -199,12 +191,17 @@ function init() {
 			internalFormat: 'RGBA8',
 			format: 'RGBA',
 			type: 'UNSIGNED_BYTE'
+		}, {
+			name: 'emission',
+			internalFormat: 'RGBA8',
+			format: 'RGBA',
+			type: 'UNSIGNED_BYTE'
 		}
 	]);
 
 	smaa = new SMAA(RP, window.innerWidth * Config.SSAA * Config.pixelRatio, window.innerHeight * Config.SSAA * Config.pixelRatio);
 	ssao = new SSAO(RP, window.innerWidth * Config.SSAOResolution * Config.pixelRatio, window.innerHeight * Config.SSAOResolution * Config.pixelRatio);
-	blur = new Blur(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
+	blur = new BilateralBlur(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	ssaa = new SSAA(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	volumetricLighting = new VolumetricLighting(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 
@@ -222,40 +219,16 @@ function init() {
 
 	quad = new FullScreenQuad({renderer: RP}).mesh;
 
-	quadMaterial = RP.createMaterial({
-		name: 'quad',
-		vertexShader: shaders.quad.vertex,
-		fragmentShader: shaders.quad.fragment,
-		uniforms: {
-			uColor: {type: 'texture', value: gBuffer.textures.color},
-			uNormal: {type: 'texture', value: gBuffer.textures.normal},
-			uPosition: {type: 'texture', value: gBuffer.textures.position},
-			uMetallicRoughness: {type: 'texture', value: gBuffer.textures.metallicRoughness},
-			uAO: {type: 'texture', value: null},
-			uVolumetric: {type: 'texture', value: volumetricLighting.blurredTexture},
-			sky: {type: 'textureCube', value: sky},
-			tBRDF: {type: 'texture', value: RP.createTexture({url: '/textures/brdf.png', minFilter: 'LINEAR', wrap: 'clamp'})},
-			'uLight.direction': {type: '3fv', value: light.direction},
-			'uLight.range': {type: '1f', value: light.range},
-			'uLight.color': {type: '3fv', value: light.color},
-			'uLight.intensity': {type: '1f', value: light.intensity},
-			'uLight.position': {type: '3fv', value: light.position},
-			'uLight.innerConeCos': {type: '1f', value: light.innerConeCos},
-			'uLight.outerConeCos': {type: '1f', value: light.outerConeCos},
-			'uLight.type': {type: '1i', value: light.type},
-			'uLight.padding': {type: '2fv', value: light.padding},
-			normalMatrix: {type: 'Matrix3fv', value: null},
-			cameraMatrixWorld: {type: 'Matrix4fv', value: null},
-			cameraMatrixWorldInverse: {type: 'Matrix4fv', value: null},
-			ambientIntensity: {type: '1f', value: 0.3},
-			uExposure: {type: '1f', value: 1.},
-			sunIntensity: {type: '1f', value: 1.},
-			fogColor: {type: '3fv', value: new Float32Array([.77, .86, .91])}
-		}
+	hdrCompose = new HDRCompose(RP, {
+		gBuffer: gBuffer,
+		skybox: skybox,
+		volumetricTexture: volumetricLighting.blurredTexture,
+		light: light
 	});
 
-	skybox = new Skybox(RP, sky);
-	wrapper.add(skybox.mesh);
+	ldrCompose = new LDRCompose(RP, {
+		gBuffer: gBuffer
+	});
 
 	workerManager = new MapWorkerManager(navigator.hardwareConcurrency, './js/worker.js');
 
@@ -264,12 +237,13 @@ function init() {
 	gui.add(Config, 'SSAOBlur');
 	gui.add(Config, 'volumetricLighting');
 	gui.add(light, 'intensity');
-	gui.add(quadMaterial.uniforms.ambientIntensity, 'value');
+	gui.add(hdrCompose.material.uniforms.ambientIntensity, 'value');
 	gui.add(debugSettings, 'timeOffset', -4e4, 4e4);
 	gui.addColor({color: '#1861b3'}, 'color').onChange(function (e) {
 		const v = hexToRgb(e);
-		quadMaterial.uniforms.fogColor.value = new Float32Array([v[0] / 255, v[1] / 255, v[2] / 255]);
+		hdrCompose.material.uniforms.fogColor.value = new Float32Array([v[0] / 255, v[1] / 255, v[2] / 255]);
 	});
+	gui.add(hdrCompose.material.uniforms.uEmissionFactor, 'value');
 
 	window.addEventListener('resize', function() {
 		camera.aspect = window.innerWidth / window.innerHeight;
@@ -331,7 +305,7 @@ function animate(rafTime) {
 	}
 
 	const intensityFactor = clamp(-sunDirection.y, 0, 1);
-	quadMaterial.uniforms.ambientIntensity.value = intensityFactor * 0.3;
+	hdrCompose.material.uniforms.ambientIntensity.value = intensityFactor * 0.3;
 	sunIntensity *= intensityFactor;
 
 	csm.update(camera.matrix);
@@ -627,21 +601,31 @@ function animate(rafTime) {
 
 	// Combine g-buffer textures
 
-	RP.bindFramebuffer(Config.SMAA ? gBuffer.framebufferFinal : ssaa.framebuffer);
+	RP.bindFramebuffer(gBuffer.framebufferHDR);
 
 	RP.depthWrite = false;
 	RP.depthTest = false;
 
-	csm.updateUniforms(quadMaterial);
-	quadMaterial.uniforms['uLight.direction'].value = new Float32Array(vec3.toArray(csm.direction));
-	quadMaterial.uniforms['uLight.intensity'].value = light.intensity * sunIntensity;
-	quadMaterial.uniforms.sunIntensity.value = sunIntensity;
-	quadMaterial.uniforms.uAO.value = Config.SSAOBlur ? blur.framebuffer.textures[0] : ssao.framebuffer.textures[0];
-	quadMaterial.uniforms.normalMatrix.value = mat4.normalMatrix(rCamera.matrixWorld);
-	quadMaterial.uniforms.cameraMatrixWorld.value = rCamera.matrixWorld;
-	quadMaterial.uniforms.cameraMatrixWorldInverse.value = rCamera.matrixWorldInverse;
-	quadMaterial.use();
-	quad.draw(quadMaterial);
+	csm.updateUniforms(hdrCompose.material);
+	hdrCompose.material.uniforms['uLight.direction'].value = new Float32Array(vec3.toArray(csm.direction));
+	hdrCompose.material.uniforms['uLight.intensity'].value = light.intensity * sunIntensity;
+	hdrCompose.material.uniforms.sunIntensity.value = sunIntensity;
+	hdrCompose.material.uniforms.uAO.value = Config.SSAOBlur ? blur.framebuffer.textures[0] : ssao.framebuffer.textures[0];
+	hdrCompose.material.uniforms.normalMatrix.value = mat4.normalMatrix(rCamera.matrixWorld);
+	hdrCompose.material.uniforms.cameraMatrixWorld.value = rCamera.matrixWorld;
+	hdrCompose.material.uniforms.cameraMatrixWorldInverse.value = rCamera.matrixWorldInverse;
+	hdrCompose.material.use();
+	quad.draw(hdrCompose.material);
+
+	// HDR to LDR texture
+
+	gBuffer.drawBloom();
+
+	if(Config.SMAA) RP.bindFramebuffer(gBuffer.framebufferOutput);
+	else RP.bindFramebuffer(ssaa.framebuffer);
+
+	ldrCompose.material.use();
+	quad.draw(ldrCompose.material);
 
 	// SMAA
 
@@ -651,7 +635,7 @@ function animate(rafTime) {
 		gl.clearColor(0, 0, 0, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT);
 
-		smaa.materials.edges.uniforms.tDiffuse.value = gBuffer.framebufferFinal.textures[0];
+		smaa.materials.edges.uniforms.tDiffuse.value = gBuffer.framebufferOutput.textures[0];
 		smaa.materials.edges.use();
 		quad.draw(smaa.materials.edges);
 
@@ -662,7 +646,7 @@ function animate(rafTime) {
 
 		RP.bindFramebuffer(ssaa.framebuffer);
 
-		smaa.materials.blend.uniforms.tColor.value = gBuffer.framebufferFinal.textures[0];
+		smaa.materials.blend.uniforms.tColor.value = gBuffer.framebufferOutput.textures[0];
 		smaa.materials.blend.use();
 		quad.draw(smaa.materials.blend);
 

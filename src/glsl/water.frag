@@ -5,6 +5,7 @@ layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec3 outNormal;
 layout(location = 2) out vec3 outPosition;
 layout(location = 3) out vec4 outMetallicRoughness;
+layout(location = 4) out vec4 outEmission;
 
 in vec3 vPosition;
 in vec3 vNormal;
@@ -61,11 +62,12 @@ void main() {
         texture(tNormal, uv * 5. + uvOffsets[1]).rgb * 0.5 +
         texture(tNormal, uv * 7. + uvOffsets[2]).rgb * 0.1;
 
-    normalValue = normalValue * 2. - 1.;
+    normalValue = normalize(normalValue * 2. - 1.);
     vec3 normal = tbn(normalValue);
 
     outColor = vec4(0.1, 0.3, 0.5, 1);
     outNormal = normal * 0.5 + 0.5;
     outPosition = vPosition;
     outMetallicRoughness = vec4(0, 0.1, 0.1, 1.);
+    outEmission = vec4(0, 0, 0, 1.);
 }

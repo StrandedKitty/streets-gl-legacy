@@ -32,6 +32,10 @@ class Shaders {
 			fragment: require('../glsl/quad.frag').default,
 			vertex: require('../glsl/quad.vert').default
 		};
+		this.raw.ldrCompose = {
+			fragment: require('../glsl/ldrCompose.frag').default,
+			vertex: require('../glsl/quad.vert').default
+		};
 		this.raw.smaaBlend = {
 			fragment: require('../glsl/smaa/blend.frag').default,
 			vertex: require('../glsl/smaa/blend.vert').default,
@@ -48,8 +52,16 @@ class Shaders {
 			fragment: require('../glsl/sao.frag').default,
 			vertex: require('../glsl/sao.vert').default
 		};
+		this.raw.bilateralBlur = {
+			fragment: require('../glsl/bilateralBlur.frag').default,
+			vertex: require('../glsl/quad.vert').default
+		};
 		this.raw.blur = {
 			fragment: require('../glsl/blur.frag').default,
+			vertex: require('../glsl/quad.vert').default
+		};
+		this.raw.brightnessFilter = {
+			fragment: require('../glsl/brightnessFilter.frag').default,
 			vertex: require('../glsl/quad.vert').default
 		};
 		this.raw.skybox = {

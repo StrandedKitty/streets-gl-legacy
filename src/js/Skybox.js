@@ -44,12 +44,23 @@ export default class Skybox {
 			1.0, -1.0, 1.0
 		]);
 
+		this.cubeTexture = renderer.createTextureCube({
+			urls: [
+				'/textures/sky/px.png',
+				'/textures/sky/nx.png',
+				'/textures/sky/py.png',
+				'/textures/sky/ny.png',
+				'/textures/sky/pz.png',
+				'/textures/sky/nz.png',
+			]
+		});
+
 		this.material = renderer.createMaterial({
 			name: 'skybox',
 			vertexShader: shaders.skybox.vertex,
 			fragmentShader: shaders.skybox.fragment,
 			uniforms: {
-				tCube: {type: 'textureCube', value: textureCube}
+				tCube: {type: 'textureCube', value: this.cubeTexture}
 			}
 		});
 

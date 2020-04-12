@@ -6,7 +6,6 @@ out vec4 FragColor;
 #define PI2 6.28318530718
 #define Eu 2.71828182846
 
-#define TONEMAP_ACES 1
 #define SHADOW_MAPPING 2
 #define SHADOWMAP_SIZE 1000.
 #define SHADOWMAP_FADE 1
@@ -22,6 +21,7 @@ uniform sampler2D uColor;
 uniform sampler2D uDepth;
 uniform sampler2D uPosition;
 uniform sampler2D uMetallicRoughness;
+uniform sampler2D uEmission;
 uniform sampler2D uAO;
 uniform float ambientIntensity;
 uniform float sunIntensity;
@@ -29,6 +29,7 @@ uniform vec3 fogColor;
 uniform samplerCube sky;
 uniform sampler2D tBRDF;
 uniform sampler2D uVolumetric;
+uniform float uEmissionFactor;
 
 uniform mat3 normalMatrix;
 uniform mat4 cameraMatrixWorld;
@@ -204,7 +205,7 @@ void main() {
     specularColor = mix(f0, baseColor.rgb, metallic);
 
     if(baseColor.a == 0.) { // skip unlit objects
-        FragColor = vec4(toneMap(baseColor.xyz * sunIntensity), 1.);
+        FragColor = vec4(baseColor.xyz * sunIntensity, 1);
         return;
     }
 
@@ -278,7 +279,7 @@ void main() {
         }
     #endif
 
-    color += applyDirectionalLight(light, materialInfo, worldNormal, worldView) * shadowFactor;
+    color += applyDirectionalLight(light, materialInfo, worldNormal, worldView) * shadowFactor * sunIntensity;
     color += materialInfo.diffuseColor * ambientIntensity;
     color += getIBLContribution(materialInfo, worldNormal, worldView) * sunIntensity;
 
@@ -291,20 +292,24 @@ void main() {
 
     // FOG
 
-    //vec3 fogColor = SRGBtoLINEAR(vec4(.77, .86, .91, 1)).rgb;
+    vec3 fogColorLinear = SRGBtoLINEAR(vec4(fogColor, 1)).rgb;
 
     float density = 1. / 15000.;
     float distance = length(position);
     float fog = 1. / pow(Eu, pow(distance * density, 2.));
 
-    color = mix(fogColor, color, fog) * sunIntensity;
+    color = mix(color, fogColorLinear, (1. - fog) * sunIntensity);
+
+    // EMISSION
+
+    color += SRGBtoLINEAR(texture(uEmission, vUv)).rgb * uEmissionFactor;
 
     // GOD RAYS
 
-    //color += fogColor * texture(uVolumetric, vUv).xyz * sunIntensity;
-    color = mix(color, fogColor, texture(uVolumetric, vUv).rgb * sunIntensity);
+    color = mix(color, fogColorLinear, texture(uVolumetric, vUv).rgb * sunIntensity);
+    //color += fogColorLinear * texture(uVolumetric, vUv).rgb * sunIntensity;
 
     // OUT
 
-    FragColor = vec4(toneMap(color), baseColor.a);
+    FragColor = vec4(color, 1);
 }

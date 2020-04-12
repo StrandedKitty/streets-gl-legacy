@@ -5,6 +5,7 @@ layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec3 outNormal;
 layout(location = 2) out vec3 outPosition;
 layout(location = 3) out vec4 outMetallicRoughness;
+layout(location = 4) out vec4 outEmission;
 in vec3 vColor;
 in vec3 vNormal;
 in vec3 vPosition;
@@ -52,8 +53,9 @@ void main() {
         specular = 0.01;
     }
 
-    outColor = vec4(vColor, 1.) * diffuse;
+    outColor = vec4(vColor, 1) * diffuse;
     outNormal = vNormal * 0.5 + 0.5;
     outPosition = vPosition;
-    outMetallicRoughness = vec4(metalness, roughness, specular, 1.);
+    outMetallicRoughness = vec4(metalness, roughness, specular, 1);
+    outEmission = vec4(0, 0, 0, 1);
 }
