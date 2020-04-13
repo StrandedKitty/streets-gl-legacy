@@ -1,5 +1,6 @@
 import Bloom from "../materials/Bloom";
 import FullScreenQuad from "../FullScreenQuad";
+import Config from "../Config";
 
 export default class GBuffer {
 	constructor(renderer, width, height, structure) {
@@ -59,7 +60,7 @@ export default class GBuffer {
 					magFilter: 'NEAREST',
 					wrap: 'clamp',
 					format: 'RGBA',
-					internalFormat: 'RGBA32F',
+					internalFormat: 'RGBA16F',
 					type: 'FLOAT'
 				})
 			]
@@ -89,17 +90,26 @@ export default class GBuffer {
 		this.bloom.brightnessFilterMaterial.use();
 		this.quad.draw(this.bloom.brightnessFilterMaterial);
 
-		this.renderer.bindFramebuffer(this.bloom.blurredFramebufferTemp);
-		this.bloom.blurMaterial.uniforms.tHDR.value = this.bloom.highLuminanceFramebuffer.textures[0];
-		this.bloom.blurMaterial.uniforms.direction.value = [1, 0];
-		this.bloom.blurMaterial.use();
-		this.quad.draw(this.bloom.blurMaterial);
+		this.bloom.highLuminanceFramebuffer.textures[0].generateMipmaps();
+		this.bloom.buildDownscaledTextures();
+
+		for(let i = 0; i < this.bloom.passes; i++) {
+			this.renderer.bindFramebuffer(this.bloom.downscaledFramebuffersTemp[i]);
+			this.bloom.blurMaterial.uniforms.tHDR.value = this.bloom.downscaledTextures[i];
+			this.bloom.blurMaterial.uniforms.direction.value = [1, 0];
+			this.bloom.blurMaterial.use();
+			this.quad.draw(this.bloom.blurMaterial);
+
+			this.renderer.bindFramebuffer(this.bloom.downscaledFramebuffers[i]);
+			this.bloom.blurMaterial.uniforms.tHDR.value = this.bloom.downscaledFramebuffersTemp[i].textures[0];
+			this.bloom.blurMaterial.uniforms.direction.value = [0, 1];
+			this.bloom.blurMaterial.use();
+			this.quad.draw(this.bloom.blurMaterial);
+		}
 
 		this.renderer.bindFramebuffer(this.bloom.blurredFramebuffer);
-		this.bloom.blurMaterial.uniforms.tHDR.value = this.bloom.blurredFramebufferTemp.textures[0];
-		this.bloom.blurMaterial.uniforms.direction.value = [0, 1];
-		this.bloom.blurMaterial.use();
-		this.quad.draw(this.bloom.blurMaterial);
+		this.bloom.blurCombineMaterial.use();
+		this.quad.draw(this.bloom.blurCombineMaterial);
 	}
 
 	setSize(width, height) {
@@ -108,6 +118,6 @@ export default class GBuffer {
 		this.framebuffer.setSize(width, height);
 		this.framebufferHDR.setSize(width, height);
 		this.framebufferOutput.setSize(width, height);
-		this.bloom.setSize(width, height);
+		this.bloom.setSize(width / Config.SSAA, height / Config.SSAA);
 	}
 }

@@ -12,7 +12,7 @@ export default class LDRCompose {
 				tHDR: {type: 'texture', value: params.gBuffer.framebufferHDR.textures[0]},
 				tBloom: {type: 'texture', value: params.gBuffer.bloom.blurredFramebuffer.textures[0]},
 				uExposure: {type: '1f', value: 1.},
-				uBloomStrength: {type: '1f', value: 0.5},
+				uBloomStrength: {type: '1f', value: 0.05},
 			}
 		});
 	}

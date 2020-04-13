@@ -282,7 +282,7 @@ function animate(rafTime) {
 	wrapper.position.x = -camera.position.x;
 	wrapper.position.z = -camera.position.z;
 
-	ground.setPosition(camera.position.x - camera.position.x % tileSize, 0, camera.position.z - camera.position.z % tileSize);
+	ground.setPosition(camera.position.x - camera.position.x % (tileSize * 2), 0, camera.position.z - camera.position.z % (tileSize * 2));
 
 	scene.updateMatrixRecursively();
 	scene.updateMatrixWorldRecursively();

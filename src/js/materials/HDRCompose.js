@@ -34,7 +34,7 @@ export default class HDRCompose {
 				cameraMatrixWorldInverse: {type: 'Matrix4fv', value: null},
 				ambientIntensity: {type: '1f', value: 0.3},
 				sunIntensity: {type: '1f', value: 1.},
-				uEmissionFactor: {type: '1f', value: 10},
+				uEmissionFactor: {type: '1f', value: 30},
 				fogColor: {type: '3fv', value: new Float32Array([.77, .86, .91])}
 			}
 		});

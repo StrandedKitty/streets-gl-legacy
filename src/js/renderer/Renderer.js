@@ -84,19 +84,32 @@ export default class Renderer {
 		}
 	}
 
-	blitFramebuffer(source, destination) {
-		this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, source.WebGLFramebuffer);
-		this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, destination.WebGLFramebuffer);
+	blitFramebuffer(params) {
+		this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, params.source.WebGLFramebuffer);
+
+		if(params.destination === null) this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, null);
+		else this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, params.destination.WebGLFramebuffer);
 
 		this.gl.readBuffer(this.gl.COLOR_ATTACHMENT0);
-		this.gl.drawBuffers([this.gl.COLOR_ATTACHMENT0]);
-		this.gl.blitFramebuffer(0, 0, source.width, source.height, 0, 0, source.width, source.height, this.gl.COLOR_BUFFER_BIT, this.gl.NEAREST);
+		if(params.destination !== null) this.gl.drawBuffers([this.gl.COLOR_ATTACHMENT0]);
 
-		this.gl.readBuffer(this.gl.COLOR_ATTACHMENT1);
-		this.gl.drawBuffers([this.gl.NONE, this.gl.COLOR_ATTACHMENT1]);
-		this.gl.blitFramebuffer(0, 0, source.width, source.height, 0, 0, source.width, source.height, this.gl.COLOR_BUFFER_BIT, this.gl.NEAREST);
+		this.gl.blitFramebuffer(
+			0, 0, params.source.width, params.source.height,
+			0, 0, params.destinationWidth, params.destinationHeight,
+			this.gl.COLOR_BUFFER_BIT, this.gl[params.filter]
+		);
 
-		this.gl.blitFramebuffer(0, 0, source.width, source.height, 0, 0, source.width, source.height, this.gl.DEPTH_BUFFER_BIT, this.gl.NEAREST);
+		if(params.depth) this.gl.blitFramebuffer(
+			0, 0, params.source.width, params.source.height,
+			0, 0, params.destinationWidth, params.destinationHeight,
+			this.gl.DEPTH_BUFFER_BIT, this.gl.NEAREST
+		);
+	}
+
+	copyFramebufferToTexture(fb, texture, mipLevel) {
+		this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, fb.WebGLFramebuffer);
+		this.gl.bindTexture(this.gl.TEXTURE_2D, texture.WebGLTexture);
+		this.gl.copyTexImage2D(this.gl.TEXTURE_2D, mipLevel, this.gl[texture.internalFormat], 0, 0, texture.width, texture.height, 0);
 	}
 
 	set culling(state) {

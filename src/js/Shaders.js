@@ -60,6 +60,10 @@ class Shaders {
 			fragment: require('../glsl/blur.frag').default,
 			vertex: require('../glsl/quad.vert').default
 		};
+		this.raw.blurCombine = {
+			fragment: require('../glsl/blurCombine.frag').default,
+			vertex: require('../glsl/quad.vert').default
+		};
 		this.raw.brightnessFilter = {
 			fragment: require('../glsl/brightnessFilter.frag').default,
 			vertex: require('../glsl/quad.vert').default

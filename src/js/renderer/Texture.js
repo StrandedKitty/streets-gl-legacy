@@ -69,6 +69,12 @@ export default class Texture {
 		}
 	}
 
+	generateMipmaps() {
+		this.gl.bindTexture(this.gl.TEXTURE_2D, this.WebGLTexture);
+		this.gl.generateMipmap(this.gl.TEXTURE_2D);
+		this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+	}
+
 	setSize(width, height) {
 		this.width = width;
 		this.height = height;

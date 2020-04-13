@@ -24,12 +24,14 @@ export default class SSAA {
 	}
 
 	blitToScreen() {
-		this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.framebuffer.WebGLFramebuffer);
-		this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, null);
-
-		this.gl.blitFramebuffer(0, 0, this.framebuffer.width, this.framebuffer.height,
-			0, 0, this.width, this.height,
-			this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
+		this.renderer.blitFramebuffer({
+			source: this.framebuffer,
+			destination: null,
+			destinationWidth: this.width,
+			destinationHeight: this.height,
+			filter: 'LINEAR',
+			depth: false
+		});
 	}
 
 	setSize(width, height) {
