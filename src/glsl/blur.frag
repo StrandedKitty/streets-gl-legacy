@@ -51,16 +51,5 @@ vec4 blur13(sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
 }
 
 void main() {
-    vec2 tex_offset = 1. / vec2(textureSize(tHDR, 0));
-    vec3 result = texture(tHDR, vUv).rgb * weight[0];
-
-    for(int i = 1; i < 5; ++i)
-    {
-        float j = float(i);
-        result += texture(tHDR, vUv + tex_offset * j * direction).rgb * weight[i];
-        result += texture(tHDR, vUv - tex_offset * j * direction).rgb * weight[i];
-    }
-
-    FragColor = vec4(result, 1);
-    //FragColor = blur9(tHDR, vUv, resolution, direction);
+    FragColor = blur9(tHDR, vUv, vec2(textureSize(tHDR, 0)), direction);
 }

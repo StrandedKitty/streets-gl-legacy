@@ -27,7 +27,8 @@ export default class Mesh extends Object3D {
 		this.setAttributeData('position', this.vertices);
 	}
 
-	draw(material) {
+	draw() {
+		const material = this.renderer.material;
 		let vao = this.vaos[material.name];
 
 		if(!vao) {

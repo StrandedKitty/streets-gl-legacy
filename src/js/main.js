@@ -31,6 +31,7 @@ import RoadMaterial from "./materials/RoadMaterial";
 import WaterMaterial from "./materials/WaterMaterial";
 import HDRCompose from "./materials/HDRCompose";
 import LDRCompose from "./materials/LDRCompose";
+import MapNavigator from "./MapNavigator";
 
 const SunCalc = require('suncalc');
 
@@ -38,6 +39,7 @@ let scene,
 	camera,
 	RP,
 	controls,
+	mapNavigator,
 	workerManager;
 
 let view = {};
@@ -122,6 +124,9 @@ function init() {
 	view.frustum.updateViewSpaceVertices();
 
 	controls = new Controls(camera);
+	mapNavigator = new MapNavigator();
+
+	//mapNavigator.getCurrentPosition(controls);
 
 	const groundMaterialInstance = new GroundMaterial(RP);
 	groundMaterial = groundMaterialInstance.material;
@@ -304,7 +309,7 @@ function animate(rafTime) {
 		csm.direction = lightDirection;
 	}
 
-	const intensityFactor = clamp(-sunDirection.y, 0, 1);
+	const intensityFactor = clamp(-csm.direction.y, 0, 1);
 	hdrCompose.material.uniforms.ambientIntensity.value = intensityFactor * 0.3;
 	sunIntensity *= intensityFactor;
 
@@ -335,7 +340,7 @@ function animate(rafTime) {
 			groundMaterialDepth.uniforms.modelViewMatrix.value = modelViewMatrix;
 			groundMaterialDepth.updateUniform('modelViewMatrix');
 
-			object.draw(groundMaterialDepth);
+			object.draw();
 		}
 
 		{
@@ -357,7 +362,7 @@ function animate(rafTime) {
 					buildingDepthMaterial.uniforms.time.value = object.data.tile.time;
 					buildingDepthMaterial.updateUniform('time');
 
-					object.draw(buildingMaterial);
+					object.draw();
 				}
 			}
 		}
@@ -377,7 +382,7 @@ function animate(rafTime) {
 			material.uniforms.viewMatrix.value = rCamera.matrixWorldInverse;
 			material.updateUniform('viewMatrix');
 
-			object.draw(material);
+			object.draw();
 
 			RP.culling = true;
 		}
@@ -413,7 +418,7 @@ function animate(rafTime) {
 		groundMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
 		groundMaterial.updateUniform('modelViewMatrix');
 
-		object.draw(groundMaterial);
+		object.draw();
 	}
 
 	RP.depthTest = false;
@@ -433,7 +438,7 @@ function animate(rafTime) {
 				waterMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
 				waterMaterial.updateUniform('modelViewMatrix');
 
-				object.draw(waterMaterial);
+				object.draw();
 			}
 		}
 	}
@@ -452,7 +457,7 @@ function animate(rafTime) {
 				roadMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
 				roadMaterial.updateUniform('modelViewMatrix');
 
-				object.draw(roadMaterial);
+				object.draw();
 			}
 		}
 	}
@@ -488,7 +493,7 @@ function animate(rafTime) {
 					++noAnimationStreak;
 				}
 
-				object.draw(buildingMaterial);
+				object.draw();
 			}
 		}
 	}
@@ -508,7 +513,7 @@ function animate(rafTime) {
 		material.uniforms.viewMatrix.value = rCamera.matrixWorldInverse;
 		material.updateUniform('viewMatrix');
 
-		object.draw(material);
+		object.draw();
 
 		RP.culling = true;
 	}
@@ -528,7 +533,7 @@ function animate(rafTime) {
 		ssao.material.uniforms.tNormal.value = gBuffer.textures.normal;
 		ssao.material.uniforms.cameraProjectionMatrix.value = rCamera.projectionMatrix;
 		ssao.material.use();
-		quad.draw(ssao.material);
+		quad.draw();
 
 		// Blur
 
@@ -538,7 +543,7 @@ function animate(rafTime) {
 		blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
 		blur.material.uniforms.direction.value = [0, 1];
 		blur.material.use();
-		quad.draw(blur.material);
+		quad.draw();
 
 		RP.bindFramebuffer(blur.framebuffer);
 
@@ -546,7 +551,7 @@ function animate(rafTime) {
 		blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
 		blur.material.uniforms.direction.value = [1, 0];
 		blur.material.use();
-		quad.draw(blur.material);
+		quad.draw();
 	} else {
 		RP.bindFramebuffer(blur.framebuffer);
 
@@ -573,7 +578,7 @@ function animate(rafTime) {
 		volumetricLighting.material.uniforms.lightDirection.value = new Float32Array(vec3.toArray(csm.direction));
 		csm.updateUniforms(volumetricLighting.material);
 		volumetricLighting.material.use();
-		quad.draw(volumetricLighting.material);
+		quad.draw();
 
 		// Blur
 
@@ -583,7 +588,7 @@ function animate(rafTime) {
 		blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
 		blur.material.uniforms.direction.value = [0, 1];
 		blur.material.use();
-		quad.draw(blur.material);
+		quad.draw();
 
 		RP.bindFramebuffer(volumetricLighting.framebufferBlurred);
 
@@ -591,7 +596,7 @@ function animate(rafTime) {
 		blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
 		blur.material.uniforms.direction.value = [1, 0];
 		blur.material.use();
-		quad.draw(blur.material);
+		quad.draw();
 	} else {
 		RP.bindFramebuffer(volumetricLighting.framebufferBlurred);
 
@@ -615,7 +620,7 @@ function animate(rafTime) {
 	hdrCompose.material.uniforms.cameraMatrixWorld.value = rCamera.matrixWorld;
 	hdrCompose.material.uniforms.cameraMatrixWorldInverse.value = rCamera.matrixWorldInverse;
 	hdrCompose.material.use();
-	quad.draw(hdrCompose.material);
+	quad.draw();
 
 	// HDR to LDR texture
 
@@ -625,7 +630,7 @@ function animate(rafTime) {
 	else RP.bindFramebuffer(ssaa.framebuffer);
 
 	ldrCompose.material.use();
-	quad.draw(ldrCompose.material);
+	quad.draw();
 
 	// SMAA
 
@@ -637,18 +642,18 @@ function animate(rafTime) {
 
 		smaa.materials.edges.uniforms.tDiffuse.value = gBuffer.framebufferOutput.textures[0];
 		smaa.materials.edges.use();
-		quad.draw(smaa.materials.edges);
+		quad.draw();
 
 		RP.bindFramebuffer(smaa.weightsFB);
 
 		smaa.materials.weights.use();
-		quad.draw(smaa.materials.weights);
+		quad.draw();
 
 		RP.bindFramebuffer(ssaa.framebuffer);
 
 		smaa.materials.blend.uniforms.tColor.value = gBuffer.framebufferOutput.textures[0];
 		smaa.materials.blend.use();
-		quad.draw(smaa.materials.blend);
+		quad.draw();
 
 		ssaa.blitToScreen();
 	} else {
@@ -759,8 +764,9 @@ function animate(rafTime) {
 				mesh.addAttribute({
 					name: 'textureId',
 					size: 1,
-					type: 'FLOAT',
-					normalized: false
+					type: 'UNSIGNED_BYTE',
+					normalized: false,
+					dataFormat: 'integer'
 				});
 				mesh.setAttributeData('textureId', textures);
 

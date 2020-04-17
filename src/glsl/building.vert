@@ -4,7 +4,7 @@ in vec3 position;
 in vec3 color;
 in vec3 normal;
 in vec2 uv;
-in float textureId;
+in uint textureId;
 in float display;
 in float fade;
 out vec3 vColor;
@@ -12,7 +12,7 @@ out vec3 vNormal;
 out vec3 vPosition;
 out vec3 vLocalPosition;
 out vec2 vUv;
-out float vTextureId;
+flat out int vTextureId;
 out vec3 vCenter;
 
 uniform mat4 projectionMatrix;
@@ -30,7 +30,7 @@ void main() {
 
     vColor = color;
     if(display > 0.5) vColor = vec3(1, 0, 0);
-    vTextureId = textureId;
+    vTextureId = int(textureId);
     vUv = uv;
     vec3 transformedNormal = normal;
     transformedNormal = vec3(modelViewMatrix * vec4(transformedNormal, 0));

@@ -11,7 +11,7 @@ in vec3 vNormal;
 in vec3 vPosition;
 in vec3 vLocalPosition;
 in vec2 vUv;
-in float vTextureId;
+flat in int vTextureId;
 in vec3 vCenter;
 
 #define WIREFRAME_MODE 0
@@ -22,6 +22,10 @@ uniform sampler2DArray tColor;
 uniform sampler2DArray tMetalness;
 uniform sampler2DArray tRoughness;
 uniform sampler2DArray tSpecular;
+uniform sampler2DArray tWinColor;
+uniform sampler2DArray tWinMetalness;
+uniform sampler2DArray tWinRoughness;
+uniform sampler2DArray tWinSpecular;
 
 #if WIREFRAME_MODE
     float edgeFactor() {
@@ -33,17 +37,33 @@ uniform sampler2DArray tSpecular;
     }
 #endif
 
+ivec2 unpackTextureId(int id) {
+    int facade = id & 15;
+    int window = id >> 4;
+
+    return ivec2(facade, window);
+}
+
 void main() {
     #if WIREFRAME_MODE
         if (edgeFactor() > 0.99) discard;
     #endif
 
-    bool textured = int(vTextureId + 0.5) > 0;
+    ivec2 textures = unpackTextureId(vTextureId);
+    bool window = textures.y == 1;
+    bool textured = textures.x > 0;
 
-    vec4 diffuse = texture(tColor, vec3(vUv, int(vTextureId - 0.5)));
-    float metalness = texture(tMetalness, vec3(vUv, int(vTextureId - 0.5))).r;
-    float roughness = texture(tRoughness, vec3(vUv, int(vTextureId - 0.5))).r;
-    float specular = texture(tSpecular, vec3(vUv, int(vTextureId - 0.5))).r;
+    vec4 diffuse = texture(tColor, vec3(vUv, textures.x - 1));
+    float metalness = texture(tMetalness, vec3(vUv, textures.x - 1)).r;
+    float roughness = texture(tRoughness, vec3(vUv, textures.x - 1)).r;
+    float specular = texture(tSpecular, vec3(vUv, textures.x - 1)).r;
+
+    if(window) {
+        diffuse = texture(tWinColor, vec3(vUv, textures.x - 1));
+        metalness = texture(tWinMetalness, vec3(vUv, textures.x - 1)).r;
+        roughness = texture(tWinRoughness, vec3(vUv, textures.x - 1)).r;
+        specular = texture(tWinSpecular, vec3(vUv, textures.x - 1)).r;
+    }
 
     if(!textured) {
         diffuse = vec4(1) - texture(tNoise, vLocalPosition.xz / TILE_SIZE * 32.) * 0.3 + texture(tNoise, vLocalPosition.xz / TILE_SIZE * 2.) * 0.3;

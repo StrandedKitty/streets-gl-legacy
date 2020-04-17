@@ -35,9 +35,10 @@ vec3 tbn(vec3 mapValue) {
 }
 
 void main() {
-    vec3 normal = tbn(texture(tNormal, vUv * 32.).xyz * 2. - 1.);
-    normal.y *= 2.5;
-    normal = normalize(normal);
+    vec3 normalMapValue = texture(tNormal, vUv * 32.).xyz * 2. - 1.;
+    normalMapValue.z *= 2.;
+    normalMapValue = normalize(normalMapValue);
+    vec3 normal = tbn(normalMapValue);
 
     outColor = texture(tDiffuse, vUv * 8. * 64.);
     outNormal = normal * 0.5 + 0.5;

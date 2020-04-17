@@ -104,8 +104,13 @@ export default class Ring {
 			this.parent.mesh.vertices.push(nextVertex.x, height, nextVertex.z);
 			this.parent.mesh.vertices.push(vertex.x, height, vertex.z);
 
-			let segmentUvStart = this.wallSegmentUvs[i][0];
-			let segmentUvEnd = this.wallSegmentUvs[i][1];
+			//let segmentUvStart = this.wallSegmentUvs[i][0];
+			//let segmentUvEnd = this.wallSegmentUvs[i][1];
+
+			const window = this.wallSegmentUvs[i][0] < 0 || this.wallSegmentUvs[i][1] < 0;
+
+			let segmentUvStart = Math.abs(this.wallSegmentUvs[i][0]);
+			let segmentUvEnd = Math.abs(this.wallSegmentUvs[i][1]);
 
 			this.parent.mesh.uvs.push(segmentUvEnd, levels);
 			this.parent.mesh.uvs.push(segmentUvStart, 0);
@@ -124,12 +129,16 @@ export default class Ring {
 			for(let j = 0; j < 6; j++) {
 				this.parent.mesh.normals.push(normal.x, normal.y, normal.z);
 				this.parent.mesh.colors.push(...facadeColor);
-				this.parent.mesh.textures.push(material.id);
+				this.parent.mesh.textures.push(this.getPackedFacadeMaterial(window ? 0 : 1));
 			}
 		}
 	}
 
-	generateWallSegments(angle, windowWidth) {
+	getPackedFacadeMaterial(window) {
+		return (window << 4) + this.geometry.material.id;
+	}
+
+	generateWallSegments2(angle, windowWidth) {
 		angle = Math.cos(toRad(angle));
 		let uvs = [];
 		let segments = [];
@@ -194,6 +203,71 @@ export default class Ring {
 		}
 
 		this.wallSegmentUvs = uvs;
+	}
+
+	generateWallSegments(angle, windowWidth) {
+		angle = Math.cos(toRad(angle));
+
+		const cuts = [];
+		const facesLength = [];
+		const windowsNumber = [];
+		const pathLength = this.calculateLength();
+		let currentLength = 0;
+
+		for(let i = 0; i < this.vertices.length - 1; i++) {
+			const thisVertex = new vec2(this.vertices[i][0], this.vertices[i][1]);
+			const nextVertex = new vec2(this.vertices[i + 1][0], this.vertices[i + 1][1]);
+			const prevVertex = i === 0 ?
+				new vec2(this.vertices[this.vertices.length - 2][0], this.vertices[this.vertices.length - 2][1]) :
+				new vec2(this.vertices[i - 1][0], this.vertices[i - 1][1]);
+
+			const nextSegment = vec2.sub(nextVertex, thisVertex);
+			const prevSegment = vec2.sub(thisVertex, prevVertex);
+
+			const dot = vec2.dot(vec2.normalize(nextSegment), vec2.normalize(prevSegment));
+
+			const isSharp = dot < angle;
+			cuts[i] = isSharp;
+
+			if(isSharp) {
+				if(currentLength > 0) facesLength.push(currentLength);
+				currentLength = 0;
+			}
+
+			currentLength += vec2.distance(thisVertex, nextVertex);
+
+			if(i === this.vertices.length - 2) facesLength.push(currentLength);
+		}
+
+		for(let i = 0; i < facesLength.length; i++) {
+			windowsNumber.push(Math.floor(facesLength[i] / windowWidth));
+		}
+
+		let face = 0;
+		let accumLength = 0;
+		this.wallSegmentUvs = [];
+
+		for(let i = 0; i < cuts.length; i++) {
+			const thisVertex = new vec2(this.vertices[i][0], this.vertices[i][1]);
+			const nextVertex = new vec2(this.vertices[i + 1][0], this.vertices[i + 1][1]);
+
+			const length = vec2.distance(thisVertex, nextVertex);
+
+			const uv1 = accumLength / facesLength[face];
+			const uv2 = (accumLength + length) / facesLength[face];
+
+			accumLength += length;
+
+			let factor = windowsNumber[face];
+			if(windowsNumber[face] === 0) factor = -length / windowWidth;
+
+			if(cuts[i + 1]) {
+				face++;
+				accumLength = 0;
+			}
+
+			this.wallSegmentUvs.push([uv1 * factor, uv2 * factor]);
+		}
 	}
 
 	distributeNodes(params) {

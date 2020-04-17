@@ -88,7 +88,7 @@ export default class GBuffer {
 		this.renderer.bindFramebuffer(this.bloom.highLuminanceFramebuffer);
 
 		this.bloom.brightnessFilterMaterial.use();
-		this.quad.draw(this.bloom.brightnessFilterMaterial);
+		this.quad.draw();
 
 		this.bloom.highLuminanceFramebuffer.textures[0].generateMipmaps();
 		this.bloom.buildDownscaledTextures();
@@ -98,18 +98,18 @@ export default class GBuffer {
 			this.bloom.blurMaterial.uniforms.tHDR.value = this.bloom.downscaledTextures[i];
 			this.bloom.blurMaterial.uniforms.direction.value = [1, 0];
 			this.bloom.blurMaterial.use();
-			this.quad.draw(this.bloom.blurMaterial);
+			this.quad.draw();
 
 			this.renderer.bindFramebuffer(this.bloom.downscaledFramebuffers[i]);
 			this.bloom.blurMaterial.uniforms.tHDR.value = this.bloom.downscaledFramebuffersTemp[i].textures[0];
 			this.bloom.blurMaterial.uniforms.direction.value = [0, 1];
 			this.bloom.blurMaterial.use();
-			this.quad.draw(this.bloom.blurMaterial);
+			this.quad.draw();
 		}
 
 		this.renderer.bindFramebuffer(this.bloom.blurredFramebuffer);
 		this.bloom.blurCombineMaterial.use();
-		this.quad.draw(this.bloom.blurCombineMaterial);
+		this.quad.draw();
 	}
 
 	setSize(width, height) {

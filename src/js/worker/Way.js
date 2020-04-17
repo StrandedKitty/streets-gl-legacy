@@ -176,15 +176,15 @@ export default class Way {
 	getMaterialData(material) {
 		switch (material) {
 			default:
-				return {id: 1, colored: true};
+				return {id: 1, colored: true, windowType: 1};
 			case 'glass':
-				return {id: 2, colored: true};
+				return {id: 2, colored: true, windowType: 2};
 			case 'mirror':
-				return {id: 3, colored: true};
+				return {id: 3, colored: true, windowType: 2};
 			case 'brick':
-				return {id: 4, colored: false};
+				return {id: 4, colored: false, windowType: 1};
 			case 'wood':
-				return {id: 5, colored: true};
+				return {id: 5, colored: true, windowType: 1};
 		}
 	}
 
@@ -212,7 +212,7 @@ export default class Way {
 		}
 	}
 
-	generateRoof(params) {
+	generateRoof() {
 		const roofHeight = this.geometry.roofHeight;
 		const roofShape = this.geometry.roofShape;
 		const buildingHeight = this.geometry.height;

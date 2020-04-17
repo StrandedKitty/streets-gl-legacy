@@ -2,7 +2,9 @@ import Program from "./Program";
 
 export default class Material {
 	constructor(renderer, params) {
+		this.renderer = renderer;
 		this.gl = renderer.gl;
+
 		this.shaders = {
 			vertexShader: params.vertexShader,
 			fragmentShader: params.fragmentShader
@@ -52,6 +54,8 @@ export default class Material {
 				}
 			}
 		}
+
+		this.renderer.material = this;
 	}
 
 	updateUniform(name) {

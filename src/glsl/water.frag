@@ -60,9 +60,10 @@ void main() {
     vec3 normalValue =
         texture(tNormal, uv * 2. + uvOffsets[0]).rgb * 0.4 +
         texture(tNormal, uv * 5. + uvOffsets[1]).rgb * 0.5 +
-        texture(tNormal, uv * 7. + uvOffsets[2]).rgb * 0.1;
+        texture(tNormal, uv * 9. + uvOffsets[2]).rgb * 0.1;
 
     normalValue = normalize(normalValue * 2. - 1.);
+    normalValue.z *= 8.;
     vec3 normal = tbn(normalValue);
 
     outColor = vec4(0.1, 0.3, 0.5, 1);

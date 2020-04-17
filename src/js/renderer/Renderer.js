@@ -27,6 +27,8 @@ export default class Renderer {
 		this.gl.enable(this.gl.DEPTH_TEST);
 		this.gl.depthFunc(this.gl.LEQUAL);
 		this.gl.clearDepth(1);
+
+		this.material = null;
 	}
 
 	createMaterial(params) {

@@ -78,7 +78,7 @@ export default class Skybox {
 		this.material.uniforms.viewMatrix = {type: 'Matrix4fv', value: camera.matrixWorldInverse};
 		this.material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
 		this.material.use();
-		this.mesh.draw(this.material);
+		this.mesh.draw();
 		this.renderer.culling = true;
 	}
 }

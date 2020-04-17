@@ -352,12 +352,12 @@ function processData(x, y, data, pivot, waterVertices) {
 					meshData.normals.push(new Float32Array(way.mesh.normals));
 					meshData.colors.push(new Uint8Array(way.mesh.colors));
 					meshData.uvs.push(new Float32Array(way.mesh.uvs));
-					meshData.textures.push(new Float32Array(way.mesh.textures));
+					meshData.textures.push(new Uint8Array(way.mesh.textures));
 				} else if(way.geometryType === 'road') {
 					roadsData.vertices.push(new Float32Array(way.mesh.vertices));
 					roadsData.normals.push(new Float32Array(way.mesh.normals));
 					roadsData.uvs.push(new Float32Array(way.mesh.uvs));
-					roadsData.textures.push(new Float32Array(way.mesh.textures));
+					roadsData.textures.push(new Uint8Array(way.mesh.textures));
 				}
 			}
 

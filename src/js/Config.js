@@ -10,7 +10,7 @@ const Config = {
 	SSAOResolution: 1,
 	SSAOBlur: true,
 	volumetricLighting: false,
-	realTimeSun: true,
+	realTimeSun: false,
 	layerHeight: 6
 };
 

@@ -48,7 +48,7 @@ export default class Texture2DArray {
 			const pixels = new Uint8Array(imageData.data.buffer);
 
 			this.gl.bindTexture(this.gl.TEXTURE_2D_ARRAY, this.WebGLTexture);
-			this.gl.texImage3D(this.gl.TEXTURE_2D_ARRAY, 0, this.gl.RGBA, image.width, image.height / this.depth, this.depth, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
+			this.gl.texImage3D(this.gl.TEXTURE_2D_ARRAY, 0, this.gl.RGBA, image.width, image.height / this.depth, this.depth, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
 			this.gl.generateMipmap(this.gl.TEXTURE_2D_ARRAY);
 		}.bind(this);
 
