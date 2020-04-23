@@ -36,8 +36,10 @@ export default class BuildingMaterial {
 				tWinMetalness: {type: 'texture2DArray', value: this.textureArraysWindow.metalness},
 				tWinRoughness: {type: 'texture2DArray', value: this.textureArraysWindow.roughness},
 				tWinSpecular: {type: 'texture2DArray', value: this.textureArraysWindow.specular},
+				tWinEmission: {type: 'texture2DArray', value: this.textureArraysWindow.emission},
 				tNoise: {type: 'texture', value: this.renderer.createTexture({url: '/textures/noise.png', anisotropy: Config.textureAnisotropy})},
-				time: {type: '1f', value: 0}
+				time: {type: '1f', value: 0},
+				uSunIntensity: {type: '1f', value: 1}
 			}
 		});
 
@@ -95,6 +97,11 @@ export default class BuildingMaterial {
 			}),
 			specular: this.renderer.createTexture2DArray({
 				url: '/textures/building/window_specular.png',
+				depth: 5,
+				anisotropy: Config.textureAnisotropy
+			}),
+			emission: this.renderer.createTexture2DArray({
+				url: '/textures/building/window_emission.png',
 				depth: 5,
 				anisotropy: Config.textureAnisotropy
 			})

@@ -26,6 +26,10 @@ uniform sampler2DArray tWinColor;
 uniform sampler2DArray tWinMetalness;
 uniform sampler2DArray tWinRoughness;
 uniform sampler2DArray tWinSpecular;
+uniform sampler2DArray tWinEmission;
+uniform float uSunIntensity;
+
+#include <noise>
 
 #if WIREFRAME_MODE
     float edgeFactor() {
@@ -37,11 +41,12 @@ uniform sampler2DArray tWinSpecular;
     }
 #endif
 
-ivec2 unpackTextureId(int id) {
-    int facade = id & 15;
-    int window = id >> 4;
+ivec3 unpackMaterial(int id) {
+    int facade = id & 7;
+    int window = (id >> 3) & 1;
+    int random = id >> 4;
 
-    return ivec2(facade, window);
+    return ivec3(facade, window, random);
 }
 
 void main() {
@@ -49,20 +54,32 @@ void main() {
         if (edgeFactor() > 0.99) discard;
     #endif
 
-    ivec2 textures = unpackTextureId(vTextureId);
-    bool window = textures.y == 1;
-    bool textured = textures.x > 0;
+    ivec3 materialProps = unpackMaterial(vTextureId);
+    int facadeTextureId = materialProps.x - 1;
+    int faceId = materialProps.z;
+    bool window = materialProps.y == 1;
+    bool textured = materialProps.x > 0;
 
-    vec4 diffuse = texture(tColor, vec3(vUv, textures.x - 1));
-    float metalness = texture(tMetalness, vec3(vUv, textures.x - 1)).r;
-    float roughness = texture(tRoughness, vec3(vUv, textures.x - 1)).r;
-    float specular = texture(tSpecular, vec3(vUv, textures.x - 1)).r;
+    vec4 diffuse = texture(tColor, vec3(vUv, facadeTextureId));
+    float metalness = texture(tMetalness, vec3(vUv, facadeTextureId)).r;
+    float roughness = texture(tRoughness, vec3(vUv, facadeTextureId)).r;
+    float specular = texture(tSpecular, vec3(vUv, facadeTextureId)).r;
+    vec3 emission = vec3(0);
 
     if(window) {
-        diffuse = texture(tWinColor, vec3(vUv, textures.x - 1));
-        metalness = texture(tWinMetalness, vec3(vUv, textures.x - 1)).r;
-        roughness = texture(tWinRoughness, vec3(vUv, textures.x - 1)).r;
-        specular = texture(tWinSpecular, vec3(vUv, textures.x - 1)).r;
+        diffuse = texture(tWinColor, vec3(vUv, facadeTextureId));
+        metalness = texture(tWinMetalness, vec3(vUv, facadeTextureId)).r;
+        roughness = texture(tWinRoughness, vec3(vUv, facadeTextureId)).r;
+        specular = texture(tWinSpecular, vec3(vUv, facadeTextureId)).r;
+
+        vec2 windowPosition = vUv + vec2(faceId);
+        windowPosition.x /= float(faceId / 8) + 2.;
+
+        bool light = noise(floor(windowPosition)) > 0.6;
+
+        if(light && uSunIntensity < 0.3) {
+            emission = texture(tWinEmission, vec3(vUv, facadeTextureId)).rgb;
+        }
     }
 
     if(!textured) {
@@ -77,5 +94,5 @@ void main() {
     outNormal = vNormal * 0.5 + 0.5;
     outPosition = vPosition;
     outMetallicRoughness = vec4(metalness, roughness, specular, 1);
-    outEmission = vec4(0, 0, 0, 1);
+    outEmission = vec4(emission, 1);
 }

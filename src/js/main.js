@@ -466,6 +466,7 @@ function animate(rafTime) {
 
 	{
 		buildingMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+		buildingMaterial.uniforms.uSunIntensity.value = sunIntensity;
 		buildingMaterial.use();
 
 		let noAnimationStreak = 0;

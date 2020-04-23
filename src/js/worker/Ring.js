@@ -92,6 +92,8 @@ export default class Ring {
 		const facadeColor = this.geometry.facadeColor;
 		const material = this.geometry.material;
 
+		let faceID = Math.floor(Math.random() * 16);
+
 		for(let i = 0; i < this.vertices.length - 1; i++) {
 			let vertex = {x: this.vertices[i][0], z: this.vertices[i][1]};
 			let nextVertex = {x: this.vertices[i + 1][0], z: this.vertices[i + 1][1]};
@@ -112,6 +114,8 @@ export default class Ring {
 			let segmentUvStart = Math.abs(this.wallSegmentUvs[i][0]);
 			let segmentUvEnd = Math.abs(this.wallSegmentUvs[i][1]);
 
+			if(segmentUvStart % 1 === 0) faceID = Math.floor(Math.random() * 16);
+
 			this.parent.mesh.uvs.push(segmentUvEnd, levels);
 			this.parent.mesh.uvs.push(segmentUvStart, 0);
 			this.parent.mesh.uvs.push(segmentUvStart, levels);
@@ -129,13 +133,13 @@ export default class Ring {
 			for(let j = 0; j < 6; j++) {
 				this.parent.mesh.normals.push(normal.x, normal.y, normal.z);
 				this.parent.mesh.colors.push(...facadeColor);
-				this.parent.mesh.textures.push(this.getPackedFacadeMaterial(window ? 0 : 1));
+				this.parent.mesh.textures.push(this.getPackedFacadeMaterial(window ? 0 : 1, faceID));
 			}
 		}
 	}
 
-	getPackedFacadeMaterial(window) {
-		return (window << 4) + this.geometry.material.id;
+	getPackedFacadeMaterial(window, faceID) {
+		return (((faceID << 1) + window) << 3) + this.geometry.material.id;
 	}
 
 	generateWallSegments2(angle, windowWidth) {
