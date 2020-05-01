@@ -42,7 +42,7 @@ float sampleCloudMap(vec3 pos) {
 
 vec4 sampleCloudNoise(vec3 pos) {
     return vec4(sampleCloudMap(pos)) * 0.8;
-    vec4 color = texture(tWorley, pos).rgba / 300.;
+    vec4 color = texture(tNoise, pos).rgba / 300.;
     return color * 10.;
 }
 

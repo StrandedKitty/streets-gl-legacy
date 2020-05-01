@@ -47,10 +47,11 @@ export default class VolumetricClouds {
 				tPosition: {type: 'texture', value: null},
 				tDepth: {type: 'texture', value: null},
 				time: {type: '1f', value: 0},
+				needsFullUpdate: {type: '1f', value: 0},
 				cameraPositionE5: {type: '3fv', value: new Float32Array([0, 0, 0])},
 				lightDirection: {type: '3fv', value: new Float32Array([0, -1, 0])},
 				normalMatrix: {type: 'Matrix3fv', value: null},
-				tWorley: {type: 'texture3D', value: this.buildWorley()},
+				tNoise: {type: 'texture3D', value: this.buildWorley()},
 				tBlueNoise: {type: 'texture', value: this.renderer.createTexture({url: '/textures/blue_noise_rgba.png', wrap: 'repeat'})},
 				tAccum: {type: 'texture', value: this.framebufferComposed.textures[0]}
 			}

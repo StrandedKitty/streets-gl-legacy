@@ -7,7 +7,7 @@ import Framebuffer from "./Framebuffer";
 import Renderbuffer from "./Renderbuffer";
 import FramebufferMultisample from "./FramebufferMultisample";
 import TextureCube from "./TextureCube";
-import DirectionalLight from "./DirectionalLight";
+import DirectionalLight from "../core/DirectionalLight";
 import Texture2DArray from "./Texture2DArray";
 import MeshInstanced from "./MeshInstanced";
 import Texture3D from "./Texture3D";

@@ -3,6 +3,7 @@ import mat4 from "./math/mat4";
 import vec3 from "./math/vec3";
 import vec2 from "./math/vec2";
 import URLData from "./URLData";
+import ControlsState from "./ControlsState";
 
 export default class Controls {
 	constructor(camera) {
@@ -48,6 +49,9 @@ export default class Controls {
 		}
 
 		this.tick = 0;
+
+		this.lastState = null;
+		this.cameraViewChanged = false;
 
 		this.addEventListeners();
 	}
@@ -134,6 +138,8 @@ export default class Controls {
 
 		this.distance = lerp(this.distance, this.distanceTarget, 0.4);
 
+		if(Math.abs(this.distance - this.distanceTarget) < 0.01) this.distance = this.distanceTarget;
+
 		if(this.keys.movement.up) {
 			let direction = {x: this.direction.x, y: this.direction.z};
 			direction = vec2.normalize(direction);
@@ -199,6 +205,10 @@ export default class Controls {
 
 		this.camera.setPosition(cameraPosition.x, cameraPosition.y, cameraPosition.z);
 		this.camera.lookAt(this.target, false);
+
+		const newState = new ControlsState(this);
+		this.cameraViewChanged = this.lastState !== null && !newState.equals(this.lastState);
+		this.lastState = newState;
 
 		const hash = URLData.getHash();
 

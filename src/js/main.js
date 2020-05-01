@@ -7,7 +7,7 @@ import MapWorkerManager from './worker/MapWorkerManager';
 import MapMesh from './MapMesh';
 import Renderer from "./renderer/Renderer";
 import SceneGraph from "./core/SceneGraph";
-import PerspectiveCamera from "./renderer/PerspectiveCamera";
+import PerspectiveCamera from "./core/PerspectiveCamera";
 import Object3D from "./core/Object3D";
 import vec3 from "./math/vec3";
 import mat4 from "./math/mat4";
@@ -610,6 +610,13 @@ function animate(rafTime) {
 
 	// Clouds
 
+	if(controls.cameraViewChanged) {
+		RP.bindFramebuffer(volumetricClouds.framebufferComposed);
+
+		gl.clearColor(0, 0, 0, 1);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+	}
+
 	RP.bindFramebuffer(volumetricClouds.framebuffer);
 
 	gl.clearColor(0, 0, 0, 1);
@@ -621,6 +628,7 @@ function animate(rafTime) {
 	volumetricClouds.material.uniforms.lightDirection.value = new Float32Array(vec3.toArray(csm.direction));
 	volumetricClouds.material.uniforms.normalMatrix.value = mat4.normalMatrix(rCamera.matrixWorld);
 	volumetricClouds.material.uniforms.time.value += delta;
+	volumetricClouds.material.uniforms.needsFullUpdate.value = controls.cameraViewChanged ? 1 : 0;
 	volumetricClouds.material.use();
 	quad.draw();
 
