@@ -1,5 +1,7 @@
 #version 300 es
 precision highp float;
+precision highp int;
+precision highp sampler3D;
 out vec4 FragColor;
 
 #define PI 3.141592653589793
@@ -30,6 +32,7 @@ uniform samplerCube sky;
 uniform sampler2D tBRDF;
 uniform sampler2D uVolumetric;
 uniform float uEmissionFactor;
+uniform sampler2D uClouds;
 
 uniform mat3 normalMatrix;
 uniform mat4 cameraMatrixWorld;
@@ -184,6 +187,7 @@ vec3 getIBLContribution(MaterialInfo materialInfo, vec3 n, vec3 v) {
     return diffuse * 0. + specular;
 }
 
+#include <noise>
 #include <shadowmapping>
 
 void main() {
@@ -203,11 +207,6 @@ void main() {
     baseColor = SRGBtoLINEAR(texture(uColor, vUv));
     diffuseColor = baseColor.rgb * (vec3(1.0) - f0) * (1.0 - metallic);
     specularColor = mix(f0, baseColor.rgb, metallic);
-
-    if(baseColor.a == 0.) { // skip unlit objects
-        FragColor = vec4(baseColor.xyz * sunIntensity, 1);
-        return;
-    }
 
     float alphaRoughness = perceptualRoughness * perceptualRoughness;
 
@@ -237,6 +236,13 @@ void main() {
     vec3 worldNormal = normalize(normalMatrix * normal);
     vec3 worldPosition = vec3(cameraMatrixWorld * vec4(position, 1.));
     vec3 cameraWorldPosition = vec3(cameraMatrixWorld * vec4(0, 0, 0, 1.));
+
+    if(baseColor.a == 0.) { // skip skybox
+        vec4 cloudsData = texture(uClouds, vUv);
+        baseColor.rgb = vec3(0.2, 0.5, 0.85) * 1.2;
+        FragColor = vec4(baseColor.xyz * cloudsData.a * sunIntensity + cloudsData.rgb, 1);
+        return;
+    }
 
     Light light = uLight;
 
@@ -311,5 +317,6 @@ void main() {
 
     // OUT
 
-    FragColor = vec4(color, 1);
+    vec4 cloudsData = texture(uClouds, vUv);
+    FragColor = vec4(color * cloudsData.a + cloudsData.rgb, 1);
 }

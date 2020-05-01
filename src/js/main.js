@@ -32,6 +32,7 @@ import WaterMaterial from "./materials/WaterMaterial";
 import HDRCompose from "./materials/HDRCompose";
 import LDRCompose from "./materials/LDRCompose";
 import MapNavigator from "./MapNavigator";
+import VolumetricClouds from "./materials/VolumetricClouds";
 
 const SunCalc = require('suncalc');
 
@@ -59,7 +60,7 @@ let quad, hdrCompose, ldrCompose;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
-let gBuffer, smaa, ssao, blur, ssaa, volumetricLighting;
+let gBuffer, smaa, ssao, blur, ssaa, volumetricLighting, volumetricClouds;
 let skybox;
 let light;
 let lightDirection = new vec3(-1, -1, -1);
@@ -209,6 +210,7 @@ function init() {
 	blur = new BilateralBlur(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	ssaa = new SSAA(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	volumetricLighting = new VolumetricLighting(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
+	volumetricClouds = new VolumetricClouds(RP, window.innerWidth, window.innerHeight);
 
 	light = {
 		direction: new Float32Array([-1, -1, -1]),
@@ -228,6 +230,7 @@ function init() {
 		gBuffer: gBuffer,
 		skybox: skybox,
 		volumetricTexture: volumetricLighting.blurredTexture,
+		cloudsTexture: volumetricClouds.texture,
 		light: light
 	});
 
@@ -248,7 +251,6 @@ function init() {
 		const v = hexToRgb(e);
 		hdrCompose.material.uniforms.fogColor.value = new Float32Array([v[0] / 255, v[1] / 255, v[2] / 255]);
 	});
-	gui.add(hdrCompose.material.uniforms.uEmissionFactor, 'value');
 
 	window.addEventListener('resize', function() {
 		camera.aspect = window.innerWidth / window.innerHeight;
@@ -268,6 +270,7 @@ function init() {
 		blur.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		ssaa.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		volumetricLighting.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
+		volumetricClouds.setSize(window.innerWidth, window.innerHeight);
 	}, false);
 
 	animate();
@@ -604,6 +607,24 @@ function animate(rafTime) {
 		gl.clearColor(0, 0, 0, 0);
 		gl.clear(gl.COLOR_BUFFER_BIT);
 	}
+
+	// Clouds
+
+	RP.bindFramebuffer(volumetricClouds.framebuffer);
+
+	gl.clearColor(0, 0, 0, 1);
+	gl.clear(gl.COLOR_BUFFER_BIT);
+
+	volumetricClouds.material.uniforms.tPosition.value = gBuffer.textures.position;
+	volumetricClouds.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
+	volumetricClouds.material.uniforms.cameraPositionE5.value = new Float32Array([camera.position.x % 1e5, camera.position.y, camera.position.z % 1e5]);
+	volumetricClouds.material.uniforms.lightDirection.value = new Float32Array(vec3.toArray(csm.direction));
+	volumetricClouds.material.uniforms.normalMatrix.value = mat4.normalMatrix(rCamera.matrixWorld);
+	volumetricClouds.material.uniforms.time.value += delta;
+	volumetricClouds.material.use();
+	quad.draw();
+
+	volumetricClouds.copyResultToOutput();
 
 	// Combine g-buffer textures
 

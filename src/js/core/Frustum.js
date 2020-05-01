@@ -146,6 +146,8 @@ export default class Frustum {
 
 	getTiles(cameraPosition, zoom = 16) {
 		const intersections = this.project();
+		if(intersections.length === 0) return [];
+
 		let points = [];
 
 		points.push(meters2tile(intersections.near[0].x, intersections.near[0].z, zoom));

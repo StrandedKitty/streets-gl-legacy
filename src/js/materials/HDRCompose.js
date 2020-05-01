@@ -1,4 +1,5 @@
 import shaders from '../Shaders';
+import {clamp} from "../Utils";
 
 export default class HDRCompose {
 	constructor(renderer, params) {
@@ -12,6 +13,7 @@ export default class HDRCompose {
 			fragmentShader: shaders.quad.fragment,
 			uniforms: {
 				uColor: {type: 'texture', value: this.gBuffer.textures.color},
+				uDepth: {type: 'texture', value: this.gBuffer.textures.depth},
 				uNormal: {type: 'texture', value: this.gBuffer.textures.normal},
 				uPosition: {type: 'texture', value: this.gBuffer.textures.position},
 				uMetallicRoughness: {type: 'texture', value: this.gBuffer.textures.metallicRoughness},
@@ -35,7 +37,8 @@ export default class HDRCompose {
 				ambientIntensity: {type: '1f', value: 0.3},
 				sunIntensity: {type: '1f', value: 1.},
 				uEmissionFactor: {type: '1f', value: 30},
-				fogColor: {type: '3fv', value: new Float32Array([.77, .86, .91])}
+				fogColor: {type: '3fv', value: new Float32Array([.77, .86, .91])},
+				uClouds: {type: 'texture', value: params.cloudsTexture}
 			}
 		});
 	}

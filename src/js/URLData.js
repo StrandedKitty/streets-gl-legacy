@@ -25,7 +25,7 @@ class URLData {
 			hashData[1] = clamp(parseFloat(hashData[1]), -180, 180);
 			hashData[2] = toRad(clamp(parseFloat(hashData[2]), 0, 360));
 			hashData[3] = toRad(clamp(parseFloat(hashData[3]), 0.1, 89.9));
-			hashData[4] = clamp(parseFloat(hashData[4]), 2, 2500);
+			hashData[4] = clamp(parseFloat(hashData[4]), 2, 8000);
 		} else {
 			hashData = null;
 		}

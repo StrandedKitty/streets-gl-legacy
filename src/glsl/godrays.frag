@@ -36,6 +36,7 @@ const mat4 ditherPattern = mat4(
 	0.9375, 0.4375, 0.8125, 0.3125
 );
 
+// Henyey–Greenstein phase function
 float computeScattering(float lightDotView) {
 	float G_SCATTERING = asymmetryFactor;
 

@@ -66,6 +66,8 @@ export default class GBuffer {
 			]
 		});
 
+		this.textures.depth = this.framebuffer.depth;
+
 		this.framebufferOutput = this.renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,

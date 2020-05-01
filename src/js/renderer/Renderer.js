@@ -10,6 +10,7 @@ import TextureCube from "./TextureCube";
 import DirectionalLight from "./DirectionalLight";
 import Texture2DArray from "./Texture2DArray";
 import MeshInstanced from "./MeshInstanced";
+import Texture3D from "./Texture3D";
 
 export default class Renderer {
 	constructor(canvas) {
@@ -49,6 +50,10 @@ export default class Renderer {
 
 	createTexture2DArray(params) {
 		return new Texture2DArray(this, params);
+	}
+
+	createTexture3D(params) {
+		return new Texture3D(this, params);
 	}
 
 	createTextureCube(params) {

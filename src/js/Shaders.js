@@ -96,10 +96,16 @@ class Shaders {
 			fragment: require('../glsl/godrays.frag').default,
 			vertex: require('../glsl/godrays.vert').default
 		};
+		this.raw.volumetricClouds = {
+			fragment: require('../glsl/clouds.frag').default,
+			vertex: require('../glsl/quad.vert').default
+		};
 
 		this.includes.tonemapping = require('../glsl/includes/tonemapping.glsl').default;
 		this.includes.shadowmapping = require('../glsl/includes/shadowmapping.glsl').default;
 		this.includes.noise = require('../glsl/includes/noise.glsl').default;
+		this.includes.clouds = require('../glsl/includes/clouds.glsl').default;
+		this.includes.dither = require('../glsl/includes/dither.glsl').default;
 
 		this.addIncludes();
 	}

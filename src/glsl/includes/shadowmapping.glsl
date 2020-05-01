@@ -70,7 +70,7 @@ float getShadowSoft(sampler2D shadowMap, vec2 shadowMapSize, float shadowBias, f
 
 // PCSS
 
-#define LIGHT_WORLD_SIZE .5
+/*#define LIGHT_WORLD_SIZE .5
 #define LIGHT_FRUSTUM_WIDTH 1.75
 #define LIGHT_SIZE_UV (LIGHT_WORLD_SIZE / LIGHT_FRUSTUM_WIDTH)
 #define NEAR_PLANE 9.5
@@ -174,4 +174,4 @@ float getShadowPCSS(sampler2D shadowMap, float shadowBias, vec4 shadowPosition) 
     }
 
     return shadow;
-}
+}*/

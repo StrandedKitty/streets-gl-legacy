@@ -49,6 +49,11 @@ export default class Material {
 					this.gl.bindTexture(this.gl.TEXTURE_2D_ARRAY, uniform.value.WebGLTexture);
 					this.gl.uniform1i(this.uniformsLocations[name], texturesUsed);
 					++texturesUsed;
+				} else if (uniform.type === 'texture3D') {
+					this.gl.activeTexture(this.gl.TEXTURE0 + texturesUsed);
+					this.gl.bindTexture(this.gl.TEXTURE_3D, uniform.value.WebGLTexture);
+					this.gl.uniform1i(this.uniformsLocations[name], texturesUsed);
+					++texturesUsed;
 				} else {
 					this.gl['uniform' + uniform.type](location, uniform.value);
 				}
