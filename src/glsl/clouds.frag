@@ -11,6 +11,7 @@ uniform sampler2D tPosition;
 uniform sampler2D tDepth;
 uniform vec3 cameraPositionE5;
 uniform vec3 lightDirection;
+uniform sampler2D tWeather;
 uniform sampler2D tBlueNoise;
 uniform sampler3D tNoise;
 uniform sampler2D tAccum;
@@ -35,7 +36,7 @@ void main() {
 	vec3 worldView = normalize(normalMatrix * view);
 
 	float realDepth = max(linearDepth(vUv), length(position));
-	vec4 color = calculateCloudsColor(cameraPositionE5, -worldView, realDepth, lightDirection);
+	vec4 color = calculateCloudsColor(cameraPositionE5, -worldView, realDepth, normalize(lightDirection));
 
 	FragColor = mix(accumColor, color, 0.05);
 	if(needsFullUpdate == 1.) FragColor = color;

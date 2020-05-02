@@ -1,16 +1,18 @@
 #define CLOUDS_STEPS 12
 #define CLOUDS_STEPS_LIGHT 6
-#define CLOUDS_MIN_HEIGHT 300.
-#define CLOUDS_THICKNESS 300.
+#define CLOUDS_MIN_HEIGHT 1500.
+#define CLOUDS_THICKNESS 4000.
 #define CLOUDS_DEPTH 1
 #define CLOUDS_MIN_TRANSMITTANCE 0.1
 
-#define CLOUDS_FORWARD_SCATTERING_G (.8)
-#define CLOUDS_BACKWARD_SCATTERING_G (-.2)
-#define CLOUDS_SCATTERING_LERP (.5)
+#define CLOUDS_FORWARD_SCATTERING_G .8
+#define CLOUDS_BACKWARD_SCATTERING_G -0.2
+#define CLOUDS_SCATTERING_LERP 0.5
+
+#define CLOUDS_MAP_SCALE 8.
 
 #define CLOUDS_WIND_VECTOR vec2(1, 0)
-#define CLOUDS_WIND_SPEED 2.
+#define CLOUDS_WIND_SPEED 0.
 
 vec2 rayBoxIntersection(vec3 boundsMin, vec3 boundsMax, vec3 rayOrigin, vec3 rayDir) {
     // Adapted from: http://jcgt.org/published/0007/03/04/
@@ -35,15 +37,18 @@ vec2 rayBoxIntersection(vec3 boundsMin, vec3 boundsMax, vec3 rayOrigin, vec3 ray
     return vec2(dstToBox, dstInsideBox);
 }
 
+float remap(float original_value, float original_min, float original_max, float new_min , float new_max) {
+    return new_min + (((original_value - original_min) / (original_max - original_min)) * (new_max - new_min));
+}
+
 float sampleCloudMap(vec3 pos) {
-    vec2 samplePos = (pos.xz + time * CLOUDS_WIND_VECTOR * CLOUDS_WIND_SPEED) / 300.;
-    return clamp(cnoise(samplePos), 0., 1.);
+    vec2 uv = (pos.xz + time * CLOUDS_WIND_VECTOR * CLOUDS_WIND_SPEED / 2.) / (CLOUDS_THICKNESS * CLOUDS_MAP_SCALE);
+    return texture(tWeather, uv).x;
 }
 
 vec4 sampleCloudNoise(vec3 pos) {
-    return vec4(sampleCloudMap(pos)) * 0.8;
-    vec4 color = texture(tNoise, pos).rgba / 300.;
-    return color * 10.;
+    vec4 color = texture(tNoise, pos.xzy / CLOUDS_THICKNESS).rgba;
+    return color;
 }
 
 // Fractional value for sample position in the cloud layer
@@ -54,21 +59,16 @@ float GetHeightFractionForPoint(vec3 inPosition , vec2 inCloudMinMax)
     return clamp(height_fraction, 0., 1.);
 }
 
-// Utility function on that maps a value from one range to another
-float remap(float original_value, float original_min, float original_max, float new_min , float new_max) {
-    return new_min + (((original_value - original_min) / (original_max - original_min)) * (new_max - new_min));
-}
-
 float getDensityHeightGradientForPoint(vec3 pos, vec3 weather) {
-    float height = pos.y / CLOUDS_MIN_HEIGHT - 1.;
-    return 1. - smoothstep(0., 0.3, 1. - height - 0.7) - smoothstep(0., 0.3, height - 0.7);
+    float height = (pos.y - CLOUDS_MIN_HEIGHT) / CLOUDS_THICKNESS;
+    return 1. - smoothstep(0., 0.5, height - 0.5) - smoothstep(0., 0.2, 1. - height - 0.8);
 }
 
-float sampleCloudDensity(vec3 p) {
-    vec3 weather_data = vec3(1);
+float sampleCloudDensity(vec3 pos) {
+    vec3 weather_data = vec3(sampleCloudMap(pos), 1, 1);
 
     // Read the low−frequency Perlin−Worley and Worley noises.
-    vec4 low_frequency_noises = sampleCloudNoise(p);
+    vec4 low_frequency_noises = sampleCloudNoise(pos) * 0.5 + sampleCloudNoise(pos) * 0.5;
 
     // Build an FBM out of the low frequency Worley noises
     // that can be used to add detail to the low−frequency
@@ -77,15 +77,21 @@ float sampleCloudDensity(vec3 p) {
 
     // Define the base cloud shape by dilating it with the
     // low−frequency FBM made of Worley noise.
-    float base_cloud = remap(low_frequency_noises.r, -(1.0 - low_freq_FBM), 1.0, 0.0, 1.0);
+    float base_cloud = remap(low_frequency_noises.r, low_freq_FBM - 1., 1., 0., 1.);
 
     // Get the density−height gradient using the density height function.
-    float density_height_gradient = getDensityHeightGradientForPoint(p, weather_data);
+    float density_height_gradient = getDensityHeightGradientForPoint(pos, weather_data);
 
     // Apply the height function to the base cloud shape.
     base_cloud *= density_height_gradient;
 
-    return low_frequency_noises.r * density_height_gradient;
+    float cloud_coverage = clamp(weather_data.r, 0., 1.);
+
+    // Use remap to apply the cloud coverage attribute.
+    float base_cloud_with_coverage = remap(base_cloud, cloud_coverage, 1.0, 0.0, 1.0);
+    base_cloud_with_coverage *= cloud_coverage;
+
+    return base_cloud_with_coverage;
 }
 
 float beers(float density) {
@@ -94,14 +100,13 @@ float beers(float density) {
 
 float henyeyGreenstein(float lightDotView, float g) {
     float gg = g * g;
-    return (1. - gg) / pow( 1. + gg - 2. * g * lightDotView, 1.5);
+    return (1. - gg) / pow(1. + gg - 2. * g * lightDotView, 1.5);
 }
 
 vec3 boundsMin = vec3(-1000000000, CLOUDS_MIN_HEIGHT, -1000000000);
 vec3 boundsMax = vec3(1000000000, CLOUDS_MIN_HEIGHT + CLOUDS_THICKNESS, 1000000000);
 float lightAbsorptionTowardSun = 1.21;
 float lightAbsorptionThroughCloud = 0.75;
-float darknessThreshold = 0.15;
 
 float lightmarch(vec3 position, vec3 lightDir) {
     vec3 dirToLight = -lightDir;
@@ -110,15 +115,27 @@ float lightmarch(vec3 position, vec3 lightDir) {
     float stepSize = dstInsideBox / float(CLOUDS_STEPS_LIGHT);
     float totalDensity = 0.;
 
+    vec2 noiseTexel = vec2(gl_FragCoord - floor(time * 1000.)) / vec2(textureSize(tBlueNoise, 0));
+    float noise = texture(tBlueNoise, noiseTexel).g;
+
     stepSize = min(stepSize, 512.);
 
+    position += dirToLight * stepSize * (noise + 0.1);
+
+    float transmittance = 1.;
+
     for (int i = 0; i < CLOUDS_STEPS_LIGHT; i++) {
+        float density = sampleCloudDensity(position);
+        transmittance *= beers(density * stepSize * lightAbsorptionTowardSun);
+
         position += dirToLight * stepSize;
-        totalDensity += max(0., sampleCloudDensity(position) * stepSize);
+
+        if (transmittance < CLOUDS_MIN_TRANSMITTANCE) {
+            break;
+        }
     }
 
-    float transmittance = beers(totalDensity * lightAbsorptionTowardSun);
-    return darknessThreshold + transmittance * (1. - darknessThreshold);
+    return transmittance;
 }
 
 float phase(float lightDirDot) {
@@ -159,19 +176,22 @@ vec4 calculateCloudsColor(vec3 rayOrigin, vec3 rayDir, float depth, vec3 lightDi
     if(dstInsideBox > 0.){
         float stepSize = dstInsideBox / float(CLOUDS_STEPS);
 
-        stepSize = min(stepSize, 1024.);
+        stepSize = min(stepSize, 5000.);
 
         vec3 position = rayOrigin + dstToBox * rayDir;
         position += rayDir * noise * stepSize;
 
         float totalDensity = 0.;
 
+        vec3 ambientLight = vec3(149., 167., 200.) * (1.5/255.);
+        vec3 sunColor = vec3(1.0, 0.9, 0.85);
+
         for (int i = 0; i < CLOUDS_STEPS; i++) {
             float density = sampleCloudDensity(position);
 
             if (density > 0.) {
                 float lightTransmittance = lightmarch(position, lightDir);
-                lightEnergy += density * stepSize * transmittance * lightTransmittance * phaseVal;
+                lightEnergy += density * (ambientLight + sunColor * stepSize * transmittance * lightTransmittance * phaseVal);
                 transmittance *= exp(-density * stepSize * lightAbsorptionThroughCloud);
 
                 if (transmittance < CLOUDS_MIN_TRANSMITTANCE) {
@@ -184,6 +204,8 @@ vec4 calculateCloudsColor(vec3 rayOrigin, vec3 rayDir, float depth, vec3 lightDi
 
         cloudDensity = totalDensity / float(CLOUDS_STEPS);
     }
+
+    lightEnergy = clamp(lightEnergy, vec3(0), vec3(3));
 
     return vec4(lightEnergy, transmittance);
 }

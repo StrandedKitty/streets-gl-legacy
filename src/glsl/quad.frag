@@ -237,10 +237,12 @@ void main() {
     vec3 worldPosition = vec3(cameraMatrixWorld * vec4(position, 1.));
     vec3 cameraWorldPosition = vec3(cameraMatrixWorld * vec4(0, 0, 0, 1.));
 
+    vec3 cloudsShadowColor = vec3(0.01, 0.01, 0.01);
+
     if(baseColor.a == 0.) { // skip skybox
         vec4 cloudsData = texture(uClouds, vUv);
         baseColor.rgb = vec3(0.2, 0.5, 0.85) * 1.2;
-        FragColor = vec4(baseColor.xyz * cloudsData.a * sunIntensity + cloudsData.rgb, 1);
+        FragColor = vec4(mix(cloudsShadowColor, baseColor.rgb, cloudsData.a) * sunIntensity + cloudsData.rgb, 1);
         return;
     }
 
@@ -318,5 +320,5 @@ void main() {
     // OUT
 
     vec4 cloudsData = texture(uClouds, vUv);
-    FragColor = vec4(color * cloudsData.a + cloudsData.rgb, 1);
+    FragColor = vec4(mix(cloudsShadowColor, color, cloudsData.a) + cloudsData.rgb, 1);
 }

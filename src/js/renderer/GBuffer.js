@@ -46,7 +46,8 @@ export default class GBuffer {
 		this.framebuffer = this.renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
-			textures: this.texturesArray
+			textures: this.texturesArray,
+			usesDepth: true
 		});
 
 		this.framebufferHDR = this.renderer.createFramebuffer({

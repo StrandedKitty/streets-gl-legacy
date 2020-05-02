@@ -2,6 +2,7 @@ import shaders from '../Shaders';
 import SeededRandom from "../math/SeededRandom";
 import vec3 from "../math/vec3";
 import {clamp} from "../Utils";
+import FullScreenQuad from "../FullScreenQuad";
 
 export default class VolumetricClouds {
 	constructor(renderer, width, height) {
@@ -51,8 +52,9 @@ export default class VolumetricClouds {
 				cameraPositionE5: {type: '3fv', value: new Float32Array([0, 0, 0])},
 				lightDirection: {type: '3fv', value: new Float32Array([0, -1, 0])},
 				normalMatrix: {type: 'Matrix3fv', value: null},
-				tNoise: {type: 'texture3D', value: this.buildWorley()},
+				tNoise: {type: 'texture3D', value: this.buildNoiseTexture()},
 				tBlueNoise: {type: 'texture', value: this.renderer.createTexture({url: '/textures/blue_noise_rgba.png', wrap: 'repeat'})},
+				tWeather: {type: 'texture', value: this.renderer.createTexture({url: '/textures/weather.png', wrap: 'repeat'})},
 				tAccum: {type: 'texture', value: this.framebufferComposed.textures[0]}
 			}
 		});
@@ -72,7 +74,7 @@ export default class VolumetricClouds {
 		this.renderer.copyFramebufferToTexture(this.framebuffer, this.framebufferComposed.textures[0], 0);
 	}
 
-	buildWorley() {
+	buildNoiseTexture() {
 		const textureSize = 128;
 		const texture3d = this.renderer.createTexture3D({
 			width: textureSize,
@@ -84,35 +86,36 @@ export default class VolumetricClouds {
 			magFiler: 'LINEAR'
 		});
 
-		const buffer = new Uint8Array(textureSize ** 3 * 4);
+		texture3d.write(new Uint8Array(textureSize * textureSize * textureSize * 4));
 
-		const random = new SeededRandom(3217);
-		let randomPoints = [];
+		const fb = this.renderer.createFramebuffer({
+			width: textureSize,
+			height: textureSize
+		});
 
-		for(let i = 0; i < 8; i++) {
-			randomPoints.push(new vec3(random.generate() * textureSize, random.generate() * textureSize, random.generate() * textureSize));
-		}
-
-		//randomPoints = [new vec3(0.5 * textureSize, 0.5 * textureSize, 0.5 * textureSize)];
-
-		for(let dx = 0; dx < textureSize; dx++) {
-			for(let dy = 0; dy < textureSize; dy++) {
-				for(let dz = 0; dz < textureSize; dz++) {
-					const texelPos = new vec3(dx,dy,dz);
-
-					let distanceToNearest = 255;
-
-					for(let i = 0; i < randomPoints.length; i++) {
-						let point = randomPoints[i];
-						distanceToNearest = Math.min(distanceToNearest, vec3.length(vec3.sub(texelPos, point)) * 5);
-					}
-
-					buffer[(dx + dy * textureSize + dz * textureSize * textureSize) * 4] = clamp(255 - Math.floor(distanceToNearest), 0, 255);
-				}
+		const material = this.renderer.createMaterial({
+			name: 'Noise for volumetric clouds',
+			vertexShader: shaders.volumetricCloudsNoise.vertex,
+			fragmentShader: shaders.volumetricCloudsNoise.fragment,
+			uniforms: {
+				layer: {type: '1i', value: 0}
 			}
-		}
+		});
 
-		texture3d.write(buffer);
+		const quad = new FullScreenQuad({renderer: this.renderer}).mesh;
+
+		material.use();
+
+		for(let i = 0; i < textureSize; i++) {
+			fb.attachTexture3D(texture3d, i);
+
+			this.renderer.bindFramebuffer(fb);
+
+			material.uniforms.layer.value = i;
+			material.updateUniform('layer');
+
+			quad.draw();
+		}
 
 		return texture3d;
 	}

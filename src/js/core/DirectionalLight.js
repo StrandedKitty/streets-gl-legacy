@@ -32,6 +32,7 @@ export default class Mesh extends Object3D {
 		this.framebuffer = renderer.createFramebuffer({
 			width: this.resolution,
 			height: this.resolution,
+			usesDepth: true,
 			textures: [renderer.createTexture({
 				width: this.resolution,
 				height: this.resolution,
