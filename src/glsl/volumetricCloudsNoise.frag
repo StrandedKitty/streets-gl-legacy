@@ -120,12 +120,25 @@ void main() {
 	vec4 color = vec4(0);
 
 	float pfbm = mix(1., perlinfbm(vec3(vUv, float(layer) / 128.), 4., 7), .5);
-	pfbm = abs(pfbm * 2. - 1.); // billowy perlin noise
+	pfbm = abs(pfbm * 2. - 1.);
 
 	color.g = worleyFbm(vec3(vUv, float(layer) / 128.), 4.);
 	color.b = worleyFbm(vec3(vUv, float(layer) / 128.), 8.);
 	color.a = worleyFbm(vec3(vUv, float(layer) / 128.), 16.);
 	color.r = remap(pfbm, 0., 1., color.g, 1.);
+
+	vec4 result = vec4(0);
+
+	result.r = color.r;
+	result.g = result.g * 0.625 + result.b * 0.25 + result.a * 0.125;
+
+	const float lowFreqFactor = 32.;
+
+	color.g = worleyFbm(vec3(vUv, float(layer) / 128.), 4. * lowFreqFactor);
+	color.b = worleyFbm(vec3(vUv, float(layer) / 128.), 8. * lowFreqFactor);
+	color.a = worleyFbm(vec3(vUv, float(layer) / 128.), 16. * lowFreqFactor);
+
+	result.b = color.g * 0.625 + color.b * 0.25 + color.a * 0.125;
 
 	FragColor = vec4(color);
 }
