@@ -48,6 +48,8 @@ export default class VolumetricClouds {
 				tPosition: {type: 'texture', value: null},
 				tDepth: {type: 'texture', value: null},
 				time: {type: '1f', value: 0},
+				densityFactor: {type: '1f', value: 0.005},
+				powderFactor: {type: '1f', value: 0.2},
 				needsFullUpdate: {type: '1f', value: 0},
 				cameraPositionE5: {type: '3fv', value: new Float32Array([0, 0, 0])},
 				lightDirection: {type: '3fv', value: new Float32Array([0, -1, 0])},

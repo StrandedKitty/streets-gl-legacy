@@ -242,7 +242,7 @@ void main() {
     if(baseColor.a == 0.) { // skip skybox
         vec4 cloudsData = texture(uClouds, vUv);
         baseColor.rgb = vec3(0.2, 0.5, 0.85) * 1.2;
-        FragColor = vec4(mix(cloudsShadowColor, baseColor.rgb, cloudsData.a) * sunIntensity + cloudsData.rgb, 1);
+        FragColor = vec4(baseColor.rgb * cloudsData.a * sunIntensity + cloudsData.rgb, 1);
         return;
     }
 
@@ -320,5 +320,5 @@ void main() {
     // OUT
 
     vec4 cloudsData = texture(uClouds, vUv);
-    FragColor = vec4(mix(cloudsData.rgb, color, cloudsData.a), 1);
+    FragColor = vec4(color * cloudsData.a + cloudsData.rgb, 1);
 }

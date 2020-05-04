@@ -247,6 +247,8 @@ function init() {
 	gui.add(light, 'intensity');
 	gui.add(hdrCompose.material.uniforms.ambientIntensity, 'value');
 	gui.add(debugSettings, 'timeOffset', -4e4, 4e4);
+	gui.add(volumetricClouds.material.uniforms.densityFactor, 'value', 0.001, 0.1);
+	//gui.add(volumetricClouds.material.uniforms.powderFactor, 'value', 0, 1);
 	gui.addColor({color: '#1861b3'}, 'color').onChange(function (e) {
 		const v = hexToRgb(e);
 		hdrCompose.material.uniforms.fogColor.value = new Float32Array([v[0] / 255, v[1] / 255, v[2] / 255]);
