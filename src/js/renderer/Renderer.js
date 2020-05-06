@@ -97,8 +97,8 @@ export default class Renderer {
 		if(params.destination === null) this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, null);
 		else this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, params.destination.WebGLFramebuffer);
 
-		this.gl.readBuffer(this.gl.COLOR_ATTACHMENT0);
-		if(params.destination !== null) this.gl.drawBuffers([this.gl.COLOR_ATTACHMENT0]);
+		this.gl.readBuffer(this.gl.COLOR_ATTACHMENT0 + (params.readAttachment || 0));
+		if(params.destination !== null) this.gl.drawBuffers(this.buildAttachmentsArray(params.drawAttachment || 0));
 
 		this.gl.blitFramebuffer(
 			0, 0, params.source.width, params.source.height,
@@ -111,6 +111,20 @@ export default class Renderer {
 			0, 0, params.destinationWidth, params.destinationHeight,
 			this.gl.DEPTH_BUFFER_BIT, this.gl.NEAREST
 		);
+
+		this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, null);
+		this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, null);
+	}
+
+	buildAttachmentsArray(index) {
+		const attachments = [];
+
+		for(let i = 0; i <= index; i++) {
+			if(i === index) attachments.push(this.gl.COLOR_ATTACHMENT0 + i);
+			else attachments.push(this.gl.NONE);
+		}
+
+		return attachments;
 	}
 
 	copyFramebufferToTexture(fb, texture, mipLevel) {

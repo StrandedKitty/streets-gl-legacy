@@ -613,26 +613,30 @@ function animate(rafTime) {
 	// Clouds
 
 	if(controls.cameraViewChanged) {
-		RP.bindFramebuffer(volumetricClouds.framebufferComposed);
+		/*RP.bindFramebuffer(volumetricClouds.framebufferComposed);
 
 		gl.clearColor(0, 0, 0, 1);
-		gl.clear(gl.COLOR_BUFFER_BIT);
+		gl.clear(gl.COLOR_BUFFER_BIT);*/
 	}
 
 	RP.bindFramebuffer(volumetricClouds.framebuffer);
 
-	gl.clearColor(0, 0, 0, 1);
-	gl.clear(gl.COLOR_BUFFER_BIT);
-
 	volumetricClouds.material.uniforms.tPosition.value = gBuffer.textures.position;
 	volumetricClouds.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
-	volumetricClouds.material.uniforms.cameraPositionE5.value = new Float32Array([camera.position.x % 1e5, camera.position.y, camera.position.z % 1e5]);
+	//volumetricClouds.material.uniforms.cameraPositionE5.value = new Float32Array([camera.position.x % 1e5, camera.position.y, camera.position.z % 1e5]);
+	volumetricClouds.material.uniforms.cameraPositionE5.value = new Float32Array([0, 0, 0]);
 	volumetricClouds.material.uniforms.lightDirection.value = new Float32Array(vec3.toArray(csm.direction));
 	volumetricClouds.material.uniforms.normalMatrix.value = mat4.normalMatrix(rCamera.matrixWorld);
+	volumetricClouds.material.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+	volumetricClouds.material.uniforms.mvMatrixCurr.value = rCamera.matrixWorldInverse;
+	volumetricClouds.material.uniforms.mvMatrixPrev.value = volumetricClouds.mvMatrix || null;
 	volumetricClouds.material.uniforms.time.value += delta;
-	volumetricClouds.material.uniforms.needsFullUpdate.value = controls.cameraViewChanged ? 1 : 0;
 	volumetricClouds.material.use();
+
 	quad.draw();
+
+	volumetricClouds.material.uniforms.needsFullUpdate.value = 0;
+	volumetricClouds.mvMatrix = mat4.copy(rCamera.matrixWorldInverse);
 
 	volumetricClouds.copyResultToOutput();
 

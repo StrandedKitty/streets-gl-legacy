@@ -1,8 +1,8 @@
 #define CLOUDS_STEPS 12
 #define CLOUDS_STEPS_LIGHT 6
-#define CLOUDS_MIN_HEIGHT 2000.
+#define CLOUDS_MIN_HEIGHT 3000.
 #define CLOUDS_THICKNESS 4000.
-#define CLOUDS_DEPTH 1
+#define CLOUDS_DEPTH 0
 #define CLOUDS_MIN_TRANSMITTANCE 0.1
 
 #define CLOUDS_FORWARD_SCATTERING_G 0.4
@@ -12,7 +12,7 @@
 #define CLOUDS_MAP_SCALE 60000.
 
 #define CLOUDS_WIND_VECTOR vec2(1, 0)
-#define CLOUDS_WIND_SPEED 50.
+#define CLOUDS_WIND_SPEED 100.
 
 vec2 rayBoxIntersection(vec3 boundsMin, vec3 boundsMax, vec3 rayOrigin, vec3 rayDir) {
     // Adapted from: http://jcgt.org/published/0007/03/04/
@@ -46,9 +46,9 @@ float sampleCloudMap(vec3 pos) {
     return texture(tWeather, uv).x;
 }
 
-vec4 sampleCloudNoise(vec3 pos) {
+vec2 sampleCloudNoise(vec3 pos) {
     vec4 color = texture(tNoise, pos.xzy / CLOUDS_THICKNESS).rgba;
-    return color;
+    return color.rg;
 }
 
 // Fractional value for sample position in the cloud layer
@@ -67,7 +67,7 @@ float getDensityHeightGradientForPoint(vec3 pos, vec3 weather) {
 float sampleCloudDensity(vec3 pos) {
     vec3 weather_data = vec3(sampleCloudMap(pos), 1, 1);
 
-    vec4 noiseSample = sampleCloudNoise(pos);
+    vec2 noiseSample = sampleCloudNoise(pos);
 
     // Build an FBM out of the low frequency Worley noises
     // that can be used to add detail to the low−frequency
@@ -84,22 +84,22 @@ float sampleCloudDensity(vec3 pos) {
     // Apply the height function to the base cloud shape.
     base_cloud *= density_height_gradient;
 
-    float cloud_coverage = weather_data.r;
+    float cloud_coverage = clamp(weather_data.r + 0.1, 0., 1.);
 
     // Use remap to apply the cloud coverage attribute.
     float base_cloud_with_coverage = remap(base_cloud, cloud_coverage, 1.0, 0.0, 1.0);
-    base_cloud_with_coverage = clamp(base_cloud_with_coverage, 0.0, 1.0);
+    //base_cloud_with_coverage = clamp(base_cloud_with_coverage, 0.0, 1.0);
     base_cloud_with_coverage *= cloud_coverage;
 
-    float high_freq_FBM = noiseSample.b;
+    /*float high_freq_FBM = sampleCloudDetails(pos);
 
     float height_fraction = getHeightFractionForPoint(pos);
 
     float high_freq_noise_modifier = mix(high_freq_FBM, 1.0 - high_freq_FBM, clamp(height_fraction * 10., 0., 1.));
-    high_freq_noise_modifier = clamp(high_freq_noise_modifier, 0.0, 1.0);
-    float final_cloud = remap(base_cloud_with_coverage, high_freq_noise_modifier * 0.2, 1.0, 0.0, 1.0);
+    //high_freq_noise_modifier = clamp(high_freq_noise_modifier, 0.0, 1.0);
+    float final_cloud = remap(base_cloud_with_coverage, high_freq_noise_modifier * 0.2, 1.0, 0.0, 1.0);*/
 
-    return max(0., final_cloud) * densityFactor;
+    return max(0., base_cloud_with_coverage) * densityFactor;
 }
 
 float beers(float density) {
@@ -161,7 +161,7 @@ float lightmarch(vec3 position, vec3 lightDir, float angle) {
     return 2. * transmittance * (powder(totalDensity) + powderFactor) * phase(angle);
 }
 
-vec4 calculateCloudsColor(vec3 rayOrigin, vec3 rayDir, float depth, vec3 lightDir, out float outDepth) {
+vec4 calculateCloudsColor(vec3 rayOrigin, vec3 rayDir, float depth, vec3 lightDir) {
     vec2 intersection = rayBoxIntersection(boundsMin, boundsMax, rayOrigin, 1. / rayDir);
     float dstToBox = intersection.x;
     float dstInsideBox = intersection.y;
@@ -172,7 +172,11 @@ vec4 calculateCloudsColor(vec3 rayOrigin, vec3 rayDir, float depth, vec3 lightDi
     #if CLOUDS_DEPTH == 1
     if(depth > 10000.) depth = 100000000.;
 
-    if(dstToBox > depth) dstInsideBox = 0.;
+    if(dstToBox > depth) {
+        dstInsideBox = 0.;
+
+        return vec4(0, 0, 0, 1);
+    }
 
     if(dstToBox + dstInsideBox > depth) {
         dstInsideBox = depth - dstToBox;
@@ -189,9 +193,6 @@ vec4 calculateCloudsColor(vec3 rayOrigin, vec3 rayDir, float depth, vec3 lightDi
     float noise = texture(tBlueNoise, noiseTexel).r;
     float noiseStatic = texture(tBlueNoise, noiseTexelStatic).r;
 
-    float cloudsDepth = 100000.;
-    bool depthSet = false;
-
     if(dstInsideBox > 0.){
         float stepSize = dstInsideBox / float(CLOUDS_STEPS);
 
@@ -206,14 +207,11 @@ vec4 calculateCloudsColor(vec3 rayOrigin, vec3 rayDir, float depth, vec3 lightDi
         vec3 sunColor = vec3(0.6, 0.8, 0.99);
 
         for (int i = 0; i < CLOUDS_STEPS; i++) {
+            float cheapDensity = sampleCloudNoise(position).r;
+
             float density = sampleCloudDensity(position);
 
             if (density > 0.) {
-                if(!depthSet) {
-                    cloudsDepth = length(position - rayOrigin);
-                    depthSet = true;
-                }
-
                 float lightTransmittance = lightmarch(position, lightDir, cosAngle);
                 lightEnergy += sunColor * density * stepSize * (ambientLight + transmittance * lightTransmittance);
                 transmittance *= exp(-density * stepSize * lightAbsorptionThroughCloud);
@@ -228,10 +226,6 @@ vec4 calculateCloudsColor(vec3 rayOrigin, vec3 rayDir, float depth, vec3 lightDi
 
         cloudDensity = totalDensity / float(CLOUDS_STEPS);
     }
-
-    //lightEnergy = clamp(lightEnergy, vec3(0), vec3(3));
-
-    outDepth = cloudsDepth;
 
     return vec4(lightEnergy, transmittance);
 }

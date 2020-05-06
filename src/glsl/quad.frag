@@ -321,4 +321,5 @@ void main() {
 
     vec4 cloudsData = texture(uClouds, vUv);
     FragColor = vec4(color * cloudsData.a + cloudsData.rgb, 1);
+    FragColor = vec4(color, 1);
 }
