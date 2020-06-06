@@ -87,14 +87,11 @@ void main() {
 		}
 
 		if (shadowMapValue > 0.) {
-			accumFog += computeScattering(dot(rayDirection, -lightDirection));
+			accumFog += computeScattering(dot(rayDirection, -lightDirection)) * stepLength * 0.002;
 		}
 
 		currentPosition += step;
 	}
-
-	accumFog /= float(NB_STEPS);
-	accumFog *= rayLength / 400.;
 
 	FragColor = vec4(vec3(accumFog), 1.0);
 }

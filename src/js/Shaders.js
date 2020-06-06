@@ -110,6 +110,7 @@ class Shaders {
 		this.includes.noise = require('../glsl/includes/noise.glsl').default;
 		this.includes.clouds = require('../glsl/includes/clouds.glsl').default;
 		this.includes.dither = require('../glsl/includes/dither.glsl').default;
+		this.includes.sky = require('../glsl/includes/sky.glsl').default;
 
 		this.addIncludes();
 	}

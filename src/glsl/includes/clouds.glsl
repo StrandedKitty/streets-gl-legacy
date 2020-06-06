@@ -1,9 +1,12 @@
 #define CLOUDS_STEPS 12
 #define CLOUDS_STEPS_LIGHT 6
 #define CLOUDS_MIN_HEIGHT 3000.
-#define CLOUDS_THICKNESS 4000.
+#define CLOUDS_THICKNESS 5000.
 #define CLOUDS_DEPTH 0
 #define CLOUDS_MIN_TRANSMITTANCE 0.1
+#define CLOUDS_EARTH_RADIUS 6371000.
+#define CLOUDS_SPHERE_RADIUS_NEAR (CLOUDS_EARTH_RADIUS + CLOUDS_MIN_HEIGHT)
+#define CLOUDS_SPHERE_RADIUS_FAR (CLOUDS_EARTH_RADIUS + CLOUDS_MIN_HEIGHT + CLOUDS_THICKNESS)
 
 #define CLOUDS_FORWARD_SCATTERING_G 0.4
 #define CLOUDS_BACKWARD_SCATTERING_G -0.2
@@ -14,27 +17,29 @@
 #define CLOUDS_WIND_VECTOR vec2(1, 0)
 #define CLOUDS_WIND_SPEED 100.
 
-vec2 rayBoxIntersection(vec3 boundsMin, vec3 boundsMax, vec3 rayOrigin, vec3 rayDir) {
-    // Adapted from: http://jcgt.org/published/0007/03/04/
-    vec3 t0 = (boundsMin - rayOrigin) * rayDir;
-    vec3 t1 = (boundsMax - rayOrigin) * rayDir;
-    vec3 tmin = min(t0, t1);
-    vec3 tmax = max(t0, t1);
+float hitSphere(vec3 sphereCenter, float sphereRadius, vec3 rayOrigin, vec3 rayDir) {
+    vec3 oc = rayOrigin - sphereCenter;
+    float a = dot(rayDir, rayDir);
+    float b = 2.0 * dot(oc, rayDir);
+    float c = dot(oc, oc) - sphereRadius * sphereRadius;
+    float discriminant = b * b - 4. * a * c;
 
-    float dstA = max(max(tmin.x, tmin.y), tmin.z);
-    float dstB = min(tmax.x, min(tmax.y, tmax.z));
+    if (discriminant < 0.0) {
+        return -1.0;
+    } else {
+        float numerator = -b - sqrt(discriminant);
+        if (numerator > 0.0) {
+            return numerator / (2.0 * a);
+        }
 
-    // CASE 1: ray intersects box from outside (0 <= dstA <= dstB)
-    // dstA is dst to nearest intersection, dstB dst to far intersection
-
-    // CASE 2: ray intersects box from inside (dstA < 0 < dstB)
-    // dstA is the dst to intersection behind the ray, dstB is dst to forward intersection
-
-    // CASE 3: ray misses box (dstA > dstB)
-
-    float dstToBox = max(0., dstA);
-    float dstInsideBox = max(0., dstB - dstToBox);
-    return vec2(dstToBox, dstInsideBox);
+        numerator = -b + sqrt(discriminant);
+        if (numerator > 0.0) {
+            return numerator / (2.0 * a);
+        }
+        else {
+            return -1.0;
+        }
+    }
 }
 
 float remap(float original_value, float original_min, float original_max, float new_min , float new_max) {
@@ -51,17 +56,17 @@ vec2 sampleCloudNoise(vec3 pos) {
     return color.rg;
 }
 
-// Fractional value for sample position in the cloud layer
 float getHeightFractionForPoint(vec3 inPosition)
 {
-    // Get global fractional position in cloud zone
     float height_fraction = (inPosition.y - CLOUDS_MIN_HEIGHT) / CLOUDS_THICKNESS;
     return clamp(height_fraction, 0., 1.);
 }
 
 float getDensityHeightGradientForPoint(vec3 pos, vec3 weather) {
-    float height = (pos.y - CLOUDS_MIN_HEIGHT) / CLOUDS_THICKNESS;
-    return 1. - smoothstep(0., 0.5, height - 0.5) - smoothstep(0., 0.2, 1. - height - 0.8);
+    vec3 sphereCenter = vec3(0, -CLOUDS_EARTH_RADIUS, 0);
+    float distanceToEarthCenter = distance(sphereCenter, pos);
+    float positionInDome = (distanceToEarthCenter - CLOUDS_SPHERE_RADIUS_NEAR) / CLOUDS_THICKNESS;
+    return 1. - smoothstep(0., 0.5, positionInDome - 0.5) - smoothstep(0., 0.2, 1. - positionInDome - 0.8);
 }
 
 float sampleCloudDensity(vec3 pos) {
@@ -88,7 +93,6 @@ float sampleCloudDensity(vec3 pos) {
 
     // Use remap to apply the cloud coverage attribute.
     float base_cloud_with_coverage = remap(base_cloud, cloud_coverage, 1.0, 0.0, 1.0);
-    //base_cloud_with_coverage = clamp(base_cloud_with_coverage, 0.0, 1.0);
     base_cloud_with_coverage *= cloud_coverage;
 
     /*float high_freq_FBM = sampleCloudDetails(pos);
@@ -130,7 +134,12 @@ float lightAbsorptionThroughCloud = 0.75;
 
 float lightmarch(vec3 position, vec3 lightDir, float angle) {
     vec3 dirToLight = -lightDir;
-    float dstInsideBox = rayBoxIntersection(boundsMin, boundsMax, position, 1. / dirToLight).y;
+
+    vec3 sphereCenter = vec3(0, -CLOUDS_EARTH_RADIUS, 0);
+    float dstToNearSphere = hitSphere(sphereCenter, CLOUDS_SPHERE_RADIUS_NEAR, position, dirToLight);
+    float dstToFarSphere = hitSphere(sphereCenter, CLOUDS_SPHERE_RADIUS_FAR, position, dirToLight);
+
+    float dstInsideBox = abs(dstToFarSphere) - abs(dstToNearSphere);
 
     float stepSize = dstInsideBox / float(CLOUDS_STEPS_LIGHT);
     float totalDensity = 0.;
@@ -162,26 +171,14 @@ float lightmarch(vec3 position, vec3 lightDir, float angle) {
 }
 
 vec4 calculateCloudsColor(vec3 rayOrigin, vec3 rayDir, float depth, vec3 lightDir) {
-    vec2 intersection = rayBoxIntersection(boundsMin, boundsMax, rayOrigin, 1. / rayDir);
-    float dstToBox = intersection.x;
-    float dstInsideBox = intersection.y;
-
-    float dstLimit = dstInsideBox;
     float cloudDensity = 0.;
 
-    #if CLOUDS_DEPTH == 1
-    if(depth > 10000.) depth = 100000000.;
+    vec3 sphereCenter = vec3(0, -CLOUDS_EARTH_RADIUS, 0);
+    float dstToNearSphere = hitSphere(sphereCenter, CLOUDS_SPHERE_RADIUS_NEAR, rayOrigin, rayDir);
+    float dstToFarSphere = hitSphere(sphereCenter, CLOUDS_SPHERE_RADIUS_FAR, rayOrigin, rayDir);
 
-    if(dstToBox > depth) {
-        dstInsideBox = 0.;
-
-        return vec4(0, 0, 0, 1);
-    }
-
-    if(dstToBox + dstInsideBox > depth) {
-        dstInsideBox = depth - dstToBox;
-    }
-    #endif
+    float dstToBox = abs(dstToNearSphere);
+    float dstInsideBox = abs(dstToFarSphere) - abs(dstToNearSphere);
 
     float cosAngle = dot(normalize(rayDir), normalize(-lightDir));
 
@@ -207,7 +204,7 @@ vec4 calculateCloudsColor(vec3 rayOrigin, vec3 rayDir, float depth, vec3 lightDi
         vec3 sunColor = vec3(0.6, 0.8, 0.99);
 
         for (int i = 0; i < CLOUDS_STEPS; i++) {
-            float cheapDensity = sampleCloudNoise(position).r;
+            if(position.y < 0.) break;
 
             float density = sampleCloudDensity(position);
 
