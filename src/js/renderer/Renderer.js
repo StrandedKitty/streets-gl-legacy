@@ -133,6 +133,17 @@ export default class Renderer {
 		this.gl.copyTexImage2D(this.gl.TEXTURE_2D, mipLevel, this.gl[texture.internalFormat], 0, 0, texture.width, texture.height, 0);
 	}
 
+	clearColor(r, g, b, a) {
+		this.gl.clearColor(r, g, b, a);
+	}
+
+	clearFramebuffer({clearColor, color = false, depth = false}) {
+		this.clearColor(...clearColor);
+		const colorBit = color ? this.gl.COLOR_BUFFER_BIT : 0;
+		const depthBit = depth ? this.gl.DEPTH_BUFFER_BIT : 0;
+		this.gl.clear(colorBit | depthBit);
+	}
+
 	set culling(state) {
 		if(state) this.gl.enable(this.gl.CULL_FACE);
 		else this.gl.disable(this.gl.CULL_FACE);

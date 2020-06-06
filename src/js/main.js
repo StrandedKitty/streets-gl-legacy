@@ -210,7 +210,7 @@ function init() {
 	blur = new BilateralBlur(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	ssaa = new SSAA(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	volumetricLighting = new VolumetricLighting(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
-	volumetricClouds = new VolumetricClouds(RP, window.innerWidth, window.innerHeight);
+	volumetricClouds = new VolumetricClouds(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 
 	light = {
 		direction: new Float32Array([-1, -1, -1]),
@@ -248,6 +248,7 @@ function init() {
 	gui.add(hdrCompose.material.uniforms.ambientIntensity, 'value');
 	gui.add(debugSettings, 'timeOffset', -4e4, 4e4);
 	gui.add(volumetricClouds.material.uniforms.densityFactor, 'value', 0.001, 0.1);
+	gui.add(volumetricClouds.material.uniforms.densityFactor2, 'value', 0, 1);
 	//gui.add(volumetricClouds.material.uniforms.powderFactor, 'value', 0, 1);
 	gui.addColor({color: '#1861b3'}, 'color').onChange(function (e) {
 		const v = hexToRgb(e);
@@ -272,7 +273,7 @@ function init() {
 		blur.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		ssaa.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		volumetricLighting.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
-		volumetricClouds.setSize(window.innerWidth, window.innerHeight);
+		volumetricClouds.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	}, false);
 
 	animate();
@@ -332,8 +333,11 @@ function animate(rafTime) {
 		RP.depthTest = true;
 		RP.depthWrite = true;
 
-		gl.clearColor(100000, 1, 1, 1);
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		RP.clearFramebuffer({
+			clearColor: [1, 1, 1, 1],
+			color: true,
+			depth: true
+		});
 
 		{
 			groundMaterialDepth.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
@@ -404,8 +408,11 @@ function animate(rafTime) {
 	RP.depthTest = true;
 	RP.depthWrite = true;
 
-	gl.clearColor(0, 0, 0, 0);
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	RP.clearFramebuffer({
+		clearColor: [0, 0, 0, 0],
+		color: true,
+		depth: true
+	});
 
 	RP.depthWrite = false;
 
@@ -532,8 +539,10 @@ function animate(rafTime) {
 	if(Config.SSAO) {
 		RP.bindFramebuffer(ssao.framebuffer);
 
-		gl.clearColor(1, 1, 1, 1);
-		gl.clear(gl.COLOR_BUFFER_BIT);
+		RP.clearFramebuffer({
+			clearColor: [1, 1, 1, 1],
+			color: true
+		});
 
 		ssao.material.uniforms.tPosition.value = gBuffer.textures.position;
 		ssao.material.uniforms.tNormal.value = gBuffer.textures.normal;
@@ -561,13 +570,17 @@ function animate(rafTime) {
 	} else {
 		RP.bindFramebuffer(blur.framebuffer);
 
-		gl.clearColor(1, 1, 1, 1);
-		gl.clear(gl.COLOR_BUFFER_BIT);
+		RP.clearFramebuffer({
+			clearColor: [1, 1, 1, 1],
+			color: true
+		});
 
 		RP.bindFramebuffer(ssao.framebuffer);
 
-		gl.clearColor(1, 1, 1, 1);
-		gl.clear(gl.COLOR_BUFFER_BIT);
+		RP.clearFramebuffer({
+			clearColor: [1, 1, 1, 1],
+			color: true
+		});
 	}
 
 	// Volumetric lighting
@@ -575,8 +588,10 @@ function animate(rafTime) {
 	if(Config.volumetricLighting) {
 		RP.bindFramebuffer(volumetricLighting.framebuffer);
 
-		gl.clearColor(0, 0, 0, 0);
-		gl.clear(gl.COLOR_BUFFER_BIT);
+		RP.clearFramebuffer({
+			clearColor: [0, 0, 0, 0],
+			color: true
+		});
 
 		volumetricLighting.material.uniforms.uPosition.value = gBuffer.textures.position;
 		volumetricLighting.material.uniforms.cameraMatrixWorld.value = rCamera.matrixWorld;
@@ -606,23 +621,17 @@ function animate(rafTime) {
 	} else {
 		RP.bindFramebuffer(volumetricLighting.framebufferBlurred);
 
-		gl.clearColor(0, 0, 0, 0);
-		gl.clear(gl.COLOR_BUFFER_BIT);
+		RP.clearFramebuffer({
+			clearColor: [0, 0, 0, 0],
+			color: true
+		});
 	}
 
 	// Clouds
 
-	if(controls.cameraViewChanged) {
-		/*RP.bindFramebuffer(volumetricClouds.framebufferComposed);
-
-		gl.clearColor(0, 0, 0, 1);
-		gl.clear(gl.COLOR_BUFFER_BIT);*/
-	}
-
 	RP.bindFramebuffer(volumetricClouds.framebuffer);
 
 	volumetricClouds.material.uniforms.tPosition.value = gBuffer.textures.position;
-	volumetricClouds.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
 	//volumetricClouds.material.uniforms.cameraPositionE5.value = new Float32Array([camera.position.x % 1e5, camera.position.y, camera.position.z % 1e5]);
 	volumetricClouds.material.uniforms.cameraPositionE5.value = new Float32Array([0, 0, 0]);
 	volumetricClouds.material.uniforms.lightDirection.value = new Float32Array(vec3.toArray(csm.direction));
@@ -673,8 +682,10 @@ function animate(rafTime) {
 	if(Config.SMAA) {
 		RP.bindFramebuffer(smaa.edgesFB);
 
-		gl.clearColor(0, 0, 0, 1);
-		gl.clear(gl.COLOR_BUFFER_BIT);
+		RP.clearFramebuffer({
+			clearColor: [0, 0, 0, 1],
+			color: true
+		});
 
 		smaa.materials.edges.uniforms.tDiffuse.value = gBuffer.framebufferOutput.textures[0];
 		smaa.materials.edges.use();

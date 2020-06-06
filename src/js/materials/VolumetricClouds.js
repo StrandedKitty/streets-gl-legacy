@@ -10,12 +10,12 @@ export default class VolumetricClouds {
 		this.renderer = renderer;
 
 		this.framebuffer = this.renderer.createFramebuffer({
-			width: this.width,
-			height: this.height,
+			width: this.width * this.resolutionFactor,
+			height: this.height * this.resolutionFactor,
 			clearColor: [0, 0, 0, 1],
 			textures: [this.renderer.createTexture({
-				width: this.width,
-				height: this.height,
+				width: this.width * this.resolutionFactor,
+				height: this.height * this.resolutionFactor,
 				minFilter: 'LINEAR',
 				magFilter: 'LINEAR',
 				wrap: 'clamp',
@@ -26,14 +26,14 @@ export default class VolumetricClouds {
 		});
 
 		this.framebufferComposed = this.renderer.createFramebuffer({
-			width: this.width,
-			height: this.height,
+			width: this.width * this.resolutionFactor,
+			height: this.height * this.resolutionFactor,
 			clearColor: [0, 0, 0, 1],
 			textures: [this.renderer.createTexture({
-				width: this.width,
-				height: this.height,
-				minFilter: 'LINEAR',
-				magFilter: 'LINEAR',
+				width: this.width * this.resolutionFactor,
+				height: this.height * this.resolutionFactor,
+				minFilter: 'NEAREST',
+				magFilter: 'NEAREST',
 				wrap: 'clamp',
 				format: 'RGBA',
 				internalFormat: 'RGBA16F',
@@ -47,8 +47,8 @@ export default class VolumetricClouds {
 			fragmentShader: shaders.volumetricClouds.fragment,
 			uniforms: {
 				tPosition: {type: 'texture', value: null},
-				tDepth: {type: 'texture', value: null},
 				time: {type: '1f', value: 0},
+				densityFactor2: {type: '1f', value: 0.35},
 				densityFactor: {type: '1f', value: 0.005},
 				powderFactor: {type: '1f', value: 0.2},
 				needsFullUpdate: {type: '1i', value: 1},
@@ -83,7 +83,7 @@ export default class VolumetricClouds {
 			destination: this.framebufferComposed,
 			destinationWidth: this.framebufferComposed.width,
 			destinationHeight: this.framebufferComposed.height,
-			filter: 'LINEAR',
+			filter: 'NEAREST',
 			depth: false
 		});
 	}

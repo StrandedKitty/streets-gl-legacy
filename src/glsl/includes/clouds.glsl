@@ -1,7 +1,7 @@
 #define CLOUDS_STEPS 12
 #define CLOUDS_STEPS_LIGHT 6
 #define CLOUDS_MIN_HEIGHT 3000.
-#define CLOUDS_THICKNESS 5000.
+#define CLOUDS_THICKNESS 4000.
 #define CLOUDS_DEPTH 0
 #define CLOUDS_MIN_TRANSMITTANCE 0.1
 #define CLOUDS_EARTH_RADIUS 6371000.
@@ -12,10 +12,10 @@
 #define CLOUDS_BACKWARD_SCATTERING_G -0.2
 #define CLOUDS_SCATTERING_LERP 0.5
 
-#define CLOUDS_MAP_SCALE 60000.
+#define CLOUDS_MAP_SCALE 100000.
 
 #define CLOUDS_WIND_VECTOR vec2(1, 0)
-#define CLOUDS_WIND_SPEED 100.
+#define CLOUDS_WIND_SPEED 0.
 
 float hitSphere(vec3 sphereCenter, float sphereRadius, vec3 rayOrigin, vec3 rayDir) {
     vec3 oc = rayOrigin - sphereCenter;
@@ -89,7 +89,7 @@ float sampleCloudDensity(vec3 pos) {
     // Apply the height function to the base cloud shape.
     base_cloud *= density_height_gradient;
 
-    float cloud_coverage = clamp(weather_data.r + 0.1, 0., 1.);
+    float cloud_coverage = clamp(weather_data.r + densityFactor2, 0., 1.);
 
     // Use remap to apply the cloud coverage attribute.
     float base_cloud_with_coverage = remap(base_cloud, cloud_coverage, 1.0, 0.0, 1.0);
@@ -170,7 +170,7 @@ float lightmarch(vec3 position, vec3 lightDir, float angle) {
     return 2. * transmittance * (powder(totalDensity) + powderFactor) * phase(angle);
 }
 
-vec4 calculateCloudsColor(vec3 rayOrigin, vec3 rayDir, float depth, vec3 lightDir) {
+vec4 calculateCloudsColor(vec3 rayOrigin, vec3 rayDir, vec3 lightDir) {
     float cloudDensity = 0.;
 
     vec3 sphereCenter = vec3(0, -CLOUDS_EARTH_RADIUS, 0);

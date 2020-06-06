@@ -12,10 +12,9 @@ in vec3 vPosition;
 uniform samplerCube tCube;
 
 void main() {
-    vec3 normal = normalize(vNormal);
-    outColor = texture(tCube, normal);
+    outColor = texture(tCube, vNormal);
     outColor.a = 0.; // unlit
-    outNormal = normalize(normal);
+    outNormal = vNormal * 0.5 + 0.5;
     outPosition = vPosition;
     outMetallicRoughness = vec4(0, 0, 0, 0);
     outEmission = vec4(0, 0, 0, 1.);
