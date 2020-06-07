@@ -6,12 +6,12 @@ const Config = {
 	pixelRatio: undefined,
 	SSAA: 1,
 	SMAA: false,
+	TAA: true,
 	SSAO: true,
 	SSAOResolution: 1,
 	SSAOBlur: true,
 	volumetricLighting: false,
-	realTimeSun: true,
-	layerHeight: 6
+	realTimeSun: false
 };
 
 Config.set = function (key, value, force) {

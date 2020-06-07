@@ -33,6 +33,7 @@ import HDRCompose from "./materials/HDRCompose";
 import LDRCompose from "./materials/LDRCompose";
 import MapNavigator from "./MapNavigator";
 import VolumetricClouds from "./materials/VolumetricClouds";
+import TAA from "./materials/TAA";
 
 const SunCalc = require('suncalc');
 
@@ -60,7 +61,7 @@ let quad, hdrCompose, ldrCompose;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
-let gBuffer, smaa, ssao, blur, ssaa, volumetricLighting, volumetricClouds;
+let gBuffer, smaa, ssao, blur, ssaa, volumetricLighting, volumetricClouds, taa;
 let skybox;
 let light;
 let lightDirection = new vec3(-1, -1, -1);
@@ -216,6 +217,7 @@ function init() {
 	ssaa = new SSAA(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	volumetricLighting = new VolumetricLighting(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	volumetricClouds = new VolumetricClouds(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
+	taa = new TAA(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 
 	light = {
 		direction: new Float32Array([-1, -1, -1]),
@@ -245,6 +247,7 @@ function init() {
 
 	workerManager = new MapWorkerManager(navigator.hardwareConcurrency, './js/worker.js');
 
+	gui.add(Config, 'TAA');
 	gui.add(Config, 'SMAA');
 	gui.add(Config, 'SSAO');
 	gui.add(Config, 'SSAOBlur');
@@ -279,6 +282,7 @@ function init() {
 		ssaa.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		volumetricLighting.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		volumetricClouds.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
+		taa.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	}, false);
 
 	animate();
@@ -305,6 +309,24 @@ function animate(rafTime) {
 
 	camera.updateMatrixWorldInverse();
 	camera.updateFrustum();
+
+	// Jitter camera projection matrix for TAA
+
+	if(Config.TAA) {
+		const jitteredProjection = camera.projectionMatrix;
+		const halton = [
+			[-7, 1],
+			[-5, -5],
+			[-1, -3],
+			[3, -7],
+			[5, -1],
+			[7, 7],
+			[1, 3],
+			[-3, 5]
+		];
+		jitteredProjection[8] = halton[buildingMaterial.uniforms.frame.value % 8][0] / 8 / (window.innerWidth * Config.pixelRatio);
+		jitteredProjection[9] = halton[buildingMaterial.uniforms.frame.value % 8][1] / 8 / (window.innerHeight * Config.pixelRatio);
+	}
 
 	// Directional light
 
@@ -484,6 +506,7 @@ function animate(rafTime) {
 	{
 		buildingMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
 		buildingMaterial.uniforms.uSunIntensity.value = sunIntensity;
+		buildingMaterial.uniforms.frame.value++;
 		buildingMaterial.use();
 
 		let noAnimationStreak = 0;
@@ -673,6 +696,20 @@ function animate(rafTime) {
 	hdrCompose.material.use();
 	quad.draw();
 
+	// TAA
+
+	if(TAA) {
+		RP.bindFramebuffer(taa.framebuffer);
+
+		taa.material.uniforms.ignoreHistory.value = controls.cameraViewChanged ? 1 : 0;
+		taa.material.uniforms.tNew.value = gBuffer.framebufferHDR.textures[0];
+		taa.material.use();
+
+		quad.draw();
+
+		taa.copyResultToOutput();
+	}
+
 	// HDR to LDR texture
 
 	gBuffer.drawBloom();
@@ -680,6 +717,7 @@ function animate(rafTime) {
 	if(Config.SMAA) RP.bindFramebuffer(gBuffer.framebufferOutput);
 	else RP.bindFramebuffer(ssaa.framebuffer);
 
+	ldrCompose.material.uniforms.tHDR.value = Config.TAA ? taa.framebuffer.textures[0] : gBuffer.framebufferHDR.textures[0];
 	ldrCompose.material.use();
 	quad.draw();
 

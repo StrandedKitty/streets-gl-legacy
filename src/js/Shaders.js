@@ -104,6 +104,10 @@ class Shaders {
 			fragment: require('../glsl/volumetricCloudsNoise.frag').default,
 			vertex: require('../glsl/quad.vert').default
 		};
+		this.raw.TAA = {
+			fragment: require('../glsl/TAA.frag').default,
+			vertex: require('../glsl/quad.vert').default
+		};
 
 		this.includes.tonemapping = require('../glsl/includes/tonemapping.glsl').default;
 		this.includes.shadowmapping = require('../glsl/includes/shadowmapping.glsl').default;

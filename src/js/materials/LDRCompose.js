@@ -9,7 +9,7 @@ export default class LDRCompose {
 			vertexShader: shaders.ldrCompose.vertex,
 			fragmentShader: shaders.ldrCompose.fragment,
 			uniforms: {
-				tHDR: {type: 'texture', value: params.gBuffer.framebufferHDR.textures[0]},
+				tHDR: {type: 'texture', value: null},
 				tBloom: {type: 'texture', value: params.gBuffer.bloom.blurredFramebuffer.textures[0]},
 				uExposure: {type: '1f', value: 1.},
 				uBloomStrength: {type: '1f', value: 0.05},

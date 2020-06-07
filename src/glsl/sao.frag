@@ -7,7 +7,6 @@ out vec4 FragColor;
 
 uniform sampler2D tPosition;
 uniform sampler2D tNormal;
-uniform sampler2D tDepth;
 uniform sampler2D tNoise;
 uniform vec3 samples[64];
 uniform mat4 cameraProjectionMatrix;
@@ -18,6 +17,7 @@ vec3 readNormal(const vec2 uv) {
 }
 
 vec3 readPosition(const vec2 uv) {
+	return vec3(textureLod(tPosition, uv, 0.)).rgb; // ignore tPosition mipmaps
 	return texture(tPosition, uv).rgb;
 }
 
@@ -50,8 +50,7 @@ void main() {
 		vec3 smple = TBN * samples[i];
 		smple = fragPos + smple * radius;
 
-		vec4 offset = vec4(smple, 1.0);
-		offset = cameraProjectionMatrix * offset;
+		vec4 offset = cameraProjectionMatrix * vec4(smple, 1.0);
 		offset.xyz /= offset.w;
 		offset.xyz = offset.xyz * 0.5 + 0.5;
 
