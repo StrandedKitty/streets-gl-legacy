@@ -28,7 +28,7 @@ export default class GBuffer {
 			const texture = this.renderer.createTexture({
 				width: this.width,
 				height: this.height,
-				minFilter: 'NEAREST',
+				minFilter: element.mipmaps ? 'NEAREST_MIPMAP_NEAREST' : 'NEAREST',
 				magFilter: 'NEAREST',
 				wrap: 'clamp',
 				format: element.format,

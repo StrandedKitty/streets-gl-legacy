@@ -181,27 +181,32 @@ function init() {
 			name: 'color',
 			internalFormat: 'RGBA8',
 			format: 'RGBA',
-			type: 'UNSIGNED_BYTE'
+			type: 'UNSIGNED_BYTE',
+			mipmaps: false
 		}, {
 			name: 'normal',
 			internalFormat: 'RGB8',
 			format: 'RGB',
-			type: 'UNSIGNED_BYTE'
+			type: 'UNSIGNED_BYTE',
+			mipmaps: false
 		}, {
 			name: 'position',
 			internalFormat: 'RGBA32F',
 			format: 'RGBA',
-			type: 'FLOAT'
+			type: 'FLOAT',
+			mipmaps: true
 		}, {
 			name: 'metallicRoughness',
 			internalFormat: 'RGBA8',
 			format: 'RGBA',
-			type: 'UNSIGNED_BYTE'
+			type: 'UNSIGNED_BYTE',
+			mipmaps: false
 		}, {
 			name: 'emission',
 			internalFormat: 'RGBA8',
 			format: 'RGBA',
-			type: 'UNSIGNED_BYTE'
+			type: 'UNSIGNED_BYTE',
+			mipmaps: false
 		}
 	]);
 
@@ -631,6 +636,7 @@ function animate(rafTime) {
 
 	RP.bindFramebuffer(volumetricClouds.framebuffer);
 
+	gBuffer.textures.position.generateMipmaps();
 	volumetricClouds.material.uniforms.tPosition.value = gBuffer.textures.position;
 	//volumetricClouds.material.uniforms.cameraPositionE5.value = new Float32Array([camera.position.x % 1e5, camera.position.y, camera.position.z % 1e5]);
 	volumetricClouds.material.uniforms.cameraPositionE5.value = new Float32Array([0, 0, 0]);

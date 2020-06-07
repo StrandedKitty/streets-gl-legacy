@@ -22,12 +22,13 @@ uniform int needsFullUpdate;
 uniform float densityFactor;
 uniform float densityFactor2;
 uniform float powderFactor;
+uniform float positionMipLevel;
 
 #include <noise>
 #include <clouds>
 
 void main() {
-	vec3 position = vec3(texture(tPosition, vUv));
+	vec3 position = vec3(textureLod(tPosition, vUv, positionMipLevel));
 	vec3 view = normalize(-position);
 	vec3 worldView = normalize(normalMatrix * view);
 

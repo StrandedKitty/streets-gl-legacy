@@ -1,6 +1,7 @@
 import shaders from '../Shaders';
 import {clamp} from "../Utils";
 import FullScreenQuad from "../FullScreenQuad";
+import Config from "../Config";
 
 export default class VolumetricClouds {
 	constructor(renderer, width, height) {
@@ -32,8 +33,8 @@ export default class VolumetricClouds {
 			textures: [this.renderer.createTexture({
 				width: this.width * this.resolutionFactor,
 				height: this.height * this.resolutionFactor,
-				minFilter: 'NEAREST',
-				magFilter: 'NEAREST',
+				minFilter: 'LINEAR',
+				magFilter: 'LINEAR',
 				wrap: 'clamp',
 				format: 'RGBA',
 				internalFormat: 'RGBA16F',
@@ -47,6 +48,7 @@ export default class VolumetricClouds {
 			fragmentShader: shaders.volumetricClouds.fragment,
 			uniforms: {
 				tPosition: {type: 'texture', value: null},
+				positionMipLevel: {type: '1f', value: ~~Math.log2(Config.SSAA / this.resolutionFactor)},
 				time: {type: '1f', value: 0},
 				densityFactor2: {type: '1f', value: 0.35},
 				densityFactor: {type: '1f', value: 0.005},
