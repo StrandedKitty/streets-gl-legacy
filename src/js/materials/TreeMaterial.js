@@ -22,6 +22,7 @@ export default class TreeMaterial {
 				projectionMatrix: {type: 'Matrix4fv', value: null},
 				modelMatrix: {type: 'Matrix4fv', value: null},
 				viewMatrix: {type: 'Matrix4fv', value: null},
+				viewMatrixPrev: {type: 'Matrix4fv', value: null},
 				normalMatrix: {type: 'Matrix3fv', value: null},
 				'tDiffuse': {type: 'texture2DArray', value: this.textureArrays.color},
 				'tNormal': {type: 'texture2DArray', value: this.textureArrays.normal},

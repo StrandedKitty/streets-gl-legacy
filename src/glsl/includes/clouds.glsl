@@ -15,7 +15,7 @@
 #define CLOUDS_MAP_SCALE 100000.
 
 #define CLOUDS_WIND_VECTOR vec2(1, 0)
-#define CLOUDS_WIND_SPEED 0.
+#define CLOUDS_WIND_SPEED 100.
 
 float hitSphere(vec3 sphereCenter, float sphereRadius, vec3 rayOrigin, vec3 rayDir) {
     vec3 oc = rayOrigin - sphereCenter;

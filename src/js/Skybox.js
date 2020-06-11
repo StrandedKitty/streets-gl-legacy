@@ -60,7 +60,10 @@ export default class Skybox {
 			vertexShader: shaders.skybox.vertex,
 			fragmentShader: shaders.skybox.fragment,
 			uniforms: {
-				tCube: {type: 'textureCube', value: this.cubeTexture}
+				tCube: {type: 'textureCube', value: this.cubeTexture},
+				modelViewMatrix: {type: 'Matrix4fv', value: null},
+				modelViewMatrixPrev: {type: 'Matrix4fv', value: null},
+				projectionMatrix: {type: 'Matrix4fv', value: null}
 			}
 		});
 
@@ -69,14 +72,14 @@ export default class Skybox {
 		});
 	}
 
-	render(camera) {
+	render(camera, matrixWorldInversePrev) {
 		this.renderer.culling = false;
 		this.mesh.setPosition(camera.position.x, camera.position.y, camera.position.z);
 		this.mesh.updateMatrix();
 		this.mesh.updateMatrixWorld();
-		this.material.uniforms.modelMatrix = {type: 'Matrix4fv', value: this.mesh.matrixWorld};
-		this.material.uniforms.viewMatrix = {type: 'Matrix4fv', value: camera.matrixWorldInverse};
-		this.material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: camera.projectionMatrix};
+		this.material.uniforms.modelViewMatrix.value = mat4.multiply(camera.matrixWorldInverse, this.mesh.matrixWorld);
+		this.material.uniforms.modelViewMatrixPrev.value = mat4.multiply(matrixWorldInversePrev || camera.matrixWorldInverse, this.mesh.matrixWorld);
+		this.material.uniforms.projectionMatrix.value = camera.projectionMatrix;
 		this.material.use();
 		this.mesh.draw();
 		this.renderer.culling = true;

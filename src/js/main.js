@@ -208,6 +208,12 @@ function init() {
 			format: 'RGBA',
 			type: 'UNSIGNED_BYTE',
 			mipmaps: false
+		}, {
+			name: 'motion',
+			internalFormat: 'RGBA32F',
+			format: 'RGBA',
+			type: 'FLOAT',
+			mipmaps: false
 		}
 	]);
 
@@ -283,6 +289,7 @@ function init() {
 		volumetricLighting.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		volumetricClouds.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		taa.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
+		taa.material.uniforms.ignoreHistory.value = 1;
 	}, false);
 
 	animate();
@@ -302,6 +309,9 @@ function animate(rafTime) {
 	wrapper.position.x = -camera.position.x;
 	wrapper.position.z = -camera.position.z;
 
+	wrapper.position.x += camera.position.x % 10000;
+	wrapper.position.z += camera.position.z % 10000;
+
 	ground.setPosition(camera.position.x - camera.position.x % (tileSize * 2), 0, camera.position.z - camera.position.z % (tileSize * 2));
 
 	scene.updateMatrixRecursively();
@@ -314,18 +324,20 @@ function animate(rafTime) {
 
 	if(Config.TAA) {
 		const jitteredProjection = camera.projectionMatrix;
-		const halton = [
-			[-7, 1],
-			[-5, -5],
-			[-1, -3],
-			[3, -7],
-			[5, -1],
-			[7, 7],
-			[1, 3],
-			[-3, 5]
+		const offsets = [
+			[-7 / 8, 1 / 8],
+			[-5 / 8, -5 / 8],
+			[-1 / 8, -3 / 8],
+			[3 / 8, -7 / 8],
+			[5 / 8, -1 / 8],
+			[7 / 8, 7 / 8],
+			[1 / 8, 3 / 8],
+			[-3 / 8, 5 / 8]
 		];
-		jitteredProjection[8] = halton[buildingMaterial.uniforms.frame.value % 8][0] / 8 / (window.innerWidth * Config.pixelRatio);
-		jitteredProjection[9] = halton[buildingMaterial.uniforms.frame.value % 8][1] / 8 / (window.innerHeight * Config.pixelRatio);
+		jitteredProjection[8] = offsets[taa.frameCount % offsets.length][0] / (window.innerWidth * Config.pixelRatio);
+		jitteredProjection[9] = offsets[taa.frameCount % offsets.length][1] / (window.innerHeight * Config.pixelRatio);
+
+		taa.frameCount++;
 	}
 
 	// Directional light
@@ -443,7 +455,7 @@ function animate(rafTime) {
 
 	RP.depthWrite = false;
 
-	skybox.render(rCamera);
+	skybox.render(rCamera, taa.matrixWorldInversePrev);
 
 	RP.depthWrite = true;
 
@@ -453,9 +465,10 @@ function animate(rafTime) {
 
 		const object = ground;
 
-		const modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-		groundMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+		groundMaterial.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+		groundMaterial.uniforms.modelViewMatrixPrev.value = mat4.multiply(taa.matrixWorldInversePrev || rCamera.matrixWorldInverse, object.matrixWorld);
 		groundMaterial.updateUniform('modelViewMatrix');
+		groundMaterial.updateUniform('modelViewMatrixPrev');
 
 		object.draw();
 	}
@@ -473,9 +486,10 @@ function animate(rafTime) {
 			const inFrustum = object.inCameraFrustum(rCamera);
 
 			if (inFrustum) {
-				let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-				waterMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+				waterMaterial.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+				waterMaterial.uniforms.modelViewMatrixPrev.value = mat4.multiply(taa.matrixWorldInversePrev || rCamera.matrixWorldInverse, object.matrixWorld);
 				waterMaterial.updateUniform('modelViewMatrix');
+				waterMaterial.updateUniform('modelViewMatrixPrev');
 
 				object.draw();
 			}
@@ -492,9 +506,10 @@ function animate(rafTime) {
 			const inFrustum = object.inCameraFrustum(rCamera);
 
 			if(inFrustum) {
-				let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-				roadMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+				roadMaterial.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+				roadMaterial.uniforms.modelViewMatrixPrev.value = mat4.multiply(taa.matrixWorldInversePrev || rCamera.matrixWorldInverse, object.matrixWorld);
 				roadMaterial.updateUniform('modelViewMatrix');
+				roadMaterial.updateUniform('modelViewMatrixPrev');
 
 				object.draw();
 			}
@@ -506,7 +521,6 @@ function animate(rafTime) {
 	{
 		buildingMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
 		buildingMaterial.uniforms.uSunIntensity.value = sunIntensity;
-		buildingMaterial.uniforms.frame.value++;
 		buildingMaterial.use();
 
 		let noAnimationStreak = 0;
@@ -517,13 +531,16 @@ function animate(rafTime) {
 			const inFrustum = object.inCameraFrustum(rCamera);
 
 			if(inFrustum) {
-				let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-				buildingMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+				buildingMaterial.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+				buildingMaterial.uniforms.modelViewMatrixPrev.value = mat4.multiply(taa.matrixWorldInversePrev || rCamera.matrixWorldInverse, object.matrixWorld);
 				buildingMaterial.updateUniform('modelViewMatrix');
+				buildingMaterial.updateUniform('modelViewMatrixPrev');
 
 				if(object.data.tile.time - delta < 1) {
 					buildingMaterial.uniforms.time.value = object.data.tile.time;
+					buildingMaterial.uniforms.timeDelta.value = Math.min(delta, 1 - object.data.tile.time);
 					buildingMaterial.updateUniform('time');
+					buildingMaterial.updateUniform('timeDelta');
 					noAnimationStreak = 0;
 				} else {
 					if(noAnimationStreak === 0) {
@@ -552,6 +569,7 @@ function animate(rafTime) {
 		material.uniforms.modelMatrix.value = object.matrixWorld;
 		material.updateUniform('modelMatrix');
 		material.uniforms.viewMatrix.value = rCamera.matrixWorldInverse;
+		material.uniforms.viewMatrixPrev.value = taa.matrixWorldInversePrev;
 		material.updateUniform('viewMatrix');
 
 		object.draw();
@@ -701,13 +719,17 @@ function animate(rafTime) {
 	if(TAA) {
 		RP.bindFramebuffer(taa.framebuffer);
 
-		taa.material.uniforms.ignoreHistory.value = controls.cameraViewChanged ? 1 : 0;
 		taa.material.uniforms.tNew.value = gBuffer.framebufferHDR.textures[0];
+		taa.material.uniforms.tMotion.value = gBuffer.textures.motion;
+		taa.material.uniforms.tPosition.value = gBuffer.textures.position;
 		taa.material.use();
 
 		quad.draw();
 
 		taa.copyResultToOutput();
+
+		taa.matrixWorldInversePrev = mat4.copy(rCamera.matrixWorldInverse);
+		taa.material.uniforms.ignoreHistory.value = 0;
 	}
 
 	// HDR to LDR texture

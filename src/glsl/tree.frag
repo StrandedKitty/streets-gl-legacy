@@ -10,11 +10,14 @@ layout(location = 1) out vec3 outNormal;
 layout(location = 2) out vec3 outPosition;
 layout(location = 3) out vec4 outMetallicRoughness;
 layout(location = 4) out vec4 outEmission;
+layout(location = 5) out vec3 outMotion;
 in vec3 vNormal;
 in vec3 vPosition;
 in vec2 vUv;
 flat in int vInstanceID;
 flat in int vType;
+in vec4 vClipPos;
+in vec4 vClipPosPrev;
 
 uniform sampler2DArray tDiffuse;
 uniform sampler2DArray tNormal;
@@ -93,4 +96,6 @@ void main() {
     outPosition = vPosition;
     outMetallicRoughness = vec4(metalness, roughness, specular, 1.);
     outEmission = vec4(0, 0, 0, 1.);
+    outMotion = 0.25 * vec3(vClipPos / vClipPos.w - vClipPosPrev / vClipPosPrev.w);
+    outMotion.z = vClipPosPrev.z;
 }

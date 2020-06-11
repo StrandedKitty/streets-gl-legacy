@@ -11,7 +11,8 @@ export default class RoadMaterial {
 			fragmentShader: shaders.road.fragment,
 			uniforms: {
 				projectionMatrix: {type: 'Matrix4fv', value: null},
-				modelViewMatrix: {type: 'Matrix4fv', value: null}
+				modelViewMatrix: {type: 'Matrix4fv', value: null},
+				modelViewMatrixPrev: {type: 'Matrix4fv', value: null}
 			}
 		});
 

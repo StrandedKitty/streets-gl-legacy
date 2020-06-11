@@ -17,10 +17,13 @@ out vec3 vNormal;
 out vec2 vUv;
 flat out int vInstanceID;
 flat out int vType;
+out vec4 vClipPos;
+out vec4 vClipPosPrev;
 
 uniform mat4 projectionMatrix;
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
+uniform mat4 viewMatrixPrev;
 
 #include <noise>
 
@@ -49,8 +52,16 @@ void main() {
     transformedPosition += iPosition;
     transformedPosition.xz += iOffset;
 
-    vec4 mvPosition = viewMatrix * modelMatrix * vec4(transformedPosition, 1.0);
-    vPosition = vec3(mvPosition);
+    mat4 modelViewMatrix = viewMatrix * modelMatrix;
+    mat4 modelViewMatrixPrev = viewMatrixPrev * modelMatrix;
 
-    gl_Position = projectionMatrix * mvPosition;
+    vec4 cameraSpacePosition = modelViewMatrix * vec4(transformedPosition, 1.0);
+    vec4 cameraSpacePositionPrev = modelViewMatrixPrev * vec4(transformedPosition, 1.0);
+
+    vClipPos = projectionMatrix * cameraSpacePosition;
+    vClipPosPrev = projectionMatrix * cameraSpacePositionPrev;
+    vClipPosPrev.z = cameraSpacePositionPrev.z;
+    vPosition = vec3(cameraSpacePosition);
+
+    gl_Position = vClipPos;
 }

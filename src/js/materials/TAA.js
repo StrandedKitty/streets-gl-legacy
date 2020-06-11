@@ -5,6 +5,8 @@ export default class TAA {
 		this.renderer = renderer;
 		this.width = width;
 		this.height = height;
+		this.frameCount = 0;
+		this.matrixWorldInversePrev = null;
 
 		this.framebufferPrev = this.renderer.createFramebuffer({
 			width: this.width,
@@ -12,12 +14,12 @@ export default class TAA {
 			textures: [this.renderer.createTexture({
 				width: this.width,
 				height: this.height,
-				minFilter: 'NEAREST',
-				magFilter: 'NEAREST',
+				minFilter: 'LINEAR',
+				magFilter: 'LINEAR',
 				wrap: 'clamp',
 				format: 'RGBA',
 				internalFormat: 'RGBA16F',
-				type: 'FLOAT'
+				type: 'HALF_FLOAT'
 			})]
 		});
 
@@ -43,7 +45,9 @@ export default class TAA {
 			uniforms: {
 				tAccum: {type: 'texture', value: this.framebufferPrev.textures[0]},
 				tNew: {type: 'texture', value: null},
-				ignoreHistory: {type: '1i', value: 0}
+				tMotion: {type: 'texture', value: null},
+				tPosition: {type: 'texture', value: null},
+				ignoreHistory: {type: '1i', value: 1},
 			}
 		});
 	}

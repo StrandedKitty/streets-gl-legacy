@@ -12,6 +12,7 @@ export default class RoadMaterial {
 			uniforms: {
 				projectionMatrix: {type: 'Matrix4fv', value: null},
 				modelViewMatrix: {type: 'Matrix4fv', value: null},
+				modelViewMatrixPrev: {type: 'Matrix4fv', value: null},
 				tNormal: {type: 'texture', value: this.renderer.createTexture({url: '/textures/water_normal.jpg', anisotropy: Config.textureAnisotropy})},
 				time: {type: '1f', value: 0}
 			}

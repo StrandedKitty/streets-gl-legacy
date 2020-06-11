@@ -10,6 +10,7 @@ export default class BuildingMaterial {
 			uniforms: {
 				projectionMatrix: {type: 'Matrix4fv', value: null},
 				modelViewMatrix: {type: 'Matrix4fv', value: null},
+				modelViewMatrixPrev: {type: 'Matrix4fv', value: null},
 				tDiffuse: {type: 'texture', value: renderer.createTexture({url: '/textures/grass.jpg', anisotropy: Config.textureAnisotropy})},
 				tNormal: {type: 'texture', value: renderer.createTexture({url: '/textures/ground_normal.jpg', anisotropy: Config.textureAnisotropy})}
 			}

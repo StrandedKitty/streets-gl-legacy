@@ -11,6 +11,7 @@ export default class TreeMaterial {
 				projectionMatrix: {type: 'Matrix4fv', value: null},
 				modelMatrix: {type: 'Matrix4fv', value: null},
 				viewMatrix: {type: 'Matrix4fv', value: null},
+				viewMatrixPrev: {type: 'Matrix4fv', value: null},
 				normalMatrix: {type: 'Matrix3fv', value: null},
 				tDiffuse: {type: 'texture', value: renderer.createTexture({url: '/textures/hydrant/diffuse.png', anisotropy: Config.textureAnisotropy})},
 				tNormal: {type: 'texture', value: renderer.createTexture({url: '/textures/hydrant/normal.png', anisotropy: Config.textureAnisotropy})},

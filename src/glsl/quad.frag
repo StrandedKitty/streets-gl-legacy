@@ -242,12 +242,12 @@ void main() {
 
     if(baseColor.a == 0.) { // skip skybox
         vec4 cloudsData = texture(uClouds, vUv);
-        //baseColor.rgb = vec3(0.2, 0.5, 0.85) * 1.2;
         vec3 scattering = calculateAtmosphericScattering(normalize(worldView), normalize(uLight.direction));
         baseColor.rgb = scattering;
         FragColor = vec4(baseColor.rgb * cloudsData.a + cloudsData.rgb, 1);
 
         FragColor.rgb = mix(scattering, FragColor.rgb, clamp(abs(worldView.y) * 4., 0., 1.));
+        FragColor.a = 0.;
         return;
     }
 

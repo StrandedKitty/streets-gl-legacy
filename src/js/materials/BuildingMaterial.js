@@ -28,6 +28,7 @@ export default class BuildingMaterial {
 			uniforms: {
 				projectionMatrix: {type: 'Matrix4fv', value: null},
 				modelViewMatrix: {type: 'Matrix4fv', value: null},
+				modelViewMatrixPrev: {type: 'Matrix4fv', value: null},
 				tColor: {type: 'texture2DArray', value: this.textureArraysFacade.color},
 				tMetalness: {type: 'texture2DArray', value: this.textureArraysFacade.metalness},
 				tRoughness: {type: 'texture2DArray', value: this.textureArraysFacade.roughness},
@@ -39,6 +40,7 @@ export default class BuildingMaterial {
 				tWinEmission: {type: 'texture2DArray', value: this.textureArraysWindow.emission},
 				tNoise: {type: 'texture', value: this.renderer.createTexture({url: '/textures/noise.png', anisotropy: Config.textureAnisotropy})},
 				time: {type: '1f', value: 0},
+				timeDelta: {type: '1f', value: 0},
 				uSunIntensity: {type: '1f', value: 1}
 			}
 		});

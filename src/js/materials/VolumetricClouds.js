@@ -63,8 +63,7 @@ export default class VolumetricClouds {
 				tNoise: {type: 'texture3D', value: this.buildNoiseTexture()},
 				tBlueNoise: {type: 'texture', value: this.renderer.createTexture({url: '/textures/blue_noise_rgba.png', wrap: 'repeat'})},
 				tWeather: {type: 'texture', value: this.renderer.createTexture({url: '/textures/weather.png', wrap: 'repeat'})},
-				tAccum: {type: 'texture', value: this.framebufferComposed.textures[0]},
-				tPrevFrameDepth: {type: 'texture', value: this.framebufferComposed.textures[1]}
+				tAccum: {type: 'texture', value: this.framebufferComposed.textures[0]}
 			}
 		});
 

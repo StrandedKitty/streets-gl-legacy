@@ -9,9 +9,12 @@ out vec3 vPosition;
 out vec3 vLocalPosition;
 out vec2 vUv;
 out vec3 vCenter;
+out vec4 vClipPos;
+out vec4 vClipPosPrev;
 
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
+uniform mat4 modelViewMatrixPrev;
 
 void main() {
     vCenter = vec3(0);
@@ -27,6 +30,13 @@ void main() {
     vec3 transformedPosition = position;
     vLocalPosition = transformedPosition;
 
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(transformedPosition, 1.0);
-    vPosition = vec3(modelViewMatrix * vec4(transformedPosition, 1.0));
+    vec4 cameraSpacePosition = modelViewMatrix * vec4(transformedPosition, 1.0);
+    vec4 cameraSpacePositionPrev = modelViewMatrixPrev * vec4(transformedPosition, 1.0);
+
+    vClipPos = projectionMatrix * cameraSpacePosition;
+    vClipPosPrev = projectionMatrix * cameraSpacePositionPrev;
+    vClipPosPrev.z = cameraSpacePositionPrev.z;
+    vPosition = vec3(cameraSpacePosition);
+
+    gl_Position = vClipPos;
 }
