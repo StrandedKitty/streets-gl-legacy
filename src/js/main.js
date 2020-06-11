@@ -118,7 +118,7 @@ function init() {
 		camera: camera,
 		parent: wrapper,
 		cascades: 3,
-		size: 4096,
+		size: 2048,
 		far: 4000
 	});
 
@@ -322,6 +322,8 @@ function animate(rafTime) {
 
 	// Jitter camera projection matrix for TAA
 
+	const defaultProjectionMatrix = mat4.copy(camera.projectionMatrix);
+
 	if(Config.TAA) {
 		const jitteredProjection = camera.projectionMatrix;
 		const offsets = [
@@ -336,6 +338,9 @@ function animate(rafTime) {
 		];
 		jitteredProjection[8] = offsets[taa.frameCount % offsets.length][0] / (window.innerWidth * Config.pixelRatio);
 		jitteredProjection[9] = offsets[taa.frameCount % offsets.length][1] / (window.innerHeight * Config.pixelRatio);
+
+		defaultProjectionMatrix[8] = 0.;
+		defaultProjectionMatrix[9] = 0.;
 
 		taa.frameCount++;
 	}

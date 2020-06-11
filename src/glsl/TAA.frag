@@ -11,6 +11,7 @@ uniform sampler2D tNew;
 uniform sampler2D tAccum;
 uniform sampler2D tMotion;
 uniform sampler2D tPosition;
+uniform vec2 offset;
 
 void main() {
 	vec4 pixelMovement = texture(tMotion, vUv);
@@ -29,11 +30,6 @@ void main() {
 
 	if(oldPixelUv.x >= 0. && oldPixelUv.x <= 1. && oldPixelUv.y >= 0. && oldPixelUv.y <= 1.) {
 		vec2 size = vec2(textureSize(tNew, 0));
-
-		if(abs(pixelMovement.x) <= 0.005 / size.x && abs(pixelMovement.y) <= 0.005 / size.y) {
-			FragColor = mix(oldColor, newColor, 0.06);
-			return;
-		}
 
 		vec2 offsets[] = vec2[](
 			vec2(1, 0),
@@ -59,9 +55,14 @@ void main() {
 		}
 
 		if(avg.a == 0.) // temporary solution to disable TTA for skybox
-			FragColor = newColor;
-		else
-			FragColor = mix(clamp(oldColor, minNeighbor, maxNeighbor), newColor, 0.1);
+			FragColor = texture(tNew, vUv);
+		else {
+			if(abs(pixelMovement.x) <= 0.005 / size.x && abs(pixelMovement.y) <= 0.005 / size.y) {
+				FragColor = mix(oldColor, newColor, 0.06);
+			} else {
+				FragColor = mix(clamp(oldColor, minNeighbor, maxNeighbor), newColor, 0.1);
+			}
+		}
 	} else {
 		FragColor = newColor;
 	}
