@@ -4,7 +4,6 @@ const Config = {
 	maxTiles: 50,
 	tilesPerWorker: 2,
 	pixelRatio: undefined,
-	SSAA: 1,
 	SMAA: false,
 	TAA: true,
 	SSAO: true,

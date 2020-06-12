@@ -21,7 +21,6 @@ import GroundMaterial from "./materials/GroundMaterial";
 import CSM from "./CSM";
 import TreeMaterial from "./materials/TreeMaterial";
 import Models from "./Models";
-import SSAA from "./SSAA";
 import VolumetricLighting from "./materials/VolumetricLighting";
 import BatchInstanced from "./BatchInstanced";
 import Shapes from "./Shapes";
@@ -61,7 +60,7 @@ let quad, hdrCompose, ldrCompose;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
-let gBuffer, smaa, ssao, blur, ssaa, volumetricLighting, volumetricClouds, taa;
+let gBuffer, smaa, ssao, blur, volumetricLighting, volumetricClouds, taa;
 let skybox;
 let light;
 let lightDirection = new vec3(-1, -1, -1);
@@ -177,7 +176,7 @@ function init() {
 	skybox = new Skybox(RP);
 	wrapper.add(skybox.mesh);
 
-	gBuffer = new GBuffer(RP, window.innerWidth * Config.SSAA * Config.pixelRatio, window.innerHeight * Config.SSAA * Config.pixelRatio, [
+	gBuffer = new GBuffer(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio, [
 		{
 			name: 'color',
 			internalFormat: 'RGBA8',
@@ -217,10 +216,9 @@ function init() {
 		}
 	]);
 
-	smaa = new SMAA(RP, window.innerWidth * Config.SSAA * Config.pixelRatio, window.innerHeight * Config.SSAA * Config.pixelRatio);
+	smaa = new SMAA(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	ssao = new SSAO(RP, window.innerWidth * Config.SSAOResolution * Config.pixelRatio, window.innerHeight * Config.SSAOResolution * Config.pixelRatio);
 	blur = new BilateralBlur(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
-	ssaa = new SSAA(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	volumetricLighting = new VolumetricLighting(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	volumetricClouds = new VolumetricClouds(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 	taa = new TAA(RP, window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
@@ -281,11 +279,10 @@ function init() {
 		Config.set('pixelRatio', window.devicePixelRatio, true);
 
 		RP.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
-		gBuffer.setSize(window.innerWidth * Config.SSAA * Config.pixelRatio, window.innerHeight * Config.SSAA * Config.pixelRatio);
-		smaa.setSize(window.innerWidth * Config.SSAA * Config.pixelRatio, window.innerHeight * Config.SSAA * Config.pixelRatio);
+		gBuffer.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
+		smaa.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		ssao.setSize(window.innerWidth * Config.SSAOResolution * Config.pixelRatio, window.innerHeight * Config.SSAOResolution * Config.pixelRatio);
 		blur.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
-		ssaa.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		volumetricLighting.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		volumetricClouds.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		taa.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
@@ -306,11 +303,18 @@ function animate(rafTime) {
 
 	controls.update(delta);
 
+	const oldPivot = {
+		x: wrapper.position.x,
+		z: wrapper.position.z
+	};
+
 	wrapper.position.x = -camera.position.x;
 	wrapper.position.z = -camera.position.z;
 
-	wrapper.position.x += camera.position.x % 10000;
-	wrapper.position.z += camera.position.z % 10000;
+	const pivotDelta = {
+		x: oldPivot.x - wrapper.position.x,
+		z: oldPivot.z - wrapper.position.z
+	};
 
 	ground.setPosition(camera.position.x - camera.position.x % (tileSize * 2), 0, camera.position.z - camera.position.z % (tileSize * 2));
 
@@ -344,6 +348,9 @@ function animate(rafTime) {
 
 		taa.frameCount++;
 	}
+
+	if(taa.matrixWorldInversePrev)
+		taa.matrixWorldInversePrev = mat4.translate(taa.matrixWorldInversePrev, pivotDelta.x, 0, pivotDelta.z);
 
 	// Directional light
 
@@ -537,7 +544,10 @@ function animate(rafTime) {
 
 			if(inFrustum) {
 				buildingMaterial.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-				buildingMaterial.uniforms.modelViewMatrixPrev.value = mat4.multiply(taa.matrixWorldInversePrev || rCamera.matrixWorldInverse, object.matrixWorld);
+				buildingMaterial.uniforms.modelViewMatrixPrev.value = mat4.multiply(
+					taa.matrixWorldInversePrev || rCamera.matrixWorldInverse,
+					object.matrixWorld
+				);
 				buildingMaterial.updateUniform('modelViewMatrix');
 				buildingMaterial.updateUniform('modelViewMatrixPrev');
 
@@ -567,15 +577,12 @@ function animate(rafTime) {
 		const material = batch.material;
 
 		material.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+		material.uniforms.modelMatrix.value = object.matrixWorld;
+		material.uniforms.viewMatrix.value = rCamera.matrixWorldInverse;
+		material.uniforms.viewMatrixPrev.value = taa.matrixWorldInversePrev || rCamera.matrixWorldInverse;
 		material.use();
 
 		RP.culling = false;
-
-		material.uniforms.modelMatrix.value = object.matrixWorld;
-		material.updateUniform('modelMatrix');
-		material.uniforms.viewMatrix.value = rCamera.matrixWorldInverse;
-		material.uniforms.viewMatrixPrev.value = taa.matrixWorldInversePrev;
-		material.updateUniform('viewMatrix');
 
 		object.draw();
 
@@ -742,7 +749,7 @@ function animate(rafTime) {
 	gBuffer.drawBloom();
 
 	if(Config.SMAA) RP.bindFramebuffer(gBuffer.framebufferOutput);
-	else RP.bindFramebuffer(ssaa.framebuffer);
+	else RP.bindFramebuffer(null);
 
 	ldrCompose.material.uniforms.tHDR.value = Config.TAA ? taa.framebuffer.textures[0] : gBuffer.framebufferHDR.textures[0];
 	ldrCompose.material.use();
@@ -767,15 +774,11 @@ function animate(rafTime) {
 		smaa.materials.weights.use();
 		quad.draw();
 
-		RP.bindFramebuffer(ssaa.framebuffer);
+		RP.bindFramebuffer(null);
 
 		smaa.materials.blend.uniforms.tColor.value = gBuffer.framebufferOutput.textures[0];
 		smaa.materials.blend.use();
 		quad.draw();
-
-		ssaa.blitToScreen();
-	} else {
-		ssaa.blitToScreen();
 	}
 
 	//

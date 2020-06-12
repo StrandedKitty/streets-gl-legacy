@@ -96,6 +96,6 @@ void main() {
     outPosition = vPosition;
     outMetallicRoughness = vec4(metalness, roughness, specular, 1.);
     outEmission = vec4(0, 0, 0, 1.);
-    outMotion = 0.25 * vec3(vClipPos / vClipPos.w - vClipPosPrev / vClipPosPrev.w);
+    outMotion = 0.5 * vec3(vClipPos / vClipPos.w - vClipPosPrev / vClipPosPrev.w);
     outMotion.z = vClipPosPrev.z;
 }
