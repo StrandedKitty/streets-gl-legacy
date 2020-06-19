@@ -1,21 +1,14 @@
 import polylabel from 'polylabel';
 import vec3 from "../math/vec3";
 import {calculateNormal} from "../Utils";
+import Roof from "./Roof";
 
-export default class PyramidalRoof {
+export default class PyramidalRoof extends Roof {
     constructor(params) {
-        this.way = params.way;
-        this.height = params.height;
-        this.buildingHeight = params.buildingHeight;
-        this.color = params.color;
+        super(params);
 
-        this.mesh = {
-            vertices: [],
-            normals: [],
-            colors: []
-        };
-        
         this.build();
+        this.flatten();
     }
 
     build() {
@@ -48,9 +41,9 @@ export default class PyramidalRoof {
                 ];
 
                 this.mesh.vertices.push(
-                    ...triangle[0],
-                    ...triangle[1],
-                    ...triangle[2]
+                    triangle[0],
+                    triangle[1],
+                    triangle[2]
                 );
 
                 const normal = calculateNormal(
@@ -60,7 +53,7 @@ export default class PyramidalRoof {
                 );
 
                 for(let j = 0; j < 3; j++) {
-                    this.mesh.normals.push(normal.x, normal.y, normal.z);
+                    this.mesh.normals.push([normal.x, normal.y, normal.z]);
                     this.mesh.colors.push(...this.color);
                 }
             }

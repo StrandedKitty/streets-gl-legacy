@@ -10,7 +10,8 @@ const Config = {
 	SSAOResolution: 1,
 	SSAOBlur: true,
 	volumetricLighting: false,
-	realTimeSun: false
+	realTimeSun: false,
+	shadows: true
 };
 
 Config.set = function (key, value, force) {

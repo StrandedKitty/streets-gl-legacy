@@ -33,6 +33,7 @@ uniform sampler2D tBRDF;
 uniform sampler2D uVolumetric;
 uniform float uEmissionFactor;
 uniform sampler2D uClouds;
+uniform int shadowMapping;
 
 uniform mat3 normalMatrix;
 uniform mat4 cameraMatrixWorld;
@@ -256,6 +257,7 @@ void main() {
     float shadowFactor = 1.;
 
     #if SHADOW_MAPPING > 0
+    if(shadowMapping == 1) {
         int cascadeId = -1;
 
         for(int i = 0; i < CSM_CASCADES; i++) {
@@ -290,6 +292,7 @@ void main() {
             }
             #endif
         }
+    }
     #endif
 
     color += applyDirectionalLight(light, materialInfo, worldNormal, worldView) * shadowFactor * sunIntensity;

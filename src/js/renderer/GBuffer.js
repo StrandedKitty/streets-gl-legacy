@@ -121,6 +121,6 @@ export default class GBuffer {
 		this.framebuffer.setSize(width, height);
 		this.framebufferHDR.setSize(width, height);
 		this.framebufferOutput.setSize(width, height);
-		this.bloom.setSize(width / Config.SSAA, height / Config.SSAA);
+		this.bloom.setSize(width, height);
 	}
 }

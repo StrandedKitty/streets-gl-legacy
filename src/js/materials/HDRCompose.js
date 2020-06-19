@@ -38,7 +38,8 @@ export default class HDRCompose {
 				sunIntensity: {type: '1f', value: 1.},
 				uEmissionFactor: {type: '1f', value: 30},
 				fogColor: {type: '3fv', value: new Float32Array([.77, .86, .91])},
-				uClouds: {type: 'texture', value: params.cloudsTexture}
+				uClouds: {type: 'texture', value: params.cloudsTexture},
+				shadowMapping: {type: '1i', value: 0}
 			}
 		});
 	}

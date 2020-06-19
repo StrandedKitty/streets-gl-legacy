@@ -255,13 +255,13 @@ function init() {
 	gui.add(Config, 'SMAA');
 	gui.add(Config, 'SSAO');
 	gui.add(Config, 'SSAOBlur');
+	gui.add(Config, 'shadows');
+	gui.add({add: () => Config.set('pixelRatio', 1, true) }, 'add').name('Reset pixel ratio');
 	gui.add(Config, 'volumetricLighting');
 	gui.add(light, 'intensity');
-	gui.add(hdrCompose.material.uniforms.ambientIntensity, 'value');
 	gui.add(debugSettings, 'timeOffset', -4e4, 4e4);
 	gui.add(volumetricClouds.material.uniforms.densityFactor, 'value', 0.001, 0.1);
 	gui.add(volumetricClouds.material.uniforms.densityFactor2, 'value', 0, 1);
-	//gui.add(volumetricClouds.material.uniforms.powderFactor, 'value', 0, 1);
 	gui.addColor({color: '#1861b3'}, 'color').onChange(function (e) {
 		const v = hexToRgb(e);
 		hdrCompose.material.uniforms.fogColor.value = new Float32Array([v[0] / 255, v[1] / 255, v[2] / 255]);
@@ -286,6 +286,7 @@ function init() {
 		volumetricLighting.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		volumetricClouds.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
 		taa.setSize(window.innerWidth * Config.pixelRatio, window.innerHeight * Config.pixelRatio);
+
 		taa.material.uniforms.ignoreHistory.value = 1;
 	}, false);
 
@@ -374,77 +375,79 @@ function animate(rafTime) {
 
 	// Shadow mapping
 
-	for(let i = 0; i < csm.lights.length; i++) {
-		let rCamera = csm.lights[i].camera;
+	if(Config.shadows) {
+		for(let i = 0; i < csm.lights.length; i++) {
+			let rCamera = csm.lights[i].camera;
 
-		rCamera.updateFrustum();
+			rCamera.updateFrustum();
 
-		RP.bindFramebuffer(csm.lights[i].framebuffer);
+			RP.bindFramebuffer(csm.lights[i].framebuffer);
 
-		RP.depthTest = true;
-		RP.depthWrite = true;
+			RP.depthTest = true;
+			RP.depthWrite = true;
 
-		RP.clearFramebuffer({
-			clearColor: [1, 1, 1, 1],
-			color: true,
-			depth: true
-		});
+			RP.clearFramebuffer({
+				clearColor: [1, 1, 1, 1],
+				color: true,
+				depth: true
+			});
 
-		{
-			groundMaterialDepth.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
-			groundMaterialDepth.use();
+			{
+				groundMaterialDepth.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
+				groundMaterialDepth.use();
 
-			let object = ground;
+				let object = ground;
 
-			let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-			groundMaterialDepth.uniforms.modelViewMatrix.value = modelViewMatrix;
-			groundMaterialDepth.updateUniform('modelViewMatrix');
+				let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+				groundMaterialDepth.uniforms.modelViewMatrix.value = modelViewMatrix;
+				groundMaterialDepth.updateUniform('modelViewMatrix');
 
-			object.draw();
-		}
+				object.draw();
+			}
 
-		{
-			buildingDepthMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
-			buildingDepthMaterial.use();
+			{
+				buildingDepthMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
+				buildingDepthMaterial.use();
 
-			for(let j = 0; j < buildings.children.length; j++) {
-				let object = buildings.children[j];
+				for(let j = 0; j < buildings.children.length; j++) {
+					let object = buildings.children[j];
 
-				if(i === 0) object.data.tile.time += delta;
+					if(i === 0) object.data.tile.time += delta;
 
-				const inFrustum = object.inCameraFrustum(rCamera);
+					const inFrustum = object.inCameraFrustum(rCamera);
 
-				if(inFrustum) {
-					let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-					buildingDepthMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
-					buildingDepthMaterial.updateUniform('modelViewMatrix');
+					if(inFrustum) {
+						let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+						buildingDepthMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
+						buildingDepthMaterial.updateUniform('modelViewMatrix');
 
-					buildingDepthMaterial.uniforms.time.value = object.data.tile.time;
-					buildingDepthMaterial.updateUniform('time');
+						buildingDepthMaterial.uniforms.time.value = object.data.tile.time;
+						buildingDepthMaterial.updateUniform('time');
 
-					object.draw();
+						object.draw();
+					}
 				}
 			}
-		}
 
-		for(const batchName in batchesInstanced) {
-			const batch = batchesInstanced[batchName];
-			const object = batch.mesh;
-			const material = batch.materialDepth;
+			for(const batchName in batchesInstanced) {
+				const batch = batchesInstanced[batchName];
+				const object = batch.mesh;
+				const material = batch.materialDepth;
 
-			material.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
-			material.use();
+				material.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+				material.use();
 
-			RP.culling = false;
+				RP.culling = false;
 
-			material.uniforms.modelMatrix.value = object.matrixWorld;
-			material.updateUniform('modelMatrix');
-			material.uniforms.viewMatrix.value = rCamera.matrixWorldInverse;
-			material.updateUniform('viewMatrix');
+				material.uniforms.modelMatrix.value = object.matrixWorld;
+				material.updateUniform('modelMatrix');
+				material.uniforms.viewMatrix.value = rCamera.matrixWorldInverse;
+				material.updateUniform('viewMatrix');
 
-			object.draw();
+				object.draw();
 
-			RP.culling = true;
+				RP.culling = true;
+			}
 		}
 	}
 
@@ -715,7 +718,8 @@ function animate(rafTime) {
 	RP.depthWrite = false;
 	RP.depthTest = false;
 
-	csm.updateUniforms(hdrCompose.material);
+	if(Config.shadows) csm.updateUniforms(hdrCompose.material);
+	hdrCompose.material.uniforms.shadowMapping.value = Config.shadows ? 1 : 0;
 	hdrCompose.material.uniforms['uLight.direction'].value = new Float32Array(vec3.toArray(csm.direction));
 	hdrCompose.material.uniforms['uLight.intensity'].value = light.intensity * sunIntensity;
 	hdrCompose.material.uniforms.sunIntensity.value = sunIntensity;

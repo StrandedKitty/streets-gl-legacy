@@ -2,22 +2,16 @@ import polylabel from 'polylabel';
 import vec3 from "../math/vec3";
 import {calculateNormal} from "../Utils";
 import vec2 from "../math/vec2";
+import Roof from "./Roof";
 
-export default class DomeRoof {
+export default class DomeRoof extends Roof {
     constructor(params) {
-        this.way = params.way;
-        this.height = params.height;
-        this.buildingHeight = params.buildingHeight;
-        this.color = params.color;
+        super(params);
+
         this.steps = 6;
 
-        this.mesh = {
-            vertices: [],
-            normals: [],
-            colors: []
-        };
-
         this.build();
+        this.flatten();
     }
 
     build() {
@@ -84,12 +78,12 @@ export default class DomeRoof {
                     ];
 
                     this.mesh.vertices.push(
-                        ...tris[0][0],
-                        ...tris[0][1],
-                        ...tris[0][2],
-                        ...tris[1][0],
-                        ...tris[1][1],
-                        ...tris[1][2]
+                        tris[0][0],
+                        tris[0][1],
+                        tris[0][2],
+                        tris[1][0],
+                        tris[1][1],
+                        tris[1][2]
                     );
 
                     const normals = [
@@ -106,12 +100,12 @@ export default class DomeRoof {
                     ];
 
                     for(let j = 0; j < 3; j++) {
-                        this.mesh.normals.push(normals[0].x, normals[0].y, normals[0].z);
+                        this.mesh.normals.push([normals[0].x, normals[0].y, normals[0].z]);
                         this.mesh.colors.push(...this.color);
                     }
 
                     for(let j = 0; j < 3; j++) {
-                        this.mesh.normals.push(normals[1].x, normals[1].y, normals[1].z);
+                        this.mesh.normals.push([normals[1].x, normals[1].y, normals[1].z]);
                         this.mesh.colors.push(...this.color);
                     }
                 }
