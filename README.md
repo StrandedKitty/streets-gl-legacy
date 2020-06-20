@@ -22,7 +22,7 @@ Streets GL is an interactive [OpenStreetMap](https://www.openstreetmap.org/) dat
 - Volumetric lighting
 - SSAO (the one sometimes referred to as normal-oriented hemisphere SSAO)
 - SMAA
-- SSAA
+- TAA
 
 ## Contributing
 
