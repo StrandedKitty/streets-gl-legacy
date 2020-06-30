@@ -1,14 +1,15 @@
 import shaders from "../Shaders";
+import Config from "../Config";
+import Pass from "../Pass";
 
-export default class TAA {
+export default class TAA extends Pass {
 	constructor(renderer, width, height) {
-		this.renderer = renderer;
-		this.width = width;
-		this.height = height;
+		super(renderer, width, height);
+
 		this.frameCount = 0;
 		this.matrixWorldInversePrev = null;
 
-		this.framebufferPrev = this.renderer.createFramebuffer({
+		this.framebuffers.prev = this.renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
 			textures: [this.renderer.createTexture({
@@ -23,7 +24,7 @@ export default class TAA {
 			})]
 		});
 
-		this.framebuffer = this.renderer.createFramebuffer({
+		this.framebuffers.main = this.renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
 			textures: [this.renderer.createTexture({
@@ -38,12 +39,12 @@ export default class TAA {
 			})]
 		});
 
-		this.material = this.renderer.createMaterial({
+		this.materials.main = this.renderer.createMaterial({
 			name: 'TAA composer',
 			vertexShader: shaders.TAA.vertex,
 			fragmentShader: shaders.TAA.fragment,
 			uniforms: {
-				tAccum: {type: 'texture', value: this.framebufferPrev.textures[0]},
+				tAccum: {type: 'texture', value: this.framebuffers.prev.textures[0]},
 				tNew: {type: 'texture', value: null},
 				tMotion: {type: 'texture', value: null},
 				tPosition: {type: 'texture', value: null},
@@ -52,22 +53,31 @@ export default class TAA {
 		});
 	}
 
+	jitter(projectionMatrix) {
+		const offsets = [
+			[-7 / 8, 1 / 8],
+			[-5 / 8, -5 / 8],
+			[-1 / 8, -3 / 8],
+			[3 / 8, -7 / 8],
+			[5 / 8, -1 / 8],
+			[7 / 8, 7 / 8],
+			[1 / 8, 3 / 8],
+			[-3 / 8, 5 / 8]
+		];
+		projectionMatrix[8] = offsets[this.frameCount % offsets.length][0] / (window.innerWidth * Config.pixelRatio);
+		projectionMatrix[9] = offsets[this.frameCount % offsets.length][1] / (window.innerHeight * Config.pixelRatio);
+
+		this.frameCount++;
+	}
+
 	copyResultToOutput() {
 		this.renderer.blitFramebuffer({
-			source: this.framebuffer,
-			destination: this.framebufferPrev,
-			destinationWidth: this.framebufferPrev.width,
-			destinationHeight: this.framebufferPrev.height,
+			source: this.framebuffers.main,
+			destination: this.framebuffers.prev,
+			destinationWidth: this.framebuffers.prev.width,
+			destinationHeight: this.framebuffers.prev.height,
 			filter: 'NEAREST',
 			depth: false
 		});
-	}
-
-	setSize(width, height) {
-		this.width = width;
-		this.height = height;
-
-		this.framebuffer.setSize(width, height);
-		this.framebufferPrev.setSize(width, height);
 	}
 }

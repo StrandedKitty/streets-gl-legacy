@@ -2,13 +2,13 @@ import shaders from '../Shaders';
 import vec3 from "../math/vec3";
 import {lerp} from "../Utils";
 import SeededRandom from "../math/SeededRandom";
+import Pass from "../Pass";
 
-export default class SSAO {
+export default class SSAO extends Pass {
 	constructor(renderer, width, height) {
-		this.width = width;
-		this.height = height;
+		super(renderer, width, height);
 
-		this.framebuffer = renderer.createFramebuffer({
+		this.framebuffers.main = renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
 			textures: [renderer.createTexture({
@@ -22,7 +22,7 @@ export default class SSAO {
 			})]
 		});
 
-		this.material = renderer.createMaterial({
+		this.materials.main = renderer.createMaterial({
 			name: 'SAO',
 			vertexShader: shaders.sao.vertex,
 			fragmentShader: shaders.sao.fragment,
@@ -74,13 +74,5 @@ export default class SSAO {
 		}
 
 		return samples;
-	}
-
-	setSize(width, height) {
-		this.width = width;
-		this.height = height;
-
-		this.framebuffer.setSize(width, height);
-		this.material.uniforms.resolution.value = [width, height];
 	}
 }

@@ -1,11 +1,11 @@
 import shaders from '../Shaders';
+import Pass from "../Pass";
 
-export default class VolumetricLighting {
+export default class VolumetricLighting extends Pass {
 	constructor(renderer, width, height) {
-		this.width = width;
-		this.height = height;
+		super(renderer, width, height);
 
-		this.framebuffer = renderer.createFramebuffer({
+		this.framebuffers.main = renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
 			textures: [renderer.createTexture({
@@ -19,7 +19,7 @@ export default class VolumetricLighting {
 			})]
 		});
 
-		this.framebufferBlurred = renderer.createFramebuffer({
+		this.framebuffers.blurred = renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
 			textures: [renderer.createTexture({
@@ -33,7 +33,7 @@ export default class VolumetricLighting {
 			})]
 		});
 
-		this.material = renderer.createMaterial({
+		this.materials.main = renderer.createMaterial({
 			name: 'Volumetric Lighting',
 			vertexShader: shaders.volumetricLighting.vertex,
 			fragmentShader: shaders.volumetricLighting.fragment,
@@ -46,15 +46,7 @@ export default class VolumetricLighting {
 			}
 		});
 
-		this.texture = this.framebuffer.textures[0];
-		this.blurredTexture = this.framebufferBlurred.textures[0];
-	}
-
-	setSize(width, height) {
-		this.width = width;
-		this.height = height;
-
-		this.framebuffer.setSize(width, height);
-		this.framebufferBlurred.setSize(width, height);
+		this.texture = this.framebuffers.main.textures[0];
+		this.blurredTexture = this.framebuffers.blurred.textures[0];
 	}
 }

@@ -1,16 +1,15 @@
 import shaders from '../Shaders';
 import {clamp} from "../Utils";
 import FullScreenQuad from "../FullScreenQuad";
-import Config from "../Config";
+import Pass from "../Pass";
 
-export default class VolumetricClouds {
+export default class VolumetricClouds extends Pass {
 	constructor(renderer, width, height) {
-		this.width = width;
-		this.height = height;
+		super(renderer, width, height);
+
 		this.resolutionFactor = 1;
-		this.renderer = renderer;
 
-		this.framebuffer = this.renderer.createFramebuffer({
+		this.framebuffers.main = this.renderer.createFramebuffer({
 			width: this.width * this.resolutionFactor,
 			height: this.height * this.resolutionFactor,
 			clearColor: [0, 0, 0, 1],
@@ -26,7 +25,7 @@ export default class VolumetricClouds {
 			})]
 		});
 
-		this.framebufferComposed = this.renderer.createFramebuffer({
+		this.framebuffers.composed = this.renderer.createFramebuffer({
 			width: this.width * this.resolutionFactor,
 			height: this.height * this.resolutionFactor,
 			clearColor: [0, 0, 0, 1],
@@ -42,13 +41,13 @@ export default class VolumetricClouds {
 			})]
 		});
 
-		this.material = this.renderer.createMaterial({
+		this.materials.main = this.renderer.createMaterial({
 			name: 'Volumetric clouds',
 			vertexShader: shaders.volumetricClouds.vertex,
 			fragmentShader: shaders.volumetricClouds.fragment,
 			uniforms: {
 				tPosition: {type: 'texture', value: null},
-				positionMipLevel: {type: '1f', value: ~~Math.log2(Config.SSAA / this.resolutionFactor)},
+				positionMipLevel: {type: '1f', value: 0},
 				time: {type: '1f', value: 0},
 				densityFactor2: {type: '1f', value: 0.35},
 				densityFactor: {type: '1f', value: 0.005},
@@ -63,27 +62,26 @@ export default class VolumetricClouds {
 				tNoise: {type: 'texture3D', value: this.buildNoiseTexture()},
 				tBlueNoise: {type: 'texture', value: this.renderer.createTexture({url: '/textures/blue_noise_rgba.png', wrap: 'repeat'})},
 				tWeather: {type: 'texture', value: this.renderer.createTexture({url: '/textures/weather.png', wrap: 'repeat'})},
-				tAccum: {type: 'texture', value: this.framebufferComposed.textures[0]}
+				tAccum: {type: 'texture', value: this.framebuffers.composed.textures[0]}
 			}
 		});
 
-		this.texture = this.framebufferComposed.textures[0];
+		this.texture = this.framebuffers.composed.textures[0];
 	}
 
 	setSize(width, height) {
-		this.width = Math.floor(width * this.resolutionFactor);
-		this.height = Math.floor(height * this.resolutionFactor);
-
-		this.framebuffer.setSize(this.width, this.height);
-		this.framebufferComposed.setSize(this.width, this.height);
+		super.setSize(
+			Math.floor(width * this.resolutionFactor),
+			Math.floor(height * this.resolutionFactor)
+		)
 	}
 
 	copyResultToOutput() {
 		this.renderer.blitFramebuffer({
-			source: this.framebuffer,
-			destination: this.framebufferComposed,
-			destinationWidth: this.framebufferComposed.width,
-			destinationHeight: this.framebufferComposed.height,
+			source: this.framebuffers.main,
+			destination: this.framebuffers.composed,
+			destinationWidth: this.framebuffers.composed.width,
+			destinationHeight: this.framebuffers.composed.height,
 			filter: 'NEAREST',
 			depth: false
 		});

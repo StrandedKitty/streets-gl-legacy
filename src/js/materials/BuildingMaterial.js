@@ -1,9 +1,10 @@
 import shaders from '../Shaders';
 import Config from "../Config";
+import MaterialGroup from "../MaterialGroup";
 
-export default class BuildingMaterial {
+export default class BuildingMaterial extends MaterialGroup {
 	constructor(renderer) {
-		this.renderer = renderer;
+		super(renderer);
 
 		this.textureArraysFacade = {
 			color: null,
@@ -21,7 +22,7 @@ export default class BuildingMaterial {
 
 		this.loadTextures();
 
-		this.material = renderer.createMaterial({
+		this.default = renderer.createMaterial({
 			name: 'buildingMaterial',
 			vertexShader: shaders.building.vertex,
 			fragmentShader: shaders.building.fragment,
@@ -45,7 +46,7 @@ export default class BuildingMaterial {
 			}
 		});
 
-		this.depthMaterial = renderer.createMaterial({
+		this.depth = renderer.createMaterial({
 			name: 'buildingMaterialDepth',
 			vertexShader: shaders.buildingDepth.vertex,
 			fragmentShader: shaders.buildingDepth.fragment,

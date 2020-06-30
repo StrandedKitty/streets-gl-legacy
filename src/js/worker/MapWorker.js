@@ -18,6 +18,11 @@ export default class MapWorker {
 	}
 
 	onmessage(e) {
+		if(e.data.error === true) {
+			this.worker.postMessage({code: 'start', position: [e.data.x, e.data.y]});
+			return;
+		}
+
 		this.queue--;
 
 		const callback = this.callbacks[e.data.x + ',' + e.data.y];

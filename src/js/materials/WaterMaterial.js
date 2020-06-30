@@ -1,11 +1,12 @@
 import shaders from '../Shaders';
 import Config from "../Config";
+import MaterialGroup from "../MaterialGroup";
 
-export default class RoadMaterial {
+export default class RoadMaterial extends MaterialGroup {
 	constructor(renderer) {
-		this.renderer = renderer;
+		super(renderer);
 
-		this.material = renderer.createMaterial({
+		this.default = renderer.createMaterial({
 			name: 'water',
 			vertexShader: shaders.water.vertex,
 			fragmentShader: shaders.water.fragment,

@@ -1,13 +1,20 @@
 import shaders from '../Shaders';
 import {clamp} from "../Utils";
+import Pass from "../Pass";
 
-export default class HDRCompose {
-	constructor(renderer, params) {
-		this.renderer = renderer;
+export default class HDRCompose extends Pass {
+	constructor(renderer, {
+		gBuffer,
+		skybox,
+		volumetricTexture,
+		cloudsTexture,
+		light
+	}) {
+		super(renderer, gBuffer.width, gBuffer.height);
 
-		this.gBuffer = params.gBuffer;
+		this.gBuffer = gBuffer;
 
-		this.material = this.renderer.createMaterial({
+		this.materials.main = this.renderer.createMaterial({
 			name: 'HDR compose',
 			vertexShader: shaders.quad.vertex,
 			fragmentShader: shaders.quad.fragment,
@@ -19,18 +26,18 @@ export default class HDRCompose {
 				uMetallicRoughness: {type: 'texture', value: this.gBuffer.textures.metallicRoughness},
 				uEmission: {type: 'texture', value: this.gBuffer.textures.emission},
 				uAO: {type: 'texture', value: null},
-				uVolumetric: {type: 'texture', value: params.volumetricTexture},
-				sky: {type: 'textureCube', value: params.skybox.cubeTexture},
+				uVolumetric: {type: 'texture', value: volumetricTexture},
+				sky: {type: 'textureCube', value: skybox.cubeTexture},
 				tBRDF: {type: 'texture', value: this.renderer.createTexture({url: '/textures/brdf.png', minFilter: 'LINEAR', wrap: 'clamp'})},
-				'uLight.direction': {type: '3fv', value: params.light.direction},
-				'uLight.range': {type: '1f', value: params.light.range},
-				'uLight.color': {type: '3fv', value: params.light.color},
-				'uLight.intensity': {type: '1f', value: params.light.intensity},
-				'uLight.position': {type: '3fv', value: params.light.position},
-				'uLight.innerConeCos': {type: '1f', value: params.light.innerConeCos},
-				'uLight.outerConeCos': {type: '1f', value: params.light.outerConeCos},
-				'uLight.type': {type: '1i', value: params.light.type},
-				'uLight.padding': {type: '2fv', value: params.light.padding},
+				'uLight.direction': {type: '3fv', value: light.direction},
+				'uLight.range': {type: '1f', value: light.range},
+				'uLight.color': {type: '3fv', value: light.color},
+				'uLight.intensity': {type: '1f', value: light.intensity},
+				'uLight.position': {type: '3fv', value: light.position},
+				'uLight.innerConeCos': {type: '1f', value: light.innerConeCos},
+				'uLight.outerConeCos': {type: '1f', value: light.outerConeCos},
+				'uLight.type': {type: '1i', value: light.type},
+				'uLight.padding': {type: '2fv', value: light.padding},
 				normalMatrix: {type: 'Matrix3fv', value: null},
 				cameraMatrixWorld: {type: 'Matrix4fv', value: null},
 				cameraMatrixWorldInverse: {type: 'Matrix4fv', value: null},
@@ -38,7 +45,7 @@ export default class HDRCompose {
 				sunIntensity: {type: '1f', value: 1.},
 				uEmissionFactor: {type: '1f', value: 30},
 				fogColor: {type: '3fv', value: new Float32Array([.77, .86, .91])},
-				uClouds: {type: 'texture', value: params.cloudsTexture},
+				uClouds: {type: 'texture', value: cloudsTexture},
 				shadowMapping: {type: '1i', value: 0}
 			}
 		});

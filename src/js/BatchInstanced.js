@@ -13,8 +13,8 @@ export default class BatchInstanced {
 
 		this.mesh = null;
 
-		this.material = params.material.material;
-		this.materialDepth = params.material.materialDepth;
+		this.material = params.material.default;
+		this.materialDepth = params.material.depth;
 
 		this.generateMesh();
 	}

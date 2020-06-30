@@ -1,11 +1,11 @@
 import shaders from '../Shaders';
+import Pass from "../Pass";
 
-export default class BilateralBlur {
+export default class BilateralBlur extends Pass {
 	constructor(renderer, width, height) {
-		this.width = width;
-		this.height = height;
+		super(renderer, width, height);
 
-		this.framebufferTemp = renderer.createFramebuffer({
+		this.framebuffers.temp = this.renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
 			textures: [renderer.createTexture({
@@ -19,7 +19,7 @@ export default class BilateralBlur {
 			})]
 		});
 
-		this.framebuffer = renderer.createFramebuffer({
+		this.framebuffers.main = renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
 			textures: [renderer.createTexture({
@@ -33,7 +33,7 @@ export default class BilateralBlur {
 			})]
 		});
 
-		this.material = renderer.createMaterial({
+		this.materials.main = renderer.createMaterial({
 			name: 'Bilateral blur',
 			vertexShader: shaders.bilateralBlur.vertex,
 			fragmentShader: shaders.bilateralBlur.fragment,
@@ -46,14 +46,5 @@ export default class BilateralBlur {
 				tDepth: {type: 'texture', value: null},
 			}
 		});
-	}
-
-	setSize(width, height) {
-		this.width = width;
-		this.height = height;
-
-		this.framebuffer.setSize(width, height);
-		this.framebufferTemp.setSize(width, height);
-		this.material.uniforms.resolution.value = [width, height];
 	}
 }

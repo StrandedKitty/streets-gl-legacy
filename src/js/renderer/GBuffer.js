@@ -1,6 +1,5 @@
-import Bloom from "../materials/Bloom";
+import Bloom from "../passes/Bloom";
 import FullScreenQuad from "../FullScreenQuad";
-import Config from "../Config";
 
 export default class GBuffer {
 	constructor(renderer, width, height, structure) {
@@ -88,30 +87,30 @@ export default class GBuffer {
 	}
 
 	drawBloom() {
-		this.renderer.bindFramebuffer(this.bloom.highLuminanceFramebuffer);
+		this.renderer.bindFramebuffer(this.bloom.framebuffers.highLuminance);
 
-		this.bloom.brightnessFilterMaterial.use();
+		this.bloom.materials.brightnessFilter.use();
 		this.quad.draw();
 
-		this.bloom.highLuminanceFramebuffer.textures[0].generateMipmaps();
+		this.bloom.framebuffers.highLuminance.textures[0].generateMipmaps();
 		this.bloom.buildDownscaledTextures();
 
 		for(let i = 0; i < this.bloom.passes; i++) {
 			this.renderer.bindFramebuffer(this.bloom.downscaledFramebuffersTemp[i]);
-			this.bloom.blurMaterial.uniforms.tHDR.value = this.bloom.downscaledTextures[i];
-			this.bloom.blurMaterial.uniforms.direction.value = [1, 0];
-			this.bloom.blurMaterial.use();
+			this.bloom.materials.blur.uniforms.tHDR.value = this.bloom.downscaledTextures[i];
+			this.bloom.materials.blur.uniforms.direction.value = [1, 0];
+			this.bloom.materials.blur.use();
 			this.quad.draw();
 
 			this.renderer.bindFramebuffer(this.bloom.downscaledFramebuffers[i]);
-			this.bloom.blurMaterial.uniforms.tHDR.value = this.bloom.downscaledFramebuffersTemp[i].textures[0];
-			this.bloom.blurMaterial.uniforms.direction.value = [0, 1];
-			this.bloom.blurMaterial.use();
+			this.bloom.materials.blur.uniforms.tHDR.value = this.bloom.downscaledFramebuffersTemp[i].textures[0];
+			this.bloom.materials.blur.uniforms.direction.value = [0, 1];
+			this.bloom.materials.blur.use();
 			this.quad.draw();
 		}
 
-		this.renderer.bindFramebuffer(this.bloom.blurredFramebuffer);
-		this.bloom.blurCombineMaterial.use();
+		this.renderer.bindFramebuffer(this.bloom.framebuffers.blurred);
+		this.bloom.materials.combine.use();
 		this.quad.draw();
 	}
 

@@ -1,10 +1,6 @@
 import {degrees2meters} from "./Utils";
 
 export default class MapNavigator {
-	constructor() {
-
-	}
-
 	getCurrentPosition(controls) {
 		if (navigator.geolocation) {
 			navigator.geolocation.getCurrentPosition(function (position) {

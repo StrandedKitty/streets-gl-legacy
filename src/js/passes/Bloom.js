@@ -1,16 +1,16 @@
 import shaders from '../Shaders';
+import Pass from "../Pass";
 
-export default class Bloom {
+export default class Bloom extends Pass {
 	constructor(renderer, width, height, params) {
-		this.width = width;
-		this.height = height;
-		this.renderer = renderer;
+		super(renderer, width, height);
+
 		this.passes = 4;
 
-		this.highLuminanceFramebuffer = renderer.createFramebuffer({
+		this.framebuffers.highLuminance = this.renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
-			textures: [renderer.createTexture({
+			textures: [this.renderer.createTexture({
 				width: this.width,
 				height: this.height,
 				internalFormat: 'RGBA16F',
@@ -22,10 +22,10 @@ export default class Bloom {
 			})]
 		});
 
-		this.blurredFramebufferTemp = renderer.createFramebuffer({
+		this.framebuffers.blurredTemp = this.renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
-			textures: [renderer.createTexture({
+			textures: [this.renderer.createTexture({
 				width: this.width,
 				height: this.height,
 				internalFormat: 'RGBA16F',
@@ -37,10 +37,10 @@ export default class Bloom {
 			})]
 		});
 
-		this.blurredFramebuffer = renderer.createFramebuffer({
+		this.framebuffers.blurred = this.renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
-			textures: [renderer.createTexture({
+			textures: [this.renderer.createTexture({
 				width: this.width,
 				height: this.height,
 				internalFormat: 'RGBA16F',
@@ -52,7 +52,7 @@ export default class Bloom {
 			})]
 		});
 
-		this.brightnessFilterMaterial = renderer.createMaterial({
+		this.materials.brightnessFilter = renderer.createMaterial({
 			name: 'Brightness filter',
 			vertexShader: shaders.brightnessFilter.vertex,
 			fragmentShader: shaders.brightnessFilter.fragment,
@@ -62,12 +62,12 @@ export default class Bloom {
 			}
 		});
 
-		this.blurMaterial = renderer.createMaterial({
+		this.materials.blur = renderer.createMaterial({
 			name: 'Blur',
 			vertexShader: shaders.blur.vertex,
 			fragmentShader: shaders.blur.fragment,
 			uniforms: {
-				tHDR: {type: 'texture', value: this.highLuminanceFramebuffer.textures[0]},
+				tHDR: {type: 'texture', value: this.framebuffers.highLuminance.textures[0]},
 				resolution: {type: '2fv', value: [width, height]},
 				direction: {type: '2fv', value: [1, 0]}
 			}
@@ -78,10 +78,10 @@ export default class Bloom {
 		this.downscaledTextures = new Array(this.passes);
 
 		for(let i = 0; i < this.passes; i++) {
-			this.downscaledFramebuffers[i] = renderer.createFramebuffer({
+			this.downscaledFramebuffers[i] = this.renderer.createFramebuffer({
 				width: Math.floor(this.width / 2 ** (i + 1)),
 				height: Math.floor(this.height / 2 ** (i + 1)),
-				textures: [renderer.createTexture({
+				textures: [this.renderer.createTexture({
 					width: Math.floor(this.width / 2 ** (i + 1)),
 					height: Math.floor(this.height / 2 ** (i + 1)),
 					internalFormat: 'RGBA16F',
@@ -93,7 +93,7 @@ export default class Bloom {
 				})]
 			});
 
-			this.downscaledFramebuffersTemp[i] = renderer.createFramebuffer({
+			this.downscaledFramebuffersTemp[i] = this.renderer.createFramebuffer({
 				width: Math.floor(this.width / 2 ** (i + 1)),
 				height: Math.floor(this.height / 2 ** (i + 1)),
 				textures: [renderer.createTexture({
@@ -111,7 +111,7 @@ export default class Bloom {
 			this.downscaledTextures[i] = this.downscaledFramebuffers[i].textures[0];
 		}
 
-		this.blurCombineMaterial = renderer.createMaterial({
+		this.materials.combine = renderer.createMaterial({
 			name: 'Blur combine',
 			vertexShader: shaders.blurCombine.vertex,
 			fragmentShader: shaders.blurCombine.fragment,
@@ -126,7 +126,7 @@ export default class Bloom {
 
 	buildDownscaledTextures() {
 		for(let i = 0; i < this.passes; i++) {
-			const source = i === 0 ? this.highLuminanceFramebuffer : this.downscaledFramebuffers[i - 1];
+			const source = i === 0 ? this.framebuffers.highLuminance : this.downscaledFramebuffers[i - 1];
 
 			this.renderer.blitFramebuffer({
 				source: source,
@@ -139,23 +139,12 @@ export default class Bloom {
 		}
 	}
 
-	blurTextures() {
-
-	}
-
 	setSize(width, height) {
-		this.width = width;
-		this.height = height;
-
-		this.highLuminanceFramebuffer.setSize(width, height);
-		this.blurredFramebuffer.setSize(width, height);
-		this.blurredFramebufferTemp.setSize(width, height);
+		super.setSize(width, height);
 
 		for(let i = 0; i < this.passes; i++) {
 			this.downscaledFramebuffers[i].setSize(Math.floor(width / 2 ** (i + 1)), Math.floor(height / 2 ** (i + 1)));
 			this.downscaledFramebuffersTemp[i].setSize(Math.floor(width / 2 ** (i + 1)), Math.floor(height / 2 ** (i + 1)));
 		}
-
-		this.blurMaterial.uniforms.resolution.value = [width, height];
 	}
 }

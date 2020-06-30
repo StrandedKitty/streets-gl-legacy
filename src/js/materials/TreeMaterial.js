@@ -1,9 +1,10 @@
 import shaders from '../Shaders';
 import Config from "../Config";
+import MaterialGroup from "../MaterialGroup";
 
-export default class TreeMaterial {
+export default class TreeMaterial extends MaterialGroup {
 	constructor(renderer) {
-		this.renderer = renderer;
+		super(renderer);
 
 		this.texturesNumber = 2;
 
@@ -14,7 +15,7 @@ export default class TreeMaterial {
 
 		this.loadTextures();
 
-		this.material = renderer.createMaterial({
+		this.default = renderer.createMaterial({
 			name: 'tree',
 			vertexShader: shaders.tree.vertex,
 			fragmentShader: shaders.tree.fragment,
@@ -30,7 +31,7 @@ export default class TreeMaterial {
 			}
 		});
 
-		this.materialDepth = renderer.createMaterial({
+		this.depth = renderer.createMaterial({
 			name: 'treeDepth',
 			vertexShader: shaders.treeDepth.vertex,
 			fragmentShader: shaders.treeDepth.fragment,

@@ -1,26 +1,26 @@
 import shaders from '../Shaders';
+import Pass from "../Pass";
 
-export default class SMAA {
+export default class SMAA extends Pass {
 	constructor(renderer, width, height) {
-		this.width = width;
-		this.height = height;
+		super(renderer, width, height);
 
-		this.areaTexture = renderer.createTexture({
+		this.areaTexture = this.renderer.createTexture({
 			url: this.areaTextureData,
 			minFilter: 'LINEAR',
 			magFilter: 'LINEAR'
 		});
 
-		this.searchTexture = renderer.createTexture({
+		this.searchTexture = this.renderer.createTexture({
 			url: this.searchTextureData,
 			minFilter: 'NEAREST',
 			magFilter: 'NEAREST'
 		});
 
-		this.edgesFB = renderer.createFramebuffer({
+		this.framebuffers.edges = this.renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
-			textures: [renderer.createTexture({
+			textures: [this.renderer.createTexture({
 				width: this.width,
 				height: this.height,
 				internalFormat: 'RGBA',
@@ -31,10 +31,10 @@ export default class SMAA {
 			})]
 		});
 
-		this.weightsFB = renderer.createFramebuffer({
+		this.framebuffers.weights = this.renderer.createFramebuffer({
 			width: this.width,
 			height: this.height,
-			textures: [renderer.createTexture({
+			textures: [this.renderer.createTexture({
 				width: this.width,
 				height: this.height,
 				internalFormat: 'RGBA',
@@ -45,51 +45,38 @@ export default class SMAA {
 			})]
 		});
 
-		this.materials = {
-			edges: renderer.createMaterial({
-				name: 'SMAA_edges',
-				vertexShader: shaders.smaaEdges.vertex,
-				fragmentShader: shaders.smaaEdges.fragment,
-				uniforms: {
-					resolution: {type: '2fv', value: [1 / this.width, 1 / this.height]},
-					tDiffuse: {type: 'texture', value: null}
-				}
-			}),
-			weights: renderer.createMaterial({
-				name: 'SMAA_weights',
-				vertexShader: shaders.smaaWeights.vertex,
-				fragmentShader: shaders.smaaWeights.fragment,
-				uniforms: {
-					resolution: {type: '2fv', value: [1 / this.width, 1 / this.height]},
-					tDiffuse: {type: 'texture', value: this.edgesFB.textures[0]},
-					tArea: {type: 'texture', value: this.areaTexture},
-					tSearch: {type: 'texture', value: this.searchTexture}
-				}
-			}),
-			blend: renderer.createMaterial({
-				name: 'SMAA_blend',
-				vertexShader: shaders.smaaBlend.vertex,
-				fragmentShader: shaders.smaaBlend.fragment,
-				uniforms: {
-					resolution: {type: '2fv', value: [1 / this.width, 1 / this.height]},
-					tDiffuse: {type: 'texture', value: this.weightsFB.textures[0]},
-					tColor: {type: 'texture', value: null}
-				}
-			})
-		}
-	}
+		this.materials.edges = this.renderer.createMaterial({
+			name: 'SMAA_edges',
+			vertexShader: shaders.smaaEdges.vertex,
+			fragmentShader: shaders.smaaEdges.fragment,
+			uniforms: {
+				resolution: {type: '2fv', value: [1 / this.width, 1 / this.height]},
+				tDiffuse: {type: 'texture', value: null}
+			}
+		});
 
-	setSize(width, height) {
-		this.width = width;
-		this.height = height;
+		this.materials.weights = this.renderer.createMaterial({
+			name: 'SMAA_weights',
+			vertexShader: shaders.smaaWeights.vertex,
+			fragmentShader: shaders.smaaWeights.fragment,
+			uniforms: {
+				resolution: {type: '2fv', value: [1 / this.width, 1 / this.height]},
+				tDiffuse: {type: 'texture', value: this.framebuffers.edges.textures[0]},
+				tArea: {type: 'texture', value: this.areaTexture},
+				tSearch: {type: 'texture', value: this.searchTexture}
+			}
+		});
 
-		const res = [1 / this.width, 1 / this.height];
-		this.materials.edges.uniforms.resolution.value = res;
-		this.materials.weights.uniforms.resolution.value = res;
-		this.materials.blend.uniforms.resolution.value = res;
-
-		this.edgesFB.setSize(width, height);
-		this.weightsFB.setSize(width, height);
+		this.materials.blend = this.renderer.createMaterial({
+			name: 'SMAA_blend',
+			vertexShader: shaders.smaaBlend.vertex,
+			fragmentShader: shaders.smaaBlend.fragment,
+			uniforms: {
+				resolution: {type: '2fv', value: [1 / this.width, 1 / this.height]},
+				tDiffuse: {type: 'texture', value: this.framebuffers.weights.textures[0]},
+				tColor: {type: 'texture', value: null}
+			}
+		});
 	}
 
 	get areaTextureData() {
@@ -98,5 +85,14 @@ export default class SMAA {
 
 	get searchTextureData() {
 		return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAAAhCAAAAABIXyLAAAAAOElEQVRIx2NgGAWjYBSMglEwEICREYRgFBZBqDCSLA2MGPUIVQETE9iNUAqLR5gIeoQKRgwXjwAAGn4AtaFeYLEAAAAASUVORK5CYII=';
+	}
+
+	setSize(width, height) {
+		super.setSize(...arguments);
+
+		const res = [1 / this.width, 1 / this.height];
+		this.materials.edges.uniforms.resolution.value = res;
+		this.materials.weights.uniforms.resolution.value = res;
+		this.materials.blend.uniforms.resolution.value = res;
 	}
 }

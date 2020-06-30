@@ -1,4 +1,4 @@
-import {clamp, hexToRgb, sphericalToCartesian, tile2meters, tileEncode, toDeg, toRad} from './Utils';
+import {clamp, hexToRgb, sphericalToCartesian, tile2meters, tileEncode} from './Utils';
 import Config from './Config';
 import Frustum from './core/Frustum';
 import Controls from './Controls';
@@ -12,27 +12,23 @@ import Object3D from "./core/Object3D";
 import vec3 from "./math/vec3";
 import mat4 from "./math/mat4";
 import GBuffer from "./renderer/GBuffer";
-import SMAA from "./materials/SMAA";
-import SSAO from "./materials/SSAO";
-import BilateralBlur from "./materials/BilateralBlur";
+import SMAA from "./passes/SMAA";
+import SSAO from "./passes/SSAO";
+import BilateralBlur from "./passes/BilateralBlur";
 import Skybox from "./Skybox";
-import BuildingMaterial from "./materials/BuildingMaterial";
-import GroundMaterial from "./materials/GroundMaterial";
 import CSM from "./CSM";
-import TreeMaterial from "./materials/TreeMaterial";
 import Models from "./Models";
-import VolumetricLighting from "./materials/VolumetricLighting";
+import VolumetricLighting from "./passes/VolumetricLighting";
 import BatchInstanced from "./BatchInstanced";
 import Shapes from "./Shapes";
-import InstanceMaterial from "./materials/InstanceMaterial";
 import FullScreenQuad from "./FullScreenQuad";
-import RoadMaterial from "./materials/RoadMaterial";
-import WaterMaterial from "./materials/WaterMaterial";
-import HDRCompose from "./materials/HDRCompose";
-import LDRCompose from "./materials/LDRCompose";
+import HDRCompose from "./passes/HDRCompose";
+import LDRCompose from "./passes/LDRCompose";
 import MapNavigator from "./MapNavigator";
-import VolumetricClouds from "./materials/VolumetricClouds";
-import TAA from "./materials/TAA";
+import VolumetricClouds from "./passes/VolumetricClouds";
+import TAA from "./passes/TAA";
+import MaterialManager from "./MaterialManager";
+import Pipeline from "./Pipeline";
 
 const SunCalc = require('suncalc');
 
@@ -53,10 +49,10 @@ const features = {
 };
 
 let ground;
-let groundMaterial, groundMaterialDepth, wrapper, buildings, roads, instanceMeshes;
-let buildingMaterial, buildingDepthMaterial;
-let roadMaterial, roadDepthMaterial;
+let wrapper, buildings, roads, instanceMeshes;
 let quad, hdrCompose, ldrCompose;
+let materialManager;
+let pipeline;
 
 const gui = new dat.GUI();
 let time = 0, delta = 0;
@@ -65,7 +61,7 @@ let skybox;
 let light;
 let lightDirection = new vec3(-1, -1, -1);
 let csm;
-let waterMeshes, waterMaterial;
+let waterMeshes;
 
 const debugSettings = {
 	timeOffset: 0
@@ -94,6 +90,9 @@ function init() {
 
 	wrapper = new Object3D();
 	scene.add(wrapper);
+
+	pipeline = new Pipeline(RP);
+	materialManager = new MaterialManager(RP);
 
 	buildings = new Object3D();
 	wrapper.add(buildings);
@@ -129,21 +128,6 @@ function init() {
 
 	//mapNavigator.getCurrentPosition(controls);
 
-	const groundMaterialInstance = new GroundMaterial(RP);
-	groundMaterial = groundMaterialInstance.material;
-	groundMaterialDepth = groundMaterialInstance.depthMaterial;
-
-	const buildingMaterialInstance = new BuildingMaterial(RP);
-	buildingMaterial = buildingMaterialInstance.material;
-	buildingDepthMaterial = buildingMaterialInstance.depthMaterial;
-
-	const roadMaterialInstance = new RoadMaterial(RP);
-	roadMaterial = roadMaterialInstance.material;
-	roadDepthMaterial = roadMaterialInstance.depthMaterial;
-
-	const waterMaterialInstance = new WaterMaterial(RP);
-	waterMaterial = waterMaterialInstance.material;
-
 	console.log(scene);
 
 	const groundShape = new Shapes.planeSubdivided(tileSize * 64, tileSize * 64, 32, 32);
@@ -162,13 +146,13 @@ function init() {
 	wrapper.add(ground);
 
 	batchesInstanced.trees = new BatchInstanced(RP, {
-		material: new TreeMaterial(RP),
+		material: materialManager.getGroup("tree"),
 		attributes: Models.Tree.mesh.attributes
 	});
 	wrapper.add(batchesInstanced.trees.mesh);
 
 	batchesInstanced.hydrants = new BatchInstanced(RP, {
-		material: new InstanceMaterial(RP),
+		material: materialManager.getGroup("instance"),
 		attributes: Models.Hydrant.mesh.attributes
 	});
 	wrapper.add(batchesInstanced.hydrants.mesh);
@@ -300,8 +284,6 @@ function animate(rafTime) {
 	delta = (now - time) / 1e3;
 	time = now;
 
-	let gl = RP.gl;
-
 	controls.update(delta);
 
 	const oldPivot = {
@@ -325,33 +307,12 @@ function animate(rafTime) {
 	camera.updateMatrixWorldInverse();
 	camera.updateFrustum();
 
-	// Jitter camera projection matrix for TAA
-
-	const defaultProjectionMatrix = mat4.copy(camera.projectionMatrix);
-
 	if(Config.TAA) {
-		const jitteredProjection = camera.projectionMatrix;
-		const offsets = [
-			[-7 / 8, 1 / 8],
-			[-5 / 8, -5 / 8],
-			[-1 / 8, -3 / 8],
-			[3 / 8, -7 / 8],
-			[5 / 8, -1 / 8],
-			[7 / 8, 7 / 8],
-			[1 / 8, 3 / 8],
-			[-3 / 8, 5 / 8]
-		];
-		jitteredProjection[8] = offsets[taa.frameCount % offsets.length][0] / (window.innerWidth * Config.pixelRatio);
-		jitteredProjection[9] = offsets[taa.frameCount % offsets.length][1] / (window.innerHeight * Config.pixelRatio);
+		taa.jitter(camera.projectionMatrix);
 
-		defaultProjectionMatrix[8] = 0.;
-		defaultProjectionMatrix[9] = 0.;
-
-		taa.frameCount++;
+		if(taa.matrixWorldInversePrev)
+			taa.matrixWorldInversePrev = mat4.translate(taa.matrixWorldInversePrev, pivotDelta.x, 0, pivotDelta.z);
 	}
-
-	if(taa.matrixWorldInversePrev)
-		taa.matrixWorldInversePrev = mat4.translate(taa.matrixWorldInversePrev, pivotDelta.x, 0, pivotDelta.z);
 
 	// Directional light
 
@@ -393,21 +354,22 @@ function animate(rafTime) {
 			});
 
 			{
-				groundMaterialDepth.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
-				groundMaterialDepth.use();
+				const material = materialManager.getDepth("ground");
+				material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
+				material.use();
 
 				let object = ground;
 
-				let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-				groundMaterialDepth.uniforms.modelViewMatrix.value = modelViewMatrix;
-				groundMaterialDepth.updateUniform('modelViewMatrix');
+				material.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+				material.updateUniform('modelViewMatrix');
 
 				object.draw();
 			}
 
 			{
-				buildingDepthMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
-				buildingDepthMaterial.use();
+				const material = materialManager.getDepth("building");
+				material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
+				material.use();
 
 				for(let j = 0; j < buildings.children.length; j++) {
 					let object = buildings.children[j];
@@ -417,12 +379,11 @@ function animate(rafTime) {
 					const inFrustum = object.inCameraFrustum(rCamera);
 
 					if(inFrustum) {
-						let modelViewMatrix = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-						buildingDepthMaterial.uniforms.modelViewMatrix.value = modelViewMatrix;
-						buildingDepthMaterial.updateUniform('modelViewMatrix');
+						material.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+						material.updateUniform('modelViewMatrix');
 
-						buildingDepthMaterial.uniforms.time.value = object.data.tile.time;
-						buildingDepthMaterial.updateUniform('time');
+						material.uniforms.time.value = object.data.tile.time;
+						material.updateUniform('time');
 
 						object.draw();
 					}
@@ -475,25 +436,23 @@ function animate(rafTime) {
 	RP.depthWrite = true;
 
 	{
-		groundMaterial.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
-		groundMaterial.use();
-
+		const material = materialManager.getDefault("ground");
 		const object = ground;
-
-		groundMaterial.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-		groundMaterial.uniforms.modelViewMatrixPrev.value = mat4.multiply(taa.matrixWorldInversePrev || rCamera.matrixWorldInverse, object.matrixWorld);
-		groundMaterial.updateUniform('modelViewMatrix');
-		groundMaterial.updateUniform('modelViewMatrixPrev');
+		material.uniforms.projectionMatrix = {type: 'Matrix4fv', value: rCamera.projectionMatrix};
+		material.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+		material.uniforms.modelViewMatrixPrev.value = mat4.multiply(taa.matrixWorldInversePrev || rCamera.matrixWorldInverse, object.matrixWorld);
+		material.use();
 
 		object.draw();
 	}
 
 	RP.depthTest = false;
 
-	waterMaterial.uniforms.time.value += delta;
 	{
-		waterMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
-		waterMaterial.use();
+		const material = materialManager.getDefault("water");
+		material.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+		material.uniforms.time.value += delta;
+		material.use();
 
 		for (let i = 0; i < waterMeshes.children.length; i++) {
 			const object = waterMeshes.children[i];
@@ -501,10 +460,10 @@ function animate(rafTime) {
 			const inFrustum = object.inCameraFrustum(rCamera);
 
 			if (inFrustum) {
-				waterMaterial.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-				waterMaterial.uniforms.modelViewMatrixPrev.value = mat4.multiply(taa.matrixWorldInversePrev || rCamera.matrixWorldInverse, object.matrixWorld);
-				waterMaterial.updateUniform('modelViewMatrix');
-				waterMaterial.updateUniform('modelViewMatrixPrev');
+				material.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+				material.uniforms.modelViewMatrixPrev.value = mat4.multiply(taa.matrixWorldInversePrev || rCamera.matrixWorldInverse, object.matrixWorld);
+				material.updateUniform('modelViewMatrix');
+				material.updateUniform('modelViewMatrixPrev');
 
 				object.draw();
 			}
@@ -512,8 +471,9 @@ function animate(rafTime) {
 	}
 
 	{
-		roadMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
-		roadMaterial.use();
+		const material = materialManager.getDefault("road");
+		material.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+		material.use();
 
 		for(let i = 0; i < roads.children.length; i++) {
 			const object = roads.children[i];
@@ -521,10 +481,10 @@ function animate(rafTime) {
 			const inFrustum = object.inCameraFrustum(rCamera);
 
 			if(inFrustum) {
-				roadMaterial.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-				roadMaterial.uniforms.modelViewMatrixPrev.value = mat4.multiply(taa.matrixWorldInversePrev || rCamera.matrixWorldInverse, object.matrixWorld);
-				roadMaterial.updateUniform('modelViewMatrix');
-				roadMaterial.updateUniform('modelViewMatrixPrev');
+				material.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+				material.uniforms.modelViewMatrixPrev.value = mat4.multiply(taa.matrixWorldInversePrev || rCamera.matrixWorldInverse, object.matrixWorld);
+				material.updateUniform('modelViewMatrix');
+				material.updateUniform('modelViewMatrixPrev');
 
 				object.draw();
 			}
@@ -534,9 +494,10 @@ function animate(rafTime) {
 	RP.depthTest = true;
 
 	{
-		buildingMaterial.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
-		buildingMaterial.uniforms.uSunIntensity.value = sunIntensity;
-		buildingMaterial.use();
+		const material = materialManager.getDefault("building");
+		material.uniforms.projectionMatrix.value = rCamera.projectionMatrix;
+		material.uniforms.uSunIntensity.value = sunIntensity;
+		material.use();
 
 		let noAnimationStreak = 0;
 
@@ -546,24 +507,24 @@ function animate(rafTime) {
 			const inFrustum = object.inCameraFrustum(rCamera);
 
 			if(inFrustum) {
-				buildingMaterial.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
-				buildingMaterial.uniforms.modelViewMatrixPrev.value = mat4.multiply(
+				material.uniforms.modelViewMatrix.value = mat4.multiply(rCamera.matrixWorldInverse, object.matrixWorld);
+				material.uniforms.modelViewMatrixPrev.value = mat4.multiply(
 					taa.matrixWorldInversePrev || rCamera.matrixWorldInverse,
 					object.matrixWorld
 				);
-				buildingMaterial.updateUniform('modelViewMatrix');
-				buildingMaterial.updateUniform('modelViewMatrixPrev');
+				material.updateUniform('modelViewMatrix');
+				material.updateUniform('modelViewMatrixPrev');
 
 				if(object.data.tile.time - delta < 1) {
-					buildingMaterial.uniforms.time.value = object.data.tile.time;
-					buildingMaterial.uniforms.timeDelta.value = Math.min(delta, 1 - object.data.tile.time);
-					buildingMaterial.updateUniform('time');
-					buildingMaterial.updateUniform('timeDelta');
+					material.uniforms.time.value = object.data.tile.time;
+					material.uniforms.timeDelta.value = Math.min(delta, 1 - object.data.tile.time);
+					material.updateUniform('time');
+					material.updateUniform('timeDelta');
 					noAnimationStreak = 0;
 				} else {
 					if(noAnimationStreak === 0) {
-						buildingMaterial.uniforms.time.value = 1;
-						buildingMaterial.updateUniform('time');
+						material.uniforms.time.value = 1;
+						material.updateUniform('time');
 					}
 
 					++noAnimationStreak;
@@ -613,7 +574,7 @@ function animate(rafTime) {
 
 		// Blur
 
-		RP.bindFramebuffer(blur.framebufferTemp);
+		RP.bindFramebuffer(blur.framebuffers.temp);
 
 		blur.material.uniforms.tColor.value = ssao.framebuffer.textures[0];
 		blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
@@ -623,13 +584,13 @@ function animate(rafTime) {
 
 		RP.bindFramebuffer(blur.framebuffer);
 
-		blur.material.uniforms.tColor.value = blur.framebufferTemp.textures[0];
+		blur.material.uniforms.tColor.value = blur.framebuffers.temp.textures[0];
 		blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
 		blur.material.uniforms.direction.value = [1, 0];
 		blur.material.use();
 		quad.draw();
 	} else {
-		RP.bindFramebuffer(blur.framebuffer);
+		RP.bindFramebuffer(blur.framebuffers.main);
 
 		RP.clearFramebuffer({
 			clearColor: [1, 1, 1, 1],
@@ -664,7 +625,7 @@ function animate(rafTime) {
 
 		// Blur
 
-		RP.bindFramebuffer(blur.framebufferTemp);
+		RP.bindFramebuffer(blur.framebuffers.temp);
 
 		blur.material.uniforms.tColor.value = volumetricLighting.texture;
 		blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
@@ -672,15 +633,15 @@ function animate(rafTime) {
 		blur.material.use();
 		quad.draw();
 
-		RP.bindFramebuffer(volumetricLighting.framebufferBlurred);
+		RP.bindFramebuffer(volumetricLighting.framebuffers.blurred);
 
-		blur.material.uniforms.tColor.value = blur.framebufferTemp.textures[0];
+		blur.material.uniforms.tColor.value = blur.framebuffers.temp.textures[0];
 		blur.material.uniforms.tDepth.value = gBuffer.framebuffer.depth;
 		blur.material.uniforms.direction.value = [1, 0];
 		blur.material.use();
 		quad.draw();
 	} else {
-		RP.bindFramebuffer(volumetricLighting.framebufferBlurred);
+		RP.bindFramebuffer(volumetricLighting.framebuffers.blurred);
 
 		RP.clearFramebuffer({
 			clearColor: [0, 0, 0, 0],
@@ -690,11 +651,10 @@ function animate(rafTime) {
 
 	// Clouds
 
-	RP.bindFramebuffer(volumetricClouds.framebuffer);
+	RP.bindFramebuffer(volumetricClouds.framebuffers.main);
 
 	gBuffer.textures.position.generateMipmaps();
 	volumetricClouds.material.uniforms.tPosition.value = gBuffer.textures.position;
-	//volumetricClouds.material.uniforms.cameraPositionE5.value = new Float32Array([camera.position.x % 1e5, camera.position.y, camera.position.z % 1e5]);
 	volumetricClouds.material.uniforms.cameraPositionE5.value = new Float32Array([0, 0, 0]);
 	volumetricClouds.material.uniforms.lightDirection.value = new Float32Array(vec3.toArray(csm.direction));
 	volumetricClouds.material.uniforms.normalMatrix.value = mat4.normalMatrix(rCamera.matrixWorld);
@@ -762,7 +722,7 @@ function animate(rafTime) {
 	// SMAA
 
 	if(Config.SMAA) {
-		RP.bindFramebuffer(smaa.edgesFB);
+		RP.bindFramebuffer(smaa.framebuffers.edges);
 
 		RP.clearFramebuffer({
 			clearColor: [0, 0, 0, 1],
@@ -773,7 +733,7 @@ function animate(rafTime) {
 		smaa.materials.edges.use();
 		quad.draw();
 
-		RP.bindFramebuffer(smaa.weightsFB);
+		RP.bindFramebuffer(smaa.framebuffers.weights);
 
 		smaa.materials.weights.use();
 		quad.draw();
