@@ -60,9 +60,13 @@ async function vectorTile(x, y) {
 }
 
 function overpass(x, y, waterVertices) {
-	//let url = 'https://overpass.kumi.systems/api/interpreter?data=';
-	//let url = 'https://overpass.nchc.org.tw/api/interpreter?data=';
-	let url = 'https://lz4.overpass-api.de/api/interpreter?data=';
+	const urls = [
+		'https://overpass.kumi.systems/api/interpreter?data=',
+		'https://overpass.nchc.org.tw/api/interpreter?data=',
+		'https://lz4.overpass-api.de/api/interpreter?data=',
+		'https://z.overpass-api.de/api/interpreter?data='
+	];
+	let url = urls[Math.floor(urls.length * Math.random())];
 	const offset = 0.05;
 	const position = [
 		tile2degrees(x - offset, y + 1 + offset),

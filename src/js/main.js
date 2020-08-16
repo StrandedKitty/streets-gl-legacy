@@ -1,3 +1,4 @@
+import './../css/style.css';
 import {clamp, hexToRgb, sphericalToCartesian, tile2meters, tileEncode} from './Utils';
 import Config from './Config';
 import Frustum from './core/Frustum';
