@@ -68,7 +68,7 @@ export default class Material {
 		let location = this.uniformsLocations[name];
 
 		if(uniform.type[0] === 'M') {
-			this.gl['uniform' + uniform.type](location, false, uniform.value);
+			this.gl['uniform' + uniform.type](location, false, new Float32Array(uniform.value));
 		} else {
 			this.gl['uniform' + uniform.type](location, uniform.value);
 		}
