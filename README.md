@@ -4,6 +4,8 @@
 
 Streets GL is an interactive [OpenStreetMap](https://www.openstreetmap.org/) data visualization which targets modern browsers with full WebGL 2 support.
 
+**This is a legacy project and it won't receive any updates. The new iteration is located in [vhawk/streets-gl](https://github.com/vHawk/streets-gl).**
+
 ## Implemented features
 
 #### Core features
